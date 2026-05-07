@@ -21,13 +21,29 @@ Bastion is a high-performance security middleware for autonomous AI agents on So
 
 ## Overview
 
-Bastion v2 is an upgraded fork of Sentinel, built for the Solana Frontier Hackathon Infrastructure track. It provides:
+Bastion v2 is an upgraded fork of Sentinel (by ClawdieLabs), built for the Solana Frontier Hackathon Infrastructure track. It provides:
 
 - Transaction validation and simulation
 - Policy-based access control
 - On-chain audit trail
 - Agent identity registry
 - Real-time dashboard
+
+## Competitive Differentiation
+
+Bastion focuses on simplicity and hackathon-readiness versus enterprise complexity:
+
+| Product | Focus |
+|---------|-------|
+| PayAI | Payments (x402 protocol) |
+| AgentGuard | 4-layer TypeScript defense, 20+ prompt injection patterns |
+| Agent Guardrails | On-chain policies + AI kill switch |
+| AlpenGuard | Enterprise compliance, OIDC, KMS, EU AI Act |
+| Sigil | TEE custody, on-chain vault enforcement |
+| AgentShield | ElizaOS-specific, 6-layer defense |
+| **Bastion** | Simple, hackathon-ready security middleware |
+
+Bastion's USP: Simple, hackathon-ready security middleware (vs enterprise complexity).
 
 ## Problem
 
