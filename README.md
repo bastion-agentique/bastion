@@ -21,7 +21,7 @@ Bastion is a high-performance security middleware for autonomous AI agents on So
 
 ## Overview
 
-Bastion v2 is an upgraded fork of Sentinel (by ClawdieLabs), built for the Solana Frontier Hackathon Infrastructure track. Sentinel v1 was a proof-of-concept Rust proxy with basic policy parsing. Bastion v2 upgrades it with **on-chain audit, agent identity registry, multi-agent support, and an enhanced policy engine**, transforming a local proxy into a verifiable, on-chain security layer for autonomous agents. It provides:
+Bastion is an upgraded fork of Sentinel (by ClawdieLabs), built for the Solana Frontier Hackathon Infrastructure track. Sentinel v1 was a proof-of-concept Rust proxy with basic policy parsing. Bastion upgrades it with **on-chain audit, agent identity registry, multi-agent support, and an enhanced policy engine**, transforming a local proxy into a verifiable, on-chain security layer for autonomous agents. It provides:
 
 - Transaction validation and simulation
 - Policy-based access control
@@ -234,7 +234,7 @@ The Anchor program provides immutable audit records on Solana.
 ### Program ID
 
 ```
-BaStion11111111111111111111111111111111
+BaSZuLcwjfh75T3TjbVYpTH4qpJt1tNoZ3S6PTkvNhCb
 ```
 
 ### Instructions
