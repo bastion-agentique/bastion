@@ -1,15 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Connection, PublicKey, SystemProgram } from '@solana/web3.js';
 import { 
   WalletProvider, 
   useWallet, 
   ConnectionProvider 
 } from '@solana/wallet-adapter-react';
 import { SolflareWalletAdapter } from '@solana/wallet-adapter-solflare';
-import { WalletModalProvider, useWalletModal } from '@solana/wallet-adapter-react-ui';
+import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { 
-  WalletMultiButton, 
-  WalletDisconnectButton 
+  WalletMultiButton 
 } from '@solana/wallet-adapter-react-ui';
 import '@solana/wallet-adapter-react-ui/styles.css';
 
@@ -48,7 +46,7 @@ const DEFAULT_POLICY: Policy = {
 };
 
 function Dashboard() {
-  const { connected, publicKey } = useWallet();
+  useWallet();
   const [activeTab, setActiveTab] = useState<'pending' | 'logs' | 'policy'>('pending');
   const [pending, setPending] = useState<AuditEntry[]>([]);
   const [logs, setLogs] = useState<AuditEntry[]>([]);
@@ -234,8 +232,7 @@ function Dashboard() {
 }
 
 function AppContent() {
-  const [endpoint, setEndpoint] = useState(ENDPOINTS[0].url);
-  const connection = new Connection(endpoint);
+  const [endpoint] = useState(ENDPOINTS[0].url);
   const wallets = [new SolflareWalletAdapter()];
 
   return (
