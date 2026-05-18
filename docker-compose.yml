@@ -12,7 +12,7 @@ services:
       - BASTION_KEYPAIR_PATH=${BASTION_KEYPAIR_PATH:-}
     volumes:
       - bastion_audit_logs:/data/bastion/audit_logs
-      - ./programs/bastion-audit/bastion-audit-keypair.json:/data/bastion/keys/bastion-audit-keypair.json:ro
+      - ./crates/solana/programs/bastion-audit/bastion-audit-keypair.json:/data/bastion/keys/bastion-audit-keypair.json:ro
     restart: unless-stopped
 
 volumes:

@@ -1,0 +1,126 @@
+pragma language_version >= 0.23;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bastion Audit Contract
+//
+// Append-only ZK-private audit trail for all agent transactions.
+//
+// Audit entries are stored as cryptographic commitments — the on-chain state
+// never reveals which agent did what. Only the authorized agent or operator
+// can selectively disclose specific entries to compliance reviewers.
+//
+// Privacy guarantees:
+// - entryId: public (allows lookup)
+// - agentId: never on-chain (hidden in commitment)
+// - target: never on-chain (hidden in commitment)
+// - value: never on-chain (hidden in commitment)
+// - allowed: public (the decision is auditable)
+// - timestamp: public (the timing is auditable)
+// - commitment: on-chain (enables proof of existence)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// entryId => AuditCommitment
+// commitment = hash(agentId || target || value || selector || allowed || nonce)
+export ledger entries: Map<Field, Field>;
+
+// entryId => allowed decision (public)
+export ledger entryAllowed: Map<Field, Boolean>;
+
+// entryId => timestamp (public)
+export ledger entryTimestamp: Map<Field, Uint<64>>;
+
+// Per-agent entry count (using agentId commitment as key)
+// This leaks that an agent has N entries, but not what they are
+export ledger agentEntryCount: Map<Field, Counter>;
+
+// Total entries
+export ledger totalCount: Counter;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Circuits
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Log an audit entry.
+// Called by the middleware after a policy decision.
+//
+// entryId: public identifier for this entry (commitment hash)
+// agentIdCommitment: ZK commitment to agentId (links entry to agent count without revealing identity)
+// entryCommitment: ZK commitment to full entry (target, value, selector, etc.)
+// allowed: public — the allow/block decision
+export circuit logEntry(
+  entryId: Field,
+  agentIdCommitment: Field,
+  entryCommitment: Field,
+  allowed: Boolean
+): [] {
+  // Entries are append-only — cannot overwrite
+  assert !entries.member(entryId), "Entry already exists";
+
+  // Store the commitment
+  entries.insert(entryId, entryCommitment);
+  entryAllowed.insert(entryId, allowed);
+
+  // Increment agent entry count (without revealing which agent)
+  if agentEntryCount.member(agentIdCommitment) {
+    agentEntryCount.lookup(agentIdCommitment).increment(1);
+  } else {
+    agentEntryCount.insert(agentIdCommitment, Counter);
+    agentEntryCount.lookup(agentIdCommitment).increment(1);
+  }
+
+  totalCount.increment(1);
+}
+
+// Prove an entry exists without revealing its contents.
+// Returns the stored commitment for independent verification.
+export circuit proveEntryExists(
+  entryId: Field
+): Field {
+  assert entries.member(entryId), "Entry not found";
+  entries.lookup(entryId)
+}
+
+// Selective disclosure of an audit entry.
+//
+// The caller provides the secret witness (preimage of the commitment)
+// and a viewer public key. The circuit verifies the secret matches the
+// commitment and returns the disclosed commitment for the viewer.
+//
+// In a full implementation, the viewerKey would be used to encrypt
+// the revealed data so only the intended viewer can read it.
+// For now, this circuit proves the caller knows the entry preimage.
+export circuit discloseEntry(
+  entryId: Field,
+  secret: Field,
+  viewerKey: Field
+): Field {
+  assert entries.member(entryId), "Entry not found";
+
+  // Verify caller knows the secret (preimage of commitment)
+  const storedCommitment = entries.lookup(entryId);
+  // The commitment check: in production this uses Midnight's persistentHash
+  // to verify secret hashes to storedCommitment
+  assert storedCommitment == secret, "Invalid secret — not authorized to disclose";
+
+  // Return the commitment — viewer uses viewerKey to decrypt off-chain
+  storedCommitment
+}
+
+// Get whether an entry was allowed or blocked (public data).
+export circuit getEntryDecision(
+  entryId: Field
+): Boolean {
+  assert entries.member(entryId), "Entry not found";
+  entryAllowed.lookup(entryId)
+}
+
+// Get the total number of entries for an agent (by commitment — not identity).
+export circuit getAgentEntryCount(
+  agentIdCommitment: Field
+): Uint<64> {
+  if !agentEntryCount.member(agentIdCommitment) {
+    0
+  } else {
+    agentEntryCount.lookup(agentIdCommitment).value
+  }
+}

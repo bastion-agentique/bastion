@@ -1,4 +1,7 @@
 target/
-programs/bastion-audit/target/
-programs/bastion-audit/bastion-audit-keypair.json
+crates/sidecar/target/
+crates/solana/programs/bastion-audit/target/
+crates/solana/programs/bastion-audit/bastion-audit-keypair.json
 *.pen
+node_modules/
+dist/

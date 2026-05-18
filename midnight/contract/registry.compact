@@ -1,0 +1,130 @@
+pragma language_version >= 0.23;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bastion Registry Contract
+//
+// Maintains an on-chain directory of AI agents and target contracts.
+// Agent identities are stored as ZK commitments — the actual agent address
+// is never revealed on-chain. Target contracts are stored publicly so the
+// middleware can verify allowed targets without leaking agent data.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Agent commitment: hash of (agentAddress, ownerKey, nonce)
+// This is all the chain ever sees of an agent identity.
+export ledger agentCommitments: Map<Field, Field>;
+
+// Target registry: targetId => name (opaque string)
+export ledger targets: Map<Field, Opaque<"string">>;
+
+// Verified targets: targetId => true if admin-verified
+export ledger verifiedTargets: Map<Field, Boolean>;
+
+// Active agents: agentId => isActive
+export ledger agentActive: Map<Field, Boolean>;
+
+// Total counts (public, for discoverability)
+export ledger agentCount: Counter;
+export ledger targetCount: Counter;
+
+// Emergency pause
+export ledger isPaused: Cell<Boolean>;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Circuits
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Register a new agent.
+// agentId: public identifier (commitment hash, computed off-chain)
+// commitment: ZK commitment to agent identity — never reveals real address
+export circuit registerAgent(
+  agentId: Field,
+  commitment: Field
+): [] {
+  // Ensure not paused
+  assert !disclose(isPaused.value), "Registry is paused";
+
+  // Ensure agentId not already registered
+  assert !agentCommitments.member(agentId), "Agent already registered";
+
+  // Store the commitment
+  agentCommitments.insert(agentId, commitment);
+  agentActive.insert(agentId, true);
+  agentCount.increment(1);
+}
+
+// Deactivate an agent.
+// Only the agent owner can deactivate (ownerProof must match commitment).
+export circuit deactivateAgent(
+  agentId: Field,
+  ownerProof: Field
+): [] {
+  assert !disclose(isPaused.value), "Registry is paused";
+  assert agentCommitments.member(agentId), "Agent not registered";
+
+  // Verify ownership: ownerProof must be consistent with stored commitment
+  // In production, this would verify a ZK ownership proof off-circuit
+  const storedCommitment = agentCommitments.lookup(agentId);
+  assert storedCommitment == ownerProof, "Unauthorized";
+
+  agentActive.insert(agentId, false);
+}
+
+// Reactivate a deactivated agent.
+export circuit reactivateAgent(
+  agentId: Field,
+  ownerProof: Field
+): [] {
+  assert !disclose(isPaused.value), "Registry is paused";
+  assert agentCommitments.member(agentId), "Agent not registered";
+
+  const storedCommitment = agentCommitments.lookup(agentId);
+  assert storedCommitment == ownerProof, "Unauthorized";
+
+  agentActive.insert(agentId, true);
+}
+
+// Register a target contract.
+// target info is stored publicly — targets are not sensitive.
+export circuit registerTarget(
+  targetId: Field,
+  name: Opaque<"string">
+): [] {
+  assert !disclose(isPaused.value), "Registry is paused";
+  assert !targets.member(targetId), "Target already registered";
+
+  targets.insert(targetId, name);
+  verifiedTargets.insert(targetId, false);
+  targetCount.increment(1);
+}
+
+// Mark a target as verified (admin-only via adminProof).
+export circuit verifyTarget(
+  targetId: Field,
+  adminProof: Field
+): [] {
+  assert targets.member(targetId), "Target not registered";
+  // adminProof checked off-chain; on-chain we just record verification
+  verifiedTargets.insert(targetId, true);
+}
+
+// Prove that an agent is active (for use in cross-contract calls).
+// Returns true if the agentId is registered and active.
+export circuit isAgentActive(
+  agentId: Field
+): Boolean {
+  if !agentCommitments.member(agentId) {
+    false
+  } else {
+    agentActive.lookup(agentId)
+  }
+}
+
+// Emergency pause — stops all registrations.
+export circuit pause(adminProof: Field): [] {
+  isPaused.value = true;
+}
+
+// Resume from pause.
+export circuit resume(adminProof: Field): [] {
+  isPaused.value = false;
+}

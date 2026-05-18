@@ -1,0 +1,16 @@
+{
+  "name": "bastion",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

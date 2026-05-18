@@ -1,27 +1,32 @@
-[package]
-name = "bastion"
+[workspace]
+resolver = "2"
+members = [
+    "crates/core",
+    "crates/sidecar",
+    "crates/solana/programs/bastion-audit",
+]
+
+[workspace.package]
 version = "0.3.0"
 edition = "2024"
+license = "MIT"
+repository = "https://github.com/bastion-agentic-defense/bastion"
 
-[dependencies]
-axum = "0.7"
-tokio = { version = "1", features = ["full"] }
+[workspace.dependencies]
+bastion-core = { path = "crates/core" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-toml = "0.8"
-solana-sdk = "1.18"
-solana-client = "1.18"
+thiserror = "2"
 anyhow = "1"
-thiserror = "1"
+tokio = { version = "1", features = ["full"] }
+axum = "0.7"
 reqwest = { version = "0.12", features = ["blocking", "json"] }
-base64 = "0.22"
-bincode = "1"
-dotenv = "0.15"
-sled = "0.34"
-uuid = { version = "1.20.0", features = ["v4"] }
-tower-http = { version = "0.5", features = ["fs"] }
-sha2 = "0.10"
 
-[dev-dependencies]
-tempfile = "3"
-tower = { version = "0.5", features = ["util"] }
+# Optimize build times for local development
+[profile.dev]
+opt-level = 0
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1

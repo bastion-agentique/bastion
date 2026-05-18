@@ -1,0 +1,177 @@
+{
+  "version": "0.2.0",
+  "name": "bastion_audit",
+  "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [
+        { "name": "auditState", "isMut": true, "isSigner": false },
+        { "name": "authority", "isMut": true, "isSigner": true },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": []
+    },
+    {
+      "name": "logAudit",
+      "accounts": [
+        { "name": "auditEntry", "isMut": true, "isSigner": false },
+        { "name": "auditState", "isMut": true, "isSigner": false },
+        { "name": "signer", "isMut": false, "isSigner": true },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "decision", "type": "u8" },
+        { "name": "simulationResult", "type": "array", "itemType": "u8", "length": 32 },
+        { "name": "reasoning", "type": "string" },
+        { "name": "programId", "type": "option", "itemType": "array", "itemType": "u8", "length": 32 }
+      ]
+    },
+    {
+      "name": "registerAgent",
+      "accounts": [
+        { "name": "agent", "isMut": true, "isSigner": false },
+        { "name": "signer", "isMut": false, "isSigner": true },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "name", "type": "string" },
+        { "name": "capabilityBitmask", "type": "u64" }
+      ]
+    },
+    {
+      "name": "updateAgentReputation",
+      "accounts": [
+        { "name": "agent", "isMut": true, "isSigner": false },
+        { "name": "signer", "isMut": false, "isSigner": true }
+      ],
+      "args": [
+        { "name": "delta", "type": "i64" }
+      ]
+    },
+    {
+      "name": "setPolicy",
+      "accounts": [
+        { "name": "policy", "isMut": true, "isSigner": false },
+        { "name": "signer", "isMut": false, "isSigner": true },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "allowedPrograms", "type": "array", "itemType": "array", "itemType": "u8", "length": 32 },
+        { "name": "maxSolPerTx", "type": "u64" },
+        { "name": "rateLimitPerMinute", "type": "u32" }
+      ]
+    },
+    {
+      "name": "emergencyPause",
+      "accounts": [
+        { "name": "auditState", "isMut": true, "isSigner": false },
+        { "name": "signer", "isMut": false, "isSigner": true }
+      ],
+      "args": []
+    },
+    {
+      "name": "emergencyResume",
+      "accounts": [
+        { "name": "auditState", "isMut": true, "isSigner": false },
+        { "name": "signer", "isMut": false, "isSigner": true }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "auditState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "owner", "type": "publicKey" },
+          { "name": "authority", "type": "publicKey" },
+          { "name": "bump", "type": "u8" },
+          { "name": "totalAudits", "type": "u64" },
+          { "name": "allowedCount", "type": "u64" },
+          { "name": "blockedCount", "type": "u64" },
+          { "name": "paused", "type": "bool" },
+          { "name": "pausedAt", "type": "i64" },
+          { "name": "resumedAt", "type": "i64" }
+        ]
+      }
+    },
+    {
+      "name": "auditEntry",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "authority", "type": "publicKey" },
+          { "name": "timestamp", "type": "i64" },
+          { "name": "decision", "type": "u8" },
+          { "name": "simulationResult", "type": "array", "itemType": "u8", "length": 32 },
+          { "name": "reasoning", "type": "string" },
+          { "name": "programId", "type": "option", "itemType": "array", "itemType": "u8", "length": 32 },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "agent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "authority", "type": "publicKey" },
+          { "name": "name", "type": "string" },
+          { "name": "capabilityBitmask", "type": "u64" },
+          { "name": "reputationScore", "type": "u64" },
+          { "name": "registeredAt", "type": "i64" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "policy",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "authority", "type": "publicKey" },
+          { "name": "allowedPrograms", "type": "array", "itemType": "array", "itemType": "u8", "length": 32 },
+          { "name": "maxSolPerTx", "type": "u64" },
+          { "name": "rateLimitPerMinute", "type": "u32" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    }
+  ],
+  "events": [
+    {
+      "name": "AgentRegistered",
+      "fields": [
+        { "name": "agent", "type": "publicKey" },
+        { "name": "authority", "type": "publicKey" },
+        { "name": "name", "type": "string" }
+      ]
+    },
+    {
+      "name": "ReputationUpdated",
+      "fields": [
+        { "name": "agent", "type": "publicKey" },
+        { "name": "newScore", "type": "u64" }
+      ]
+    },
+    {
+      "name": "ProtocolPaused",
+      "fields": [
+        { "name": "authority", "type": "publicKey" }
+      ]
+    },
+    {
+      "name": "ProtocolResumed",
+      "fields": [
+        { "name": "authority", "type": "publicKey" }
+      ]
+    }
+  ],
+  "errors": [
+    { "code": 100, "name": "InvalidReputation", "msg": "Invalid reputation score" },
+    { "code": 101, "name": "NotPaused", "msg": "Protocol is not paused" },
+    { "code": 102, "name": "IsPaused", "msg": "Protocol is paused" },
+    { "code": 103, "name": "Unauthorized", "msg": "Unauthorized" }
+  ]
+}
