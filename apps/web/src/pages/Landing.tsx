@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useAccount } from 'wagmi';
@@ -120,13 +120,22 @@ export default function Landing() {
           protocols. Through the noise, we craft a firewall for pure execution.
         </p>
 
-        <button
-          onClick={handleCTA}
-          className="animate-fade-rise-delay-2 mt-12 rounded-full px-14 py-5 text-base font-medium font-sans transition-transform duration-150 hover:scale-[1.03] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
-          style={{ background: 'var(--text-primary)', color: 'var(--bg)' }}
-        >
-          Go to Dashboard
-        </button>
+        <div className="flex items-center justify-center gap-4 mt-12">
+          <Link
+            to="/integrate"
+            className="animate-fade-rise-delay-2 rounded-full px-14 py-5 text-base font-medium font-sans transition-transform duration-150 hover:scale-[1.03] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
+            style={{ background: 'var(--text-primary)', color: 'var(--bg)', textDecoration: 'none' }}
+          >
+            Integrate SDK
+          </Link>
+          <button
+            onClick={handleCTA}
+            className="animate-fade-rise-delay-2 rounded-full px-10 py-5 text-base font-medium font-sans transition-all duration-150 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
+            style={{ color: 'var(--text-muted)', border: '1px solid var(--border)' }}
+          >
+            Dashboard
+          </button>
+        </div>
       </section>
 
       {/* ── Architecture Flow ── */}

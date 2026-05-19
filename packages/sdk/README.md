@@ -5,14 +5,14 @@ TypeScript SDK for interacting with the Bastion on-chain audit program.
 ## Installation
 
 ```bash
-npm install @bastion/sdk
+npm install @bastion-agentic-defense/sdk
 ```
 
 ## Usage
 
 ```typescript
 import { Connection } from "@solana/web3.js";
-import { BastionClient, AGENT_CAPABILITIES, DECISION } from "@bastion/sdk";
+import { BastionClient, AGENT_CAPABILITIES, DECISION } from "@bastion-agentic-defense/sdk";
 
 const connection = new Connection("https://api.devnet.solana.com");
 

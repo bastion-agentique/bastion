@@ -1,9 +1,21 @@
 {
-  "name": "@bastion/sdk",
+  "name": "@bastion-agentic-defense/sdk",
   "version": "0.2.0",
-  "description": "TypeScript SDK for Bastion on-chain audit program",
+  "description": "TypeScript SDK for Bastion AI Agent Firewall. On-chain audit, agent registry, policy engine, and circuit breaker for Solana.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist/",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bastion-defend/bastion.git",
+    "directory": "packages/sdk"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc",
     "test": "jest"
@@ -26,7 +38,10 @@
     "anchor",
     "bastion",
     "security",
-    "ai-agents"
+    "ai-agents",
+    "firewall",
+    "audit",
+    "multichain"
   ],
   "license": "MIT"
 }
