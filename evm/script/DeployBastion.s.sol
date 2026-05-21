@@ -6,12 +6,15 @@ import { BastionPolicy } from "../src/BastionPolicy.sol";
 import { BastionAudit } from "../src/BastionAudit.sol";
 import { BastionFirewall } from "../src/BastionFirewall.sol";
 import { BastionRegistry } from "../src/BastionRegistry.sol";
+import { BastionERC8004Registry } from "../src/BastionERC8004Registry.sol";
 import { IBastionPolicy } from "../src/interfaces/IBastionPolicy.sol";
 import { IBastionAudit } from "../src/interfaces/IBastionAudit.sol";
 
 /// @title DeployBastion
 /// @notice Deploy the full Bastion protocol to any EVM chain.
 /// Usage:
+///   forge script script/DeployBastion.s.sol --rpc-url celo_testnet --broadcast --verify
+///   forge script script/DeployBastion.s.sol --rpc-url celo --broadcast --verify
 ///   forge script script/DeployBastion.s.sol --rpc-url base --broadcast --verify
 ///   forge script script/DeployBastion.s.sol --rpc-url polygon --broadcast --verify
 contract DeployBastion is Script {
@@ -32,9 +35,13 @@ contract DeployBastion is Script {
         BastionPolicy policy = new BastionPolicy(deployer);
         console.log("BastionPolicy deployed at:", address(policy));
 
-        // 3. Deploy Registry
+        // 3. Deploy Registry (original BastionRegistry)
         BastionRegistry registry = new BastionRegistry(deployer);
         console.log("BastionRegistry deployed at:", address(registry));
+
+        // 3b. Deploy ERC-8004 Identity Registry
+        BastionERC8004Registry erc8004Registry = new BastionERC8004Registry(deployer);
+        console.log("BastionERC8004Registry deployed at:", address(erc8004Registry));
 
         // 4. Deploy Firewall
         BastionFirewall firewall = new BastionFirewall(
@@ -49,6 +56,7 @@ contract DeployBastion is Script {
         console.log("Audit:", address(audit));
         console.log("Policy:", address(policy));
         console.log("Registry:", address(registry));
+        console.log("ERC-8004 Registry:", address(erc8004Registry));
         console.log("Firewall:", address(firewall));
     }
 }

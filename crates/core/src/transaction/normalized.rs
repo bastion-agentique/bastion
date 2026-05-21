@@ -43,6 +43,7 @@ pub enum Chain {
     Ethereum,
     Polygon,
     Arbitrum,
+    Celo,
     Midnight,
 }
 

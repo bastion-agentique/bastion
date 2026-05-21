@@ -39,9 +39,13 @@ pub struct EvaluateResponse {
 /// Convert an EvaluateRequest into a NormalizedTransaction.
 fn normalize_request(req: &EvaluateRequest) -> NormalizedTransaction {
     let chain = match req.chain.as_deref() {
-        Some("base") | Some("ethereum") | Some("polygon") | Some("arbitrum") => Chain::Base,
+        Some("base") => Chain::Base,
+        Some("ethereum") => Chain::Ethereum,
+        Some("polygon") => Chain::Polygon,
+        Some("arbitrum") => Chain::Arbitrum,
+        Some("celo") => Chain::Celo,
         Some("midnight") => Chain::Midnight,
-        _ => Chain::Solana,
+        Some("solana") | _ => Chain::Solana,
     };
 
     let tx_type = match req.tx_type.as_deref() {

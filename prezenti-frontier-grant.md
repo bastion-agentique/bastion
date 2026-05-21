@@ -28,7 +28,17 @@
 ---
 
 ## ERC-8004 registration
-**Yes**, registered under ERC-8004. Bastion's agent identity registry implements the ERC-8004 standard so every agent secured by Bastion is discoverable and verifiable across the agent ecosystem. Each agent gets an on-chain identity tied to its authority key, with reputation that compounds across sessions.
+**Yes.** Bastion implements the full ERC-8004 Identity Registry specification (`evm/src/BastionERC8004Registry.sol`). Every agent registered through Bastion receives an ERC-8004 compliant ERC-721 identity with:
+
+- **ERC-721 tokenId + URIStorage** — each agent is an NFT browseable in any ERC-721 explorer
+- **agentURI** — resolves to the ERC-8004 registration file (ipfs://, https://, or data: URI)
+- **On-chain metadata** — key-value store with reserved `agentWallet` key for EIP-712/ERC-1271 verified payment addresses
+- **Global agent ID** — `eip155:{chainId}:{registryAddress}` format for cross-chain agent identity
+- **EIP-712 typed signatures** — provable wallet ownership without exposing private keys
+
+This makes every agent secured by Bastion discoverable across the entire agent ecosystem, compatible with any ERC-8004-compliant discovery tool, reputation system, or validation protocol.
+
+Contract: `evm/src/BastionERC8004Registry.sol` | Tests: 22/22 passing in `evm/test/BastionERC8004Registry.t.sol`
 
 ---
 
@@ -58,6 +68,8 @@ Bastion is an **AI Agent Firewall** , a security middleware that sits between au
 4. Blockint security checks fire: flash loan pattern detection, excessive slippage, mint/freeze authority changes, known-risk address blocking
 5. Decision (ALLOW/BLOCK/PENDING) is logged on-chain as an immutable audit record
 6. If blocked, a human operator can review and override via the dashboard
+
+Every agent registered through Bastion receives an **ERC-8004 compliant ERC-721 identity** (via `BastionERC8004Registry`), making them discoverable ecosystem-wide with `eip155:42220:0x...` global agent identifiers.
 
 Bastion already runs on **Solana** (Anchor program deployed, full Rust middleware + TypeScript SDK). We are now expanding to **Celo** with EVM-compatible Solidity contracts, making Celo the second chain in Bastion's multichain agent security layer.
 
@@ -121,7 +133,7 @@ Bastion makes Celo more capable as a platform for AI and agent activity in three
 
 **Security-first design**: Policy engine runs before simulation. Simulation runs before signing. Nothing reaches the chain without passing both layers. Circuit breaker can pause all agent activity instantly. Every decision is recorded on-chain, not in a private database.
 
-**ERC-8004 and Self Protocol compliant**: Agent identities in Bastion's registry follow the ERC-8004 standard and integrate with Self Protocol's Agent ID for sybil resistance.
+**ERC-8004 and Self Protocol compliant**: Bastion implements the full ERC-8004 Identity Registry (ERC-721 + URIStorage + EIP-712 wallet verification). Every agent registered through Bastion receives an ERC-8004 identity discoverable across the ecosystem. Self Protocol's Agent ID integration provides sybil-resistant identity verification on Celo.
 
 **Tech stack**: Rust (Axum middleware), Solidity (Foundry, EVM contracts), Anchor (Solana program), TypeScript (SDK + React dashboard), RainbowKit + wagmi (Celo wallet), Helius (Solana simulation), Docker (deployment).
 

@@ -4,7 +4,7 @@ import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react
 import { SolflareWalletAdapter } from '@solana/wallet-adapter-solflare';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { WagmiProvider, createConfig, http } from 'wagmi';
-import { celo } from 'wagmi/chains';
+import { type Chain } from 'viem';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { injected, walletConnect } from 'wagmi/connectors';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -21,31 +21,87 @@ const SOLANA_RPC = 'https://api.devnet.solana.com';
 
 const queryClient = new QueryClient();
 
-// Build connectors defensively — if the injected connector fails due to
-// multiple wallet extensions fighting over window.ethereum, WalletConnect
-// remains available as a fallback.
+// Manually define Celo chain to avoid BigInt serialization issues
+// that can occur when importing from wagmi/chains in bundled environments.
+const celo = {
+  id: 42220,
+  name: 'Celo',
+  nativeCurrency: { name: 'CELO', symbol: 'CELO', decimals: 18 },
+  rpcUrls: {
+    default: { http: ['https://forno.celo.org'] },
+  },
+  blockExplorers: {
+    default: { name: 'CeloScan', url: 'https://celoscan.io' },
+  },
+  testnet: false,
+} as const satisfies Chain;
+
+const CELO_RPC = 'https://forno.celo.org';
+
+const isEthereumLocked = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if ((window as any).__BASTION_EVM_LOCKED) return true;
+  try {
+    const desc = Object.getOwnPropertyDescriptor(window, 'ethereum');
+    if (!desc) return false;
+    return (typeof desc.get === 'function' && !desc.writable && !desc.set)
+        || (!desc.writable && !desc.set);
+  } catch {
+    return true;
+  }
+};
+
+// Build connectors defensively.
+// If window.ethereum is locked by competing extensions, skip the injected
+// connector and fall back to WalletConnect-only mode.
 const connectors = (() => {
-  const list = [
+  const list: ReturnType<typeof walletConnect | typeof injected>[] = [
     walletConnect({
       projectId: 'bastion-defend',
       showQrModal: false,
     }),
   ];
-  try {
-    list.push(injected({ target: 'metaMask' }));
-  } catch {
-    // Another extension has locked window.ethereum — skip injected connector.
+
+  if (!isEthereumLocked()) {
+    try {
+      list.push(injected({ target: 'metaMask' }));
+    } catch {
+      console.warn('[Bastion] Injected EVM connector failed to construct (ethereum locked).');
+    }
+  } else {
+    console.warn('[Bastion] window.ethereum is locked. Running in WalletConnect-only mode.');
   }
+
   return list;
 })();
 
-const wagmiConfig = createConfig({
-  chains: [celo],
-  connectors,
-  transports: {
-    [celo.id]: http('https://rpc.ankr.com/celo'),
-  },
-});
+const wagmiConfig = (() => {
+  try {
+    return createConfig({
+      chains: [celo],
+      connectors,
+      transports: {
+        [celo.id]: http(CELO_RPC),
+      },
+    });
+  } catch (e) {
+    console.error('[Bastion] Failed to create wagmi config:', e);
+    // Return a minimal config with WalletConnect as the only connector.
+    return createConfig({
+      chains: [celo],
+      connectors: [
+        walletConnect({
+          projectId: 'bastion-defend',
+          showQrModal: false,
+        }),
+      ],
+      transports: {
+        [celo.id]: http(CELO_RPC),
+      },
+    });
+  }
+})();
 
 function AppRoutes() {
   const solanaWallets = useMemo(() => [new SolflareWalletAdapter()], []);
