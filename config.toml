@@ -3,3 +3,4 @@ rate_limit_per_minute = 120
 allowed_programs = []
 blocked_addresses = []
 simulation_checks_enabled = true
+helius_rpc_url = "https://devnet.helius-rpc.com/"

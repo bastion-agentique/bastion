@@ -20,8 +20,10 @@ async fn shutdown_signal() {
 async fn main() {
     let config_text = fs::read_to_string("config.toml").expect("read config.toml");
     let policy: Policy = toml::from_str(&config_text).expect("parse config.toml");
-    let simulator: Arc<dyn Simulate + Send + Sync> =
-        Arc::new(HeliusSimulator::new().expect("create Helius simulator"));
+    let simulator: Arc<dyn Simulate + Send + Sync> = Arc::new(
+        HeliusSimulator::with_rpc_url(&policy.helius_rpc_url)
+            .expect("create Helius simulator"),
+    );
     let logger = Arc::new(AuditLogger::new("audit_logs").expect("create audit logger"));
 
     let on_chain_enabled = env::var("BASTION_ON_CHAIN").is_ok();

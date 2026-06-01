@@ -199,7 +199,7 @@ pub struct UpdateReputation<'info> {
 #[derive(Accounts)]
 pub struct SetPolicy<'info> {
     #[account(
-        init,
+        init_if_needed,
         seeds = [b"bastion_policy".as_ref()],
         bump,
         payer = signer,
@@ -216,7 +216,8 @@ pub struct EmergencyPause<'info> {
     #[account(
         mut,
         seeds = [AUDIT_SEED.as_bytes()],
-        bump = audit_state.bump
+        bump = audit_state.bump,
+        constraint = signer.key() == audit_state.authority @ BastionError::Unauthorized
     )]
     pub audit_state: Account<'info, AuditState>,
     pub signer: Signer<'info>,
@@ -227,7 +228,8 @@ pub struct EmergencyResume<'info> {
     #[account(
         mut,
         seeds = [AUDIT_SEED.as_bytes()],
-        bump = audit_state.bump
+        bump = audit_state.bump,
+        constraint = signer.key() == audit_state.authority @ BastionError::Unauthorized
     )]
     pub audit_state: Account<'info, AuditState>,
     pub signer: Signer<'info>,

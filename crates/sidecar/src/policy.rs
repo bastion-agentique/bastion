@@ -20,6 +20,12 @@ pub struct Policy {
     pub blocked_addresses: Vec<String>,
     #[serde(default)]
     pub simulation_checks_enabled: bool,
+    #[serde(default = "default_helius_rpc_url")]
+    pub helius_rpc_url: String,
+}
+
+fn default_helius_rpc_url() -> String {
+    "https://mainnet.helius-rpc.com/".to_string()
 }
 
 impl Policy {
