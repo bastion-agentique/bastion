@@ -8,6 +8,7 @@ import { useChain } from '../context/ChainContext';
 import { useBastionProgram, type AuditEntryData, type PolicyData, type StatsData } from '../hooks/useBastionProgram';
 import { useSidecar } from '../hooks/useSidecar';
 import AgentFloor from '../components/AgentFloor';
+import { useAgentEvents } from '../hooks/useAgentEvents';
 
 const DECISION_COLORS: Record<string, string> = { ALLOWED: '#22c55e', BLOCKED: '#ef4444', PENDING: '#f59e0b' };
 
@@ -124,6 +125,7 @@ export default function Dashboard() {
 
   const sol = useBastionProgram();
   const sidecar = useSidecar();
+  const { events: sseEvents, connected: sseConnected } = useAgentEvents();
   const [history, setHistory] = useState<number[]>(Array(30).fill(0));
 
   const [activeTab, setActiveTab] = useState<'overview' | 'logs' | 'policy' | 'cases'>('overview');
@@ -201,18 +203,22 @@ export default function Dashboard() {
 
   const blockRate = stats.total > 0 ? (stats.blocked / stats.total * 100) : 0;
 
-  // Build agent floor data from audit logs
-  const agentEntities = logs
-    .filter((l, i) => l.account && i < 20)
-    .map((l, i) => ({
-      id: l.account || `agent-${i}`,
-      name: l.account?.slice(0, 8) || `A${i}`,
-      x: (i * 3 + 2) % 24,
-      y: Math.floor(i / 6) * 3 + 2,
-      status: l.decision === 'ALLOWED' ? 'idle' as const : 'waiting' as const,
-      intent: l.intent,
-      reputation: l.decision === 'ALLOWED' ? 85 : 40,
-    }));
+  // Build agent floor data from SSE events or audit logs
+  const agentEntities = (sseEvents.length > 0 ? sseEvents : logs)
+    .filter((l: any, i: number) => (l.agent_id || l.account) && i < 20)
+    .map((l: any, i: number) => {
+      const id = l.agent_id || l.account || `agent-${i}`;
+      const decision = l.decision || 'ALLOWED';
+      return {
+        id,
+        name: id.slice(0, 8),
+        x: (i * 3 + 2) % 24,
+        y: Math.floor(i / 6) * 3 + 2,
+        status: decision === 'ALLOWED' ? 'idle' as const : decision === 'BLOCKED' ? 'waiting' as const : 'walking' as const,
+        intent: l.intent || '',
+        reputation: decision === 'ALLOWED' ? 85 : 40,
+      };
+    });
 
   const inputStyle = (editable: boolean) => ({
     background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.08)', color: '#fff', opacity: editable ? 1 : 0.6,

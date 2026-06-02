@@ -1196,6 +1196,50 @@ async fn resolve_did_handler(
     Ok(Json(result))
 }
 
+// ── SSE Event Stream Handler ──
+
+#[derive(serde::Serialize, serde::Deserialize, Clone)]
+struct SseAgentEvent {
+    agent_id: String,
+    timestamp: u64,
+    decision: String,
+    intent: String,
+    tx_signature: String,
+    simulation_hash: Option<String>,
+}
+
+async fn sse_events_handler(
+    State(state): State<AppState>,
+) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
+    let mut rx = state.event_tx.subscribe();
+
+    let stream = async_stream::stream! {
+        yield Ok(Event::default().data(r#"{"type":"ping"}"#));
+
+        loop {
+            match rx.recv().await {
+                Ok(msg) => {
+                    if let Ok(event) = serde_json::from_str::<SseAgentEvent>(&msg) {
+                        yield Ok(Event::default().json_data(event).unwrap_or_default());
+                    }
+                }
+                Err(tokio::sync::broadcast::error::RecvError::Lagged(_n)) => {
+                    continue;
+                }
+                Err(tokio::sync::broadcast::error::RecvError::Closed) => {
+                    break;
+                }
+            }
+        }
+    };
+
+    Sse::new(stream).keep_alive(
+        KeepAlive::new()
+            .interval(Duration::from_secs(15))
+            .text("ping"),
+    )
+}
+
 pub fn build_app(
     policy: Policy,
     simulator: Arc<dyn Simulate + Send + Sync>,
@@ -1223,6 +1267,7 @@ pub fn build_app(
     Router::new()
         .route("/", get(hello))
         .route("/health", get(health))
+        .route("/events", get(sse_events_handler))
         .route("/api/v2/evaluate", post(evaluate_v2))
         .route("/api/v2/simulate-evm", post(simulate_evm_handler))
         .route("/events", get(events_handler))
