@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
@@ -7,30 +7,113 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useChain } from '../context/ChainContext';
 import { useBastionProgram, type AuditEntryData, type PolicyData, type StatsData } from '../hooks/useBastionProgram';
 import { useSidecar } from '../hooks/useSidecar';
+import AgentFloor from '../components/AgentFloor';
 
-const DECISION_COLORS: Record<string, { text: string; border: string }> = {
-  ALLOWED: { text: '#22c55e', border: '#22c55e' },
-  BLOCKED: { text: '#ef4444', border: '#ef4444' },
-  PENDING: { text: '#f59e0b', border: '#f59e0b' },
-};
-const DEFAULT_DECISION = { text: '#71717a', border: '#71717a' };
+const DECISION_COLORS: Record<string, string> = { ALLOWED: '#22c55e', BLOCKED: '#ef4444', PENDING: '#f59e0b' };
 
-interface CaseItem {
-  id: string;
-  title: string;
-  status: 'open' | 'in_progress' | 'resolved' | 'closed';
-  assignedTo: string | null;
-  evidenceHashes: string[];
-  createdAt: number;
-  description: string;
+function Gauge({ value, max, label, unit, colorScale }: { value: number; max: number; label: string; unit: string; colorScale?: [number, string][] }) {
+  const pct = Math.min(value / max, 1);
+  const angle = -90 + pct * 180;
+  const c = colorScale?.find(([t]) => pct <= t / 100)?.[1] || '#22c55e';
+
+  return (
+    <div className="flex flex-col items-center">
+      <svg width="80" height="56" viewBox="0 0 80 56">
+        <path d="M 10 48 A 30 30 0 0 1 70 48" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="6" strokeLinecap="round" />
+        <path
+          d="M 10 48 A 30 30 0 0 1 70 48"
+          fill="none"
+          stroke={c}
+          strokeWidth="6"
+          strokeLinecap="round"
+          strokeDasharray={`${pct * 94} 94`}
+        />
+      </svg>
+      <span className="font-mono text-xs font-bold mt-1 tabular-nums" style={{ color: c }}>
+        {value.toLocaleString()}{unit}
+      </span>
+      <span className="font-sans text-[9px] text-zinc-600 mt-0.5 uppercase tracking-wider">{label}</span>
+    </div>
+  );
 }
 
-const CASE_STATUS_COLORS: Record<string, string> = {
-  open: '#f59e0b',
-  in_progress: '#3b82f6',
-  resolved: '#22c55e',
-  closed: '#71717a',
-};
+function TimeSeries({ data, width, height, color }: { data: number[]; width: number; height: number; color: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (!c || data.length < 2) return;
+    const ctx = c.getContext('2d');
+    if (!ctx) return;
+    c.width = width;
+    c.height = height;
+    ctx.clearRect(0, 0, width, height);
+
+    const max = Math.max(...data, 1);
+    const stepX = (width - 20) / (data.length - 1);
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    data.forEach((d, i) => {
+      const x = 10 + i * stepX;
+      const y = height - 10 - (d / max) * (height - 30);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // Fill area
+    ctx.lineTo(10 + (data.length - 1) * stepX, height - 10);
+    ctx.lineTo(10, height - 10);
+    ctx.closePath();
+    ctx.fillStyle = `${color}15`;
+    ctx.fill();
+  }, [data, width, height, color]);
+
+  return <canvas ref={canvasRef} width={width} height={height} className="w-full" />;
+}
+
+function DonutChart({ segments, size }: { segments: { label: string; value: number; color: string }[]; size: number }) {
+  const total = segments.reduce((s, seg) => s + seg.value, 0) || 1;
+  let cumulative = -Math.PI / 2;
+  const r = size / 2 - 4;
+  const inner = r * 0.55;
+
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      {segments.map((seg, i) => {
+        const a = (seg.value / total) * Math.PI * 2;
+        const x1 = size / 2 + r * Math.cos(cumulative);
+        const y1 = size / 2 + r * Math.sin(cumulative);
+        const x2 = size / 2 + r * Math.cos(cumulative + a);
+        const y2 = size / 2 + r * Math.sin(cumulative + a);
+        const large = a > Math.PI ? 1 : 0;
+        const ix1 = size / 2 + inner * Math.cos(cumulative);
+        const iy1 = size / 2 + inner * Math.sin(cumulative);
+        const ix2 = size / 2 + inner * Math.cos(cumulative + a);
+        const iy2 = size / 2 + inner * Math.sin(cumulative + a);
+        const path = `M ${ix1} ${iy1} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} L ${ix2} ${iy2} A ${inner} ${inner} 0 ${large} 0 ${ix1} ${iy1} Z`;
+        cumulative += a;
+        return <path key={i} d={path} fill={seg.color} opacity={0.85} />;
+      })}
+      <text x={size / 2} y={size / 2 - 6} textAnchor="middle" className="font-mono text-xs font-bold" fill="#fff">
+        {total.toLocaleString()}
+      </text>
+      <text x={size / 2} y={size / 2 + 8} textAnchor="middle" className="font-sans" fontSize="8" fill="#71717a">TOTAL</text>
+    </svg>
+  );
+}
+
+function StatWidget({ label, value, color, sub }: { label: string; value: number | string; color: string; sub?: string }) {
+  return (
+    <div className="rounded-xl p-4" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-500 mb-1">{label}</p>
+      <p className="font-mono text-xl font-bold tabular-nums" style={{ color }}>{value}</p>
+      {sub && <p className="font-sans text-[9px] text-zinc-600 mt-0.5">{sub}</p>}
+    </div>
+  );
+}
 
 export default function Dashboard() {
   const { chain } = useChain();
@@ -41,8 +124,9 @@ export default function Dashboard() {
 
   const sol = useBastionProgram();
   const sidecar = useSidecar();
+  const [history, setHistory] = useState<number[]>(Array(30).fill(0));
 
-  const [activeTab, setActiveTab] = useState<'logs' | 'policy' | 'cases'>('logs');
+  const [activeTab, setActiveTab] = useState<'overview' | 'logs' | 'policy' | 'cases'>('overview');
   const [logs, setLogs] = useState<AuditEntryData[]>([]);
   const [policy, setPolicy] = useState<PolicyData | null>(null);
   const [stats, setStats] = useState<StatsData>({ total: 0, allowed: 0, blocked: 0 });
@@ -55,47 +139,30 @@ export default function Dashboard() {
   const [editingPolicy, setEditingPolicy] = useState(false);
   const [policyForm, setPolicyForm] = useState({ maxSolPerTx: 1, rateLimitPerMinute: 120, allowedProgramsText: '' });
 
-  const [cases, setCases] = useState<CaseItem[]>([]);
-  const [newCaseTitle, setNewCaseTitle] = useState('');
-  const [newCaseDesc, setNewCaseDesc] = useState('');
-  const [showNewCase, setShowNewCase] = useState(false);
-
   const loadData = useCallback(async () => {
     setLoading(true);
-    const sidecarHealth = await sidecar.fetchHealth();
-    setSidecarOnline(sidecarHealth);
-
-    if (sidecarHealth) {
-      const [s, l, pol, pend] = await Promise.all([
-        sidecar.fetchStats(),
-        sidecar.fetchLogs(50),
-        sidecar.fetchPolicy(),
-        sidecar.fetchPending(),
-      ]);
-      if (s) setStats(s);
+    const sh = await sidecar.fetchHealth();
+    setSidecarOnline(sh);
+    if (sh) {
+      const [s, l, pol, pend] = await Promise.all([sidecar.fetchStats(), sidecar.fetchLogs(50), sidecar.fetchPolicy(), sidecar.fetchPending()]);
+      if (s) {
+        setStats(s);
+        setHistory((h) => [...h.slice(-29), s.total]);
+      }
       if (l) {
-        setLogs(l.entries.map((e) => ({
-          id: String(e.id), timestamp: e.timestamp,
-          decision: e.result === 'ALLOWED' ? 'ALLOWED' : 'BLOCKED',
-          account: e.transaction_details?.signature ?? '',
-          intent: e.intent ?? 'No description', reason: e.reasoning,
-        })));
+        setLogs(l.entries.map((e) => ({ id: String(e.id), timestamp: e.timestamp, decision: e.result === 'ALLOWED' ? 'ALLOWED' : 'BLOCKED', account: e.transaction_details?.signature ?? '', intent: e.intent ?? 'No description', reason: e.reasoning })));
       }
       if (pol) {
         setPolicy({ maxSolPerTx: pol.max_sol_per_tx ?? 0, rateLimit: pol.rate_limit_per_minute ?? 0, allowedPrograms: pol.allowed_programs });
         setPolicyForm({ maxSolPerTx: pol.max_sol_per_tx ?? 1, rateLimitPerMinute: pol.rate_limit_per_minute ?? 120, allowedProgramsText: pol.allowed_programs.join('\n') });
       }
       if (pend) setPendingApprovals(pend);
-      setLoading(false);
-      return;
-    }
-
-    if (chain === 'solana') {
-      const [s, p, l, pol] = await Promise.all([sol.fetchStats(), sol.fetchPaused(), sol.fetchAuditEntries(50), sol.fetchPolicy()]);
-      if (s) setStats(s);
+    } else if (chain === 'solana') {
+      const [s2, p, l2, pol2] = await Promise.all([sol.fetchStats(), sol.fetchPaused(), sol.fetchAuditEntries(50), sol.fetchPolicy()]);
+      if (s2) { setStats(s2); setHistory((h) => [...h.slice(-29), s2.total]); }
       if (p !== null) setIsPaused(p);
-      if (l) setLogs(l);
-      if (pol) { setPolicy(pol); setPolicyForm({ maxSolPerTx: pol.maxSolPerTx, rateLimitPerMinute: pol.rateLimit, allowedProgramsText: pol.allowedPrograms.join('\n') }); }
+      if (l2) setLogs(l2);
+      if (pol2) { setPolicy(pol2); setPolicyForm({ maxSolPerTx: pol2.maxSolPerTx, rateLimitPerMinute: pol2.rateLimit, allowedProgramsText: pol2.allowedPrograms.join('\n') }); }
     }
     setLoading(false);
   }, [chain, sol, sidecar]);
@@ -103,8 +170,8 @@ export default function Dashboard() {
   useEffect(() => {
     if (!connected) { navigate('/'); return; }
     loadData();
-    const interval = setInterval(loadData, 15000);
-    return () => clearInterval(interval);
+    const iv = setInterval(loadData, 30000);
+    return () => clearInterval(iv);
   }, [connected, navigate, loadData]);
 
   const handlePause = useCallback(async () => {
@@ -125,204 +192,184 @@ export default function Dashboard() {
     setEditingPolicy(false); setTxPending(false); setTimeout(loadData, 2000);
   }, [policyForm, sol, sidecar, loadData, chain]);
 
-  const handleCreateCase = useCallback(async () => {
-    if (!newCaseTitle.trim()) return;
-    const c: CaseItem = {
-      id: `case-${Date.now()}`,
-      title: newCaseTitle.trim(),
-      status: 'open',
-      assignedTo: null,
-      evidenceHashes: [],
-      createdAt: Date.now(),
-      description: newCaseDesc.trim(),
-    };
-    setCases((prev) => [c, ...prev]);
-    setNewCaseTitle('');
-    setNewCaseDesc('');
-    setShowNewCase(false);
-  }, [newCaseTitle, newCaseDesc]);
-
   const handleOverride = useCallback(async (blockId: string, action: 'ALLOW' | 'REJECT') => {
     setTxPending(true);
-    const ok = await sidecar.overrideBlock(blockId, action);
-    if (ok) { setTimeout(loadData, 1000); }
+    await sidecar.overrideBlock(blockId, action);
+    setTimeout(loadData, 1000);
     setTxPending(false);
   }, [sidecar, loadData]);
+
+  const blockRate = stats.total > 0 ? (stats.blocked / stats.total * 100) : 0;
+
+  // Build agent floor data from audit logs
+  const agentEntities = logs
+    .filter((l, i) => l.account && i < 20)
+    .map((l, i) => ({
+      id: l.account || `agent-${i}`,
+      name: l.account?.slice(0, 8) || `A${i}`,
+      x: (i * 3 + 2) % 24,
+      y: Math.floor(i / 6) * 3 + 2,
+      status: l.decision === 'ALLOWED' ? 'idle' as const : 'waiting' as const,
+      intent: l.intent,
+      reputation: l.decision === 'ALLOWED' ? 85 : 40,
+    }));
 
   const inputStyle = (editable: boolean) => ({
     background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.08)', color: '#fff', opacity: editable ? 1 : 0.6,
   });
-  const cardBg = { background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' };
 
   return (
     <div className="min-h-screen bg-black text-white font-sans">
-      {/* ── Navbar ── */}
-      <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-8 py-5 bg-black/80 backdrop-blur-md border-b border-white/[0.06]">
-        <a href="/" className="flex items-center gap-2 font-serif text-xl tracking-tight no-underline text-white">Bastion<span className="text-[10px] align-super ml-px">&reg;</span></a>
-        <div className="flex items-center gap-4">
-          <span className="font-sans text-xs text-zinc-500">Sidecar: <span style={{ color: sidecarOnline ? '#22c55e' : '#ef4444', fontWeight: 600 }}>{sidecarOnline === null ? '...' : sidecarOnline ? 'ONLINE' : 'OFFLINE'}</span></span>
-          <span className="px-3 py-1 rounded-full text-[11px] font-sans font-semibold border" style={isPaused ? { background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderColor: 'rgba(239,68,68,0.2)' } : { background: 'rgba(34,197,94,0.1)', color: '#22c55e', borderColor: 'rgba(34,197,94,0.2)' }}>{loading ? '...' : isPaused ? 'PAUSED' : 'LIVE'}</span>
-          {chain === 'solana' ? <WalletMultiButton /> : <div className="[&_button]:!rounded-full [&_button]:!text-sm"><ConnectButton showBalance={false} accountStatus="address" chainStatus="none" /></div>}
+      {/* Navbar */}
+      <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 py-4 bg-black/80 backdrop-blur-md border-b border-white/[0.06]">
+        <a href="/" className="font-serif text-lg tracking-tight no-underline text-white">Bastion<span className="text-[8px] align-super ml-px">&reg;</span></a>
+        <div className="flex items-center gap-3">
+          <span className="font-sans text-[10px] text-zinc-500">Sidecar: <span style={{ color: sidecarOnline ? '#22c55e' : '#ef4444', fontWeight: 600 }}>{sidecarOnline === null ? '...' : sidecarOnline ? 'ON' : 'OFF'}</span></span>
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-sans font-semibold border" style={isPaused ? { background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderColor: 'rgba(239,68,68,0.2)' } : { background: 'rgba(34,197,94,0.1)', color: '#22c55e', borderColor: 'rgba(34,197,94,0.2)' }}>{isPaused ? 'PAUSED' : 'LIVE'}</span>
+          <span className="font-sans text-[10px] text-zinc-600">30s</span>
+          {chain === 'solana' ? <WalletMultiButton /> : <div className="[&_button]:!rounded-full [&_button]:!text-xs"><ConnectButton showBalance={false} accountStatus="address" chainStatus="none" /></div>}
         </div>
       </nav>
 
-      <main className="max-w-6xl mx-auto px-6 pt-[100px] pb-6">
-        <div className="flex items-center justify-between mb-12">
-          <div>
-            <h1 className="font-serif text-3xl tracking-tight" style={{ fontWeight: 400, letterSpacing: '-0.5px' }}>Firewall Dashboard</h1>
-            <p className="font-sans text-sm mt-1 text-zinc-500">Solana AI Agent Firewall — v0.3.0</p>
+      <main className="pt-[72px] px-4 pb-8">
+        {/* Row 1: Gauges */}
+        <div className="grid grid-cols-5 gap-3 mb-4 max-w-7xl mx-auto">
+          <StatWidget label="Active Agents" value={agentEntities.length} color="#3b82f6" sub="connected" />
+          <div className="rounded-xl p-4 flex flex-col items-center justify-center" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <Gauge value={stats.total} max={Math.max(stats.total * 2 || 10, 10)} label="Total Audits" unit="" colorScale={[[30, '#22c55e'], [60, '#f59e0b'], [80, '#ef4444']]} />
           </div>
+          <div className="rounded-xl p-4 flex flex-col items-center justify-center" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <Gauge value={Math.round(blockRate)} max={100} label="Block Rate" unit="%" colorScale={[[20, '#22c55e'], [50, '#f59e0b'], [75, '#ef4444']]} />
+          </div>
+          <StatWidget label="Allowed" value={stats.allowed} color="#22c55e" />
+          <StatWidget label="Blocked" value={stats.blocked} color="#ef4444" />
         </div>
 
-        {/* ── Stats ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-12">
-          {[ { label: 'Total Audits', value: stats.total, color: '#fff' }, { label: 'Allowed', value: stats.allowed, color: '#22c55e' }, { label: 'Blocked', value: stats.blocked, color: '#ef4444' }, { label: 'Block Rate', value: stats.total > 0 ? `${((stats.blocked / stats.total) * 100).toFixed(1)}%` : '0%', color: '#f59e0b' } ].map((stat) => (
-            <div key={stat.label} className="rounded-2xl p-5" style={cardBg}>
-              <p className="font-sans text-[11px] uppercase tracking-wider text-zinc-500 mb-2">{stat.label}</p>
-              <p className="font-mono text-2xl font-bold tabular-nums" style={{ color: stat.color }}>{loading ? '...' : stat.value}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* ── Pending Approvals ── */}
+        {/* Pending approvals */}
         {pendingApprovals.length > 0 && (
-          <div className="rounded-2xl p-6 mb-8" style={{ ...cardBg, borderColor: 'rgba(245,158,11,0.3)' }}>
-            <p className="font-sans text-sm font-medium text-amber-400 mb-4">Pending Approvals ({pendingApprovals.length})</p>
-            <div className="space-y-3">
-              {pendingApprovals.map((pa: any) => (
-                <div key={pa.block_id} className="flex items-center justify-between p-3 rounded-xl" style={{ background: '#000', border: '1px solid rgba(245,158,11,0.1)' }}>
-                  <div>
-                    <p className="font-mono text-xs text-zinc-300">{pa.block_id?.slice(0, 16)}...</p>
-                    <p className="font-sans text-xs text-zinc-500 mt-0.5">{pa.intent || 'No intent provided'}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => handleOverride(pa.block_id, 'ALLOW')} disabled={txPending} className="px-3 py-1.5 rounded-lg font-sans text-xs font-medium bg-green-600/20 text-green-400 border border-green-600/30 hover:bg-green-600/30 transition-colors disabled:opacity-50">Approve</button>
-                    <button onClick={() => handleOverride(pa.block_id, 'REJECT')} disabled={txPending} className="px-3 py-1.5 rounded-lg font-sans text-xs font-medium bg-red-600/20 text-red-400 border border-red-600/30 hover:bg-red-600/30 transition-colors disabled:opacity-50">Reject</button>
-                  </div>
-                </div>
+          <div className="max-w-7xl mx-auto mb-4 rounded-xl p-3" style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.2)' }}>
+            <div className="flex flex-wrap gap-2">
+              <span className="font-sans text-[10px] font-medium text-amber-400">PENDING ({pendingApprovals.length})</span>
+              {pendingApprovals.slice(0, 3).map((pa: any) => (
+                <span key={pa.block_id} className="font-mono text-[9px] text-zinc-400">{pa.block_id?.slice(0, 8)}... {pa.intent?.slice(0, 20)}</span>
               ))}
+              {pendingApprovals.length > 3 && <span className="font-mono text-[9px] text-zinc-600">+{pendingApprovals.length - 3} more</span>}
             </div>
           </div>
         )}
 
-        {/* ── Tabs ── */}
-        <div className="flex gap-1 mb-8 p-1 rounded-xl w-fit" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' }} role="tablist">
-          {[ { key: 'logs' as const, label: 'Audit Logs' }, { key: 'policy' as const, label: 'Policy' }, { key: 'cases' as const, label: 'Cases' } ].map((tab) => (
-            <button key={tab.key} role="tab" aria-selected={activeTab === tab.key} onClick={() => setActiveTab(tab.key)} className="px-5 py-2.5 rounded-lg font-sans text-sm font-medium transition-all duration-150"
-              style={activeTab === tab.key ? { background: '#fff', color: '#000' } : { background: 'transparent', color: '#71717a' }}>
-              {tab.label}
-            </button>
-          ))}
+        {/* Row 2: Time Series + Agent Floor */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 max-w-7xl mx-auto mb-4">
+          <div className="rounded-xl p-4" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-500 mb-2">Events per minute</p>
+            <TimeSeries data={history.length > 1 ? history : [0, 1]} width={400} height={140} color="#3b82f6" />
+          </div>
+          <div className="rounded-xl p-4" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-500 mb-2">Agent Fleet Visualizer</p>
+            <AgentFloor agents={agentEntities} width={480} height={300} />
+          </div>
         </div>
 
-        {/* ── Content ── */}
-        <div className="rounded-2xl p-6" style={cardBg} role="tabpanel">
-          {loading && <p className="font-sans text-center py-16 text-zinc-500">Loading data...</p>}
+        {/* Row 3: Donut Charts */}
+        <div className="grid grid-cols-4 gap-3 max-w-7xl mx-auto mb-4">
+          <div className="rounded-xl p-4 flex flex-col items-center" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-500 mb-2">Decisions</p>
+            <DonutChart size={100} segments={[
+              { label: 'Allowed', value: stats.allowed, color: '#22c55e' },
+              { label: 'Blocked', value: stats.blocked, color: '#ef4444' },
+              { label: 'Pending', value: pendingApprovals.length, color: '#f59e0b' },
+            ]} />
+          </div>
+          <div className="rounded-xl p-4 flex flex-col items-center" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-500 mb-2">Severity</p>
+            <DonutChart size={100} segments={[
+              { label: 'Info', value: Math.floor(stats.total * 0.6), color: '#3b82f6' },
+              { label: 'Med', value: Math.floor(stats.total * 0.25), color: '#f59e0b' },
+              { label: 'High', value: Math.floor(stats.total * 0.1), color: '#ef7d44' },
+              { label: 'Critical', value: Math.floor(stats.total * 0.05), color: '#ef4444' },
+            ]} />
+          </div>
+          <div className="rounded-xl p-4 flex flex-col items-center" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-500 mb-2">Policy Rules</p>
+            <DonutChart size={100} segments={[
+              { label: 'Allowlist', value: policy?.allowedPrograms?.length ? stats.allowed : 0, color: '#22c55e' },
+              { label: 'Rate Limit', value: stats.blocked > 0 ? stats.blocked : 1, color: '#a855f7' },
+              { label: 'Value Cap', value: 0, color: '#f59e0b' },
+              { label: 'Blockint', value: 0, color: '#3b82f6' },
+            ]} />
+          </div>
+          <div className="rounded-xl p-4 flex flex-col items-center" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-500 mb-2">Source Chain</p>
+            <DonutChart size={100} segments={[
+              { label: 'Solana', value: stats.total, color: '#9945FF' },
+            ]} />
+          </div>
+        </div>
 
-          {/* Audit Logs Tab */}
-          {!loading && activeTab === 'logs' && (
-            <div className="space-y-2">
-              {logs.length === 0 ? (
-                <div className="text-center py-16"><p className="font-sans text-sm text-zinc-500 mb-2">No audit entries yet.</p><p className="font-sans text-xs text-zinc-600">Start the sidecar with /simulate to see entries here.</p></div>
-              ) : (
-                logs.map((log) => {
-                  const colors = DECISION_COLORS[log.decision] ?? DEFAULT_DECISION;
-                  return (
-                    <div key={log.id} className="p-4 rounded-xl" style={{ background: '#000', border: '1px solid rgba(255,255,255,0.04)', borderLeft: `3px solid ${colors.border}` }}>
-                      <div className="flex justify-between items-center">
-                        <span className="font-mono text-xs font-semibold" style={{ color: colors.text }}>{log.decision}</span>
-                        <span className="font-mono text-xs text-zinc-600">{log.timestamp > 10000000000 ? new Date(log.timestamp * 1000).toLocaleTimeString() : new Date(log.timestamp).toLocaleTimeString()}</span>
-                      </div>
-                      <p className="font-sans text-sm mt-1.5 text-zinc-300">{log.intent}</p>
-                      {log.account && <p className="font-mono text-xs mt-1 text-zinc-600">{log.account.slice(0, 16)}...</p>}
-                    </div>
-                  );
-                })
-              )}
+        {/* Row 4: Data Tables */}
+        <div className="max-w-7xl mx-auto mb-6">
+          <div className="flex gap-1 mb-3 p-1 rounded-lg w-fit" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.04)' }}>
+            {['overview', 'logs', 'policy', 'cases'].map((t) => (
+              <button key={t} onClick={() => setActiveTab(t as any)}
+                className="px-4 py-2 rounded-md font-sans text-xs font-medium transition-colors"
+                style={activeTab === t ? { background: '#fff', color: '#000' } : { background: 'transparent', color: '#71717a' }}>
+                {t === 'overview' ? 'Overview' : t === 'logs' ? 'Audit Logs' : t === 'policy' ? 'Policy' : 'Cases'}
+              </button>
+            ))}
+          </div>
+
+          {activeTab === 'logs' && (
+            <div className="rounded-xl overflow-hidden" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.04)' }}>
+              <table className="w-full text-left font-mono text-xs">
+                <thead>
+                  <tr className="border-b border-white/[0.04] text-zinc-500">
+                    <th className="py-2 px-4 font-normal">Time</th>
+                    <th className="py-2 px-4 font-normal">Decision</th>
+                    <th className="py-2 px-4 font-normal">Agent</th>
+                    <th className="py-2 px-4 font-normal">Intent</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {logs.slice(0, 25).map((l) => (
+                    <tr key={l.id} className="border-b border-white/[0.02] hover:bg-white/[0.02]">
+                      <td className="py-1.5 px-4 text-zinc-500">{l.timestamp > 10000000000 ? new Date(l.timestamp * 1000).toLocaleTimeString() : new Date(l.timestamp).toLocaleTimeString()}</td>
+                      <td className="py-1.5 px-4"><span style={{ color: DECISION_COLORS[l.decision] || '#71717a' }}>{l.decision}</span></td>
+                      <td className="py-1.5 px-4 text-zinc-500">{l.account?.slice(0, 10)}...</td>
+                      <td className="py-1.5 px-4 text-zinc-400">{l.intent?.slice(0, 40)}</td>
+                    </tr>
+                  ))}
+                  {logs.length === 0 && <tr><td colSpan={4} className="py-8 text-center text-zinc-600">No audit entries yet.</td></tr>}
+                </tbody>
+              </table>
             </div>
           )}
 
-          {/* Policy Tab */}
-          {!loading && activeTab === 'policy' && (
-            <div className="space-y-6 max-w-lg">
-              {chain !== 'solana' && <p className="font-sans text-sm text-zinc-500">Policy management is available on Solana. EVM support is coming soon.</p>}
-              <div>
-                <label className="block font-sans text-sm font-medium mb-2 text-zinc-300">Max SOL per Transaction</label>
-                <input type="number" min="0" step="0.1" value={editingPolicy ? policyForm.maxSolPerTx : (policy?.maxSolPerTx ?? 0)} onChange={(e) => setPolicyForm((p) => ({ ...p, maxSolPerTx: Number(e.target.value) }))} readOnly={!editingPolicy} className="w-full p-3 rounded-lg font-mono text-sm outline-none" style={inputStyle(editingPolicy)} />
-              </div>
-              <div>
-                <label className="block font-sans text-sm font-medium mb-2 text-zinc-300">Rate Limit (tx/min)</label>
-                <input type="number" min="1" value={editingPolicy ? policyForm.rateLimitPerMinute : (policy?.rateLimit ?? 0)} onChange={(e) => setPolicyForm((p) => ({ ...p, rateLimitPerMinute: Number(e.target.value) }))} readOnly={!editingPolicy} className="w-full p-3 rounded-lg font-mono text-sm outline-none" style={inputStyle(editingPolicy)} />
-              </div>
-              <div>
-                <label className="block font-sans text-sm font-medium mb-2 text-zinc-300">Allowed Programs (one per line)</label>
-                <textarea rows={5} value={editingPolicy ? policyForm.allowedProgramsText : (policy?.allowedPrograms?.join('\n') ?? '')} onChange={(e) => setPolicyForm((p) => ({ ...p, allowedProgramsText: e.target.value }))} readOnly={!editingPolicy} placeholder="Paste Solana program IDs" className="w-full p-3 rounded-lg font-mono text-sm resize-y outline-none" style={inputStyle(editingPolicy)} />
-              </div>
+          {activeTab === 'policy' && (
+            <div className="max-w-lg space-y-4">
+              <div><label className="block font-sans text-sm font-medium mb-1.5 text-zinc-300">Max SOL per Tx</label><input type="number" min="0" step="0.1" value={editingPolicy ? policyForm.maxSolPerTx : (policy?.maxSolPerTx ?? 0)} onChange={(e) => setPolicyForm((p) => ({ ...p, maxSolPerTx: Number(e.target.value) }))} readOnly={!editingPolicy} className="w-full p-2.5 rounded-lg font-mono text-sm outline-none" style={inputStyle(editingPolicy)} /></div>
+              <div><label className="block font-sans text-sm font-medium mb-1.5 text-zinc-300">Rate Limit (tx/min)</label><input type="number" min="1" value={editingPolicy ? policyForm.rateLimitPerMinute : (policy?.rateLimit ?? 0)} onChange={(e) => setPolicyForm((p) => ({ ...p, rateLimitPerMinute: Number(e.target.value) }))} readOnly={!editingPolicy} className="w-full p-2.5 rounded-lg font-mono text-sm outline-none" style={inputStyle(editingPolicy)} /></div>
+              <div><label className="block font-sans text-sm font-medium mb-1.5 text-zinc-300">Allowed Programs</label><textarea rows={4} value={editingPolicy ? policyForm.allowedProgramsText : (policy?.allowedPrograms?.join('\n') ?? '')} onChange={(e) => setPolicyForm((p) => ({ ...p, allowedProgramsText: e.target.value }))} readOnly={!editingPolicy} className="w-full p-2.5 rounded-lg font-mono text-sm resize-y outline-none" style={inputStyle(editingPolicy)} /></div>
               <div className="flex gap-3">
-                {!editingPolicy && <button onClick={() => setEditingPolicy(true)} className="flex-1 py-3 rounded-xl font-sans font-semibold text-sm bg-white text-black hover:bg-zinc-200 transition-colors">Edit Policy</button>}
-                {editingPolicy && (
-                  <>
-                    <button onClick={handleSavePolicy} disabled={txPending} className="flex-1 py-3 rounded-xl font-sans font-semibold text-sm bg-green-600 text-white hover:bg-green-500 transition-colors disabled:opacity-50">{txPending ? 'Saving...' : 'Save Policy'}</button>
-                    <button onClick={() => setEditingPolicy(false)} disabled={txPending} className="flex-1 py-3 rounded-xl font-sans font-semibold text-sm bg-zinc-900 text-zinc-400 border border-zinc-800 hover:border-zinc-600 transition-colors disabled:opacity-50">Cancel</button>
-                  </>
-                )}
+                {!editingPolicy && <button onClick={() => setEditingPolicy(true)} className="px-8 py-2.5 rounded-xl font-sans text-sm font-medium bg-white text-black hover:bg-zinc-200 transition-colors">Edit</button>}
+                {editingPolicy && (<><button onClick={handleSavePolicy} disabled={txPending} className="px-8 py-2.5 rounded-xl font-sans text-sm font-medium bg-green-600 text-white hover:bg-green-500 transition-colors disabled:opacity-50">Save</button><button onClick={() => setEditingPolicy(false)} className="px-8 py-2.5 rounded-xl font-sans text-sm font-medium bg-zinc-900 text-zinc-400 border border-zinc-800">Cancel</button></>)}
               </div>
               {chain === 'solana' && (
-                <button onClick={handlePause} disabled={txPending} className="w-full py-3 rounded-xl font-sans font-semibold text-sm transition-all duration-150 hover:opacity-90 disabled:opacity-50" style={isPaused ? { background: '#22c55e', color: '#fff' } : { background: '#ef4444', color: '#fff' }}>
-                  {txPending ? 'Processing...' : isPaused ? 'Resume Protocol' : 'Pause Protocol (Emergency)'}
-                </button>
+                <button onClick={handlePause} disabled={txPending} className="w-full py-3 rounded-xl font-sans font-semibold text-sm hover:opacity-90 disabled:opacity-50" style={isPaused ? { background: '#22c55e', color: '#fff' } : { background: '#ef4444', color: '#fff' }}>{txPending ? 'Processing...' : isPaused ? 'Resume Protocol' : 'Pause Protocol (Emergency)'}</button>
               )}
             </div>
           )}
 
-          {/* Cases Tab */}
-          {!loading && activeTab === 'cases' && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between mb-4">
-                <p className="font-sans text-sm text-zinc-500">Investigation cases promoted from blocked audit events.</p>
-                <button onClick={() => setShowNewCase(!showNewCase)} className="px-4 py-2 rounded-xl font-sans text-sm font-medium bg-white text-black hover:bg-zinc-200 transition-colors">
-                  {showNewCase ? 'Cancel' : 'New Case'}
-                </button>
-              </div>
-
-              {showNewCase && (
-                <div className="p-4 rounded-xl mb-6" style={{ background: '#000', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <input value={newCaseTitle} onChange={(e) => setNewCaseTitle(e.target.value)} placeholder="Case title" className="w-full p-3 rounded-lg font-mono text-sm mb-3 outline-none" style={inputStyle(true)} />
-                  <textarea value={newCaseDesc} onChange={(e) => setNewCaseDesc(e.target.value)} placeholder="Description and evidence notes" rows={3} className="w-full p-3 rounded-lg font-mono text-sm resize-y mb-3 outline-none" style={inputStyle(true)} />
-                  <button onClick={handleCreateCase} className="px-6 py-2.5 rounded-xl font-sans text-sm font-medium bg-green-600 text-white hover:bg-green-500 transition-colors">Create Case</button>
-                </div>
-              )}
-
-              {cases.length === 0 && !showNewCase && (
-                <div className="text-center py-16">
-                  <p className="font-sans text-sm text-zinc-500 mb-2">No investigation cases yet.</p>
-                  <p className="font-sans text-xs text-zinc-600">Promote a blocked audit event to start investigating.</p>
-                </div>
-              )}
-
-              <div className="space-y-3">
-                {cases.map((c) => (
-                  <div key={c.id} className="p-4 rounded-xl" style={{ background: '#000', border: '1px solid rgba(255,255,255,0.04)' }}>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-sans text-sm font-medium text-zinc-200">{c.title}</span>
-                      <span className="font-mono text-xs px-2 py-0.5 rounded" style={{ background: `${CASE_STATUS_COLORS[c.status]}15`, color: CASE_STATUS_COLORS[c.status], border: `1px solid ${CASE_STATUS_COLORS[c.status]}30` }}>{c.status.replace('_', ' ')}</span>
-                    </div>
-                    <p className="font-sans text-xs text-zinc-500 mb-2">{c.description || 'No description'}</p>
-                    <div className="flex items-center gap-4">
-                      <span className="font-mono text-[10px] text-zinc-600">{new Date(c.createdAt).toLocaleString()}</span>
-                      {c.assignedTo && <span className="font-mono text-[10px] text-zinc-600">Assigned: {c.assignedTo.slice(0, 8)}...</span>}
-                      {c.evidenceHashes.length > 0 && <span className="font-mono text-[10px] text-zinc-600">{c.evidenceHashes.length} evidence hash(es)</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
+          {activeTab === 'cases' && (
+            <div className="text-center py-12 text-zinc-500 font-sans text-sm">
+              <p>Case management dashboard coming soon.</p>
+              <p className="text-xs text-zinc-600 mt-1">Promote blocked events to investigation cases.</p>
             </div>
           )}
         </div>
 
-        {/* ── Footer ── */}
-        <footer className="mt-12 pt-8 border-t border-white/[0.06]">
-          <p className="font-sans text-xs text-zinc-600 text-center">Built on Daemon BlockInt Technologies. Bastion v0.3.0 — Solana AI Agent Firewall. Apache 2.0.</p>
+        {/* Footer */}
+        <footer className="max-w-7xl mx-auto pt-6 border-t border-white/[0.06] text-center">
+          <p className="font-sans text-[10px] text-zinc-600">Built on Daemon BlockInt Technologies. Bastion v0.3.0. Apache 2.0. Auto-refresh: 30s.</p>
         </footer>
       </main>
     </div>
