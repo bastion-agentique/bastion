@@ -17,11 +17,15 @@ use tower_http::services::ServeDir;
 use uuid::Uuid;
 
 pub mod audit;
+pub mod cases;
 pub mod core_adapter;
+pub mod did;
 pub mod grond_oracle;
+pub mod ingestion;
 pub mod logger;
 pub mod policy;
 pub mod program_client;
+pub mod prompt_safety;
 pub mod simulation;
 pub mod simulation_evm;
 
@@ -70,6 +74,9 @@ struct AppState {
     celo_simulator: Option<Arc<CeloSimulator>>,
     event_tx: broadcast::Sender<String>,
     started_at: std::time::Instant,
+    case_store: Arc<RwLock<cases::CaseStore>>,
+    correlation_engine: Option<Arc<RwLock<bastion_correlation::engine::CorrelationEngine>>>,
+    did_cache: Arc<RwLock<HashMap<String, did::DidResolveResult>>>,
 }
 
 fn emit_event(tx: &broadcast::Sender<String>, event_type: &str, json_payload: &str) {
@@ -1053,6 +1060,142 @@ async fn simulate_evm_handler(
     }).into_response()
 }
 
+// ── Case Management Handlers ──
+
+#[derive(serde::Serialize)]
+struct CaseListResponse {
+    cases: Vec<cases::Case>,
+    total: usize,
+}
+
+#[derive(serde::Deserialize)]
+struct CreateCaseRequest {
+    title: String,
+    description: Option<String>,
+    event_ids: Option<Vec<String>>,
+}
+
+#[derive(serde::Deserialize)]
+struct PatchCaseRequest {
+    #[serde(default)]
+    status: Option<String>,
+    #[serde(default)]
+    assigned_to: Option<String>,
+}
+
+#[derive(serde::Deserialize)]
+struct AddEvidenceRequest {
+    tx_hash: String,
+}
+
+async fn get_cases(State(state): State<AppState>) -> Json<CaseListResponse> {
+    let store = state.case_store.read().await;
+    let cases = store.list().to_vec();
+    let total = cases.len();
+    Json(CaseListResponse { cases, total })
+}
+
+async fn post_case(
+    State(state): State<AppState>,
+    Json(req): Json<CreateCaseRequest>,
+) -> Json<cases::Case> {
+    let sanitized_title = prompt_safety::sanitize_input(&req.title);
+    let sanitized_desc = req
+        .description
+        .as_deref()
+        .map(prompt_safety::sanitize_input)
+        .unwrap_or_default();
+
+    let mut store = state.case_store.write().await;
+    let case = store.create(
+        sanitized_title,
+        sanitized_desc,
+        req.event_ids.unwrap_or_default(),
+    );
+    Json(case.clone())
+}
+
+async fn patch_case(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    Json(req): Json<PatchCaseRequest>,
+) -> Result<Json<cases::Case>, axum::http::StatusCode> {
+    let mut store = state.case_store.write().await;
+
+    let case = store
+        .get_mut(&id)
+        .ok_or(axum::http::StatusCode::NOT_FOUND)?;
+
+    if let Some(status) = &req.status {
+        match status.as_str() {
+            "in_progress" => case.resolve(),
+            "resolved" => {
+                if let Some(analyst) = &req.assigned_to {
+                    let sanitized = prompt_safety::sanitize_input(analyst);
+                    case.assign(sanitized);
+                }
+                case.resolve();
+            }
+            "closed" => case.close(),
+            _ => return Err(axum::http::StatusCode::BAD_REQUEST),
+        }
+    }
+
+    if let Some(analyst) = &req.assigned_to {
+        let sanitized = prompt_safety::sanitize_input(analyst);
+        case.assign(sanitized);
+    }
+
+    Ok(Json(case.clone()))
+}
+
+async fn post_case_evidence(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    Json(req): Json<AddEvidenceRequest>,
+) -> Result<Json<cases::Case>, axum::http::StatusCode> {
+    let mut store = state.case_store.write().await;
+    let case = store
+        .get_mut(&id)
+        .ok_or(axum::http::StatusCode::NOT_FOUND)?;
+    case.add_evidence(req.tx_hash);
+    Ok(Json(case.clone()))
+}
+
+// ── DID Resolution Handler ──
+
+#[derive(serde::Deserialize)]
+struct DidPath {
+    did: String,
+}
+
+async fn resolve_did_handler(
+    State(state): State<AppState>,
+    Path(params): Path<DidPath>,
+) -> Result<Json<did::DidResolveResult>, axum::http::StatusCode> {
+    let full_did = format!("did:bastion:{}", params.did);
+
+    // Check cache first
+    {
+        let cache = state.did_cache.read().await;
+        if let Some(result) = cache.get(&full_did) {
+            return Ok(Json(result.clone()));
+        }
+    }
+
+    let result = did::resolve_did(&full_did)
+        .await
+        .ok_or(axum::http::StatusCode::NOT_FOUND)?;
+
+    // Cache the result
+    {
+        let mut cache = state.did_cache.write().await;
+        cache.insert(full_did, result.clone());
+    }
+
+    Ok(Json(result))
+}
+
 pub fn build_app(
     policy: Policy,
     simulator: Arc<dyn Simulate + Send + Sync>,
@@ -1072,6 +1215,9 @@ pub fn build_app(
         celo_simulator,
         event_tx,
         started_at: std::time::Instant::now(),
+        case_store: Arc::new(RwLock::new(cases::CaseStore::new())),
+        correlation_engine: None, // Disabled by default; enable with feature flag
+        did_cache: Arc::new(RwLock::new(HashMap::new())),
     };
 
     Router::new()
@@ -1121,6 +1267,14 @@ pub fn build_app(
             "/circuit-breaker/disengage",
             post(disengage_circuit_breaker),
         )
+        // SIEM universal ingestion
+        .route("/ingest", post(ingestion::ingest_event))
+        // Case management
+        .route("/cases", get(get_cases).post(post_case))
+        .route("/cases/:id", axum::routing::patch(patch_case))
+        .route("/cases/:id/evidence", post(post_case_evidence))
+        // W3C DID resolution
+        .route("/did/resolve/:did", get(resolve_did_handler))
         // Static dashboard
         .nest_service("/dashboard", ServeDir::new("static"))
         .with_state(app_state)

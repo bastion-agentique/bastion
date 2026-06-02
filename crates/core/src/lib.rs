@@ -11,12 +11,14 @@
 
 pub mod audit;
 pub mod decision;
+pub mod event;
 pub mod policy;
 pub mod risk;
 pub mod transaction;
 
 pub use audit::AuditRecord;
 pub use decision::FirewallDecision;
+pub use event::SecurityEvent;
 pub use policy::{PolicyEvaluator, PolicyRule, PolicySet};
 pub use risk::{RiskOracle, RiskOracleError, RiskScore, WebacyClient};
 pub use transaction::{Address, AgentId, Chain, NormalizedTransaction, TxType};

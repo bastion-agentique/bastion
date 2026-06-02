@@ -13,13 +13,28 @@ const DECISION_COLORS: Record<string, { text: string; border: string }> = {
   BLOCKED: { text: '#ef4444', border: '#ef4444' },
   PENDING: { text: '#f59e0b', border: '#f59e0b' },
 };
-
 const DEFAULT_DECISION = { text: '#71717a', border: '#71717a' };
+
+interface CaseItem {
+  id: string;
+  title: string;
+  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  assignedTo: string | null;
+  evidenceHashes: string[];
+  createdAt: number;
+  description: string;
+}
+
+const CASE_STATUS_COLORS: Record<string, string> = {
+  open: '#f59e0b',
+  in_progress: '#3b82f6',
+  resolved: '#22c55e',
+  closed: '#71717a',
+};
 
 export default function Dashboard() {
   const { chain } = useChain();
   const navigate = useNavigate();
-
   const { connected: solConnected } = useWallet();
   const { isConnected: evmConnected } = useAccount();
   const connected = chain === 'solana' ? solConnected : evmConnected;
@@ -27,7 +42,7 @@ export default function Dashboard() {
   const sol = useBastionProgram();
   const sidecar = useSidecar();
 
-  const [activeTab, setActiveTab] = useState<'logs' | 'policy'>('logs');
+  const [activeTab, setActiveTab] = useState<'logs' | 'policy' | 'cases'>('logs');
   const [logs, setLogs] = useState<AuditEntryData[]>([]);
   const [policy, setPolicy] = useState<PolicyData | null>(null);
   const [stats, setStats] = useState<StatsData>({ total: 0, allowed: 0, blocked: 0 });
@@ -35,13 +50,15 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [txPending, setTxPending] = useState(false);
   const [sidecarOnline, setSidecarOnline] = useState<boolean | null>(null);
+  const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
 
   const [editingPolicy, setEditingPolicy] = useState(false);
-  const [policyForm, setPolicyForm] = useState({
-    maxSolPerTx: 1,
-    rateLimitPerMinute: 120,
-    allowedProgramsText: '',
-  });
+  const [policyForm, setPolicyForm] = useState({ maxSolPerTx: 1, rateLimitPerMinute: 120, allowedProgramsText: '' });
+
+  const [cases, setCases] = useState<CaseItem[]>([]);
+  const [newCaseTitle, setNewCaseTitle] = useState('');
+  const [newCaseDesc, setNewCaseDesc] = useState('');
+  const [showNewCase, setShowNewCase] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -49,28 +66,26 @@ export default function Dashboard() {
     setSidecarOnline(sidecarHealth);
 
     if (sidecarHealth) {
-      const [s, l, pol] = await Promise.all([
+      const [s, l, pol, pend] = await Promise.all([
         sidecar.fetchStats(),
         sidecar.fetchLogs(50),
         sidecar.fetchPolicy(),
+        sidecar.fetchPending(),
       ]);
       if (s) setStats(s);
       if (l) {
-        setLogs(
-          l.entries.map((e) => ({
-            id: String(e.id),
-            timestamp: e.timestamp,
-            decision: e.result === 'ALLOWED' ? 'ALLOWED' : 'BLOCKED',
-            account: e.transaction_details?.signature ?? '',
-            intent: e.intent ?? 'No description',
-            reason: e.reasoning,
-          })),
-        );
+        setLogs(l.entries.map((e) => ({
+          id: String(e.id), timestamp: e.timestamp,
+          decision: e.result === 'ALLOWED' ? 'ALLOWED' : 'BLOCKED',
+          account: e.transaction_details?.signature ?? '',
+          intent: e.intent ?? 'No description', reason: e.reasoning,
+        })));
       }
       if (pol) {
         setPolicy({ maxSolPerTx: pol.max_sol_per_tx ?? 0, rateLimit: pol.rate_limit_per_minute ?? 0, allowedPrograms: pol.allowed_programs });
         setPolicyForm({ maxSolPerTx: pol.max_sol_per_tx ?? 1, rateLimitPerMinute: pol.rate_limit_per_minute ?? 120, allowedProgramsText: pol.allowed_programs.join('\n') });
       }
+      if (pend) setPendingApprovals(pend);
       setLoading(false);
       return;
     }
@@ -80,10 +95,7 @@ export default function Dashboard() {
       if (s) setStats(s);
       if (p !== null) setIsPaused(p);
       if (l) setLogs(l);
-      if (pol) {
-        setPolicy(pol);
-        setPolicyForm({ maxSolPerTx: pol.maxSolPerTx, rateLimitPerMinute: pol.rateLimit, allowedProgramsText: pol.allowedPrograms.join('\n') });
-      }
+      if (pol) { setPolicy(pol); setPolicyForm({ maxSolPerTx: pol.maxSolPerTx, rateLimitPerMinute: pol.rateLimit, allowedProgramsText: pol.allowedPrograms.join('\n') }); }
     }
     setLoading(false);
   }, [chain, sol, sidecar]);
@@ -107,62 +119,64 @@ export default function Dashboard() {
     if (chain !== 'solana') return;
     setTxPending(true);
     const programs = policyForm.allowedProgramsText.split('\n').map((p) => p.trim()).filter((p) => p.length > 0);
-    await sidecar.updatePolicy({
-      max_sol_per_tx: policyForm.maxSolPerTx, max_balance_drain_lamports: null,
-      rate_limit_per_minute: policyForm.rateLimitPerMinute, allowed_programs: programs,
-      blocked_addresses: [], simulation_checks_enabled: true,
-    });
+    await sidecar.updatePolicy({ max_sol_per_tx: policyForm.maxSolPerTx, max_balance_drain_lamports: null, rate_limit_per_minute: policyForm.rateLimitPerMinute, allowed_programs: programs, blocked_addresses: [], simulation_checks_enabled: true });
     try { await sol.updatePolicy(programs, policyForm.maxSolPerTx, policyForm.rateLimitPerMinute); } catch { /* ok */ }
     setPolicy({ maxSolPerTx: policyForm.maxSolPerTx, rateLimit: policyForm.rateLimitPerMinute, allowedPrograms: programs });
-    setEditingPolicy(false);
-    setTxPending(false);
-    setTimeout(loadData, 2000);
+    setEditingPolicy(false); setTxPending(false); setTimeout(loadData, 2000);
   }, [policyForm, sol, sidecar, loadData, chain]);
 
-  const inputStyle = (editable: boolean) => ({
-    background: '#0a0a0a',
-    border: '1px solid rgba(255,255,255,0.08)',
-    color: '#fff',
-    opacity: editable ? 1 : 0.6,
-  });
+  const handleCreateCase = useCallback(async () => {
+    if (!newCaseTitle.trim()) return;
+    const c: CaseItem = {
+      id: `case-${Date.now()}`,
+      title: newCaseTitle.trim(),
+      status: 'open',
+      assignedTo: null,
+      evidenceHashes: [],
+      createdAt: Date.now(),
+      description: newCaseDesc.trim(),
+    };
+    setCases((prev) => [c, ...prev]);
+    setNewCaseTitle('');
+    setNewCaseDesc('');
+    setShowNewCase(false);
+  }, [newCaseTitle, newCaseDesc]);
 
+  const handleOverride = useCallback(async (blockId: string, action: 'ALLOW' | 'REJECT') => {
+    setTxPending(true);
+    const ok = await sidecar.overrideBlock(blockId, action);
+    if (ok) { setTimeout(loadData, 1000); }
+    setTxPending(false);
+  }, [sidecar, loadData]);
+
+  const inputStyle = (editable: boolean) => ({
+    background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.08)', color: '#fff', opacity: editable ? 1 : 0.6,
+  });
   const cardBg = { background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' };
 
   return (
     <div className="min-h-screen bg-black text-white font-sans">
       {/* ── Navbar ── */}
       <nav className="fixed top-0 inset-x-0 z-50 flex items-center justify-between px-8 py-5 bg-black/80 backdrop-blur-md border-b border-white/[0.06]">
-        <a href="/" className="flex items-center gap-2 font-serif text-xl tracking-tight no-underline text-white">
-          Bastion<span className="text-[10px] align-super ml-px">&reg;</span>
-        </a>
+        <a href="/" className="flex items-center gap-2 font-serif text-xl tracking-tight no-underline text-white">Bastion<span className="text-[10px] align-super ml-px">&reg;</span></a>
         <div className="flex items-center gap-4">
-          <span className="font-sans text-xs text-zinc-500">
-            Sidecar: <span style={{ color: sidecarOnline ? '#22c55e' : '#ef4444', fontWeight: 600 }}>{sidecarOnline === null ? '...' : sidecarOnline ? 'ONLINE' : 'OFFLINE'}</span>
-          </span>
-          <span className="px-3 py-1 rounded-full text-[11px] font-sans font-semibold border" style={isPaused ? { background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderColor: 'rgba(239,68,68,0.2)' } : { background: 'rgba(34,197,94,0.1)', color: '#22c55e', borderColor: 'rgba(34,197,94,0.2)' }}>
-            {loading ? '...' : isPaused ? 'PAUSED' : 'LIVE'}
-          </span>
+          <span className="font-sans text-xs text-zinc-500">Sidecar: <span style={{ color: sidecarOnline ? '#22c55e' : '#ef4444', fontWeight: 600 }}>{sidecarOnline === null ? '...' : sidecarOnline ? 'ONLINE' : 'OFFLINE'}</span></span>
+          <span className="px-3 py-1 rounded-full text-[11px] font-sans font-semibold border" style={isPaused ? { background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderColor: 'rgba(239,68,68,0.2)' } : { background: 'rgba(34,197,94,0.1)', color: '#22c55e', borderColor: 'rgba(34,197,94,0.2)' }}>{loading ? '...' : isPaused ? 'PAUSED' : 'LIVE'}</span>
           {chain === 'solana' ? <WalletMultiButton /> : <div className="[&_button]:!rounded-full [&_button]:!text-sm"><ConnectButton showBalance={false} accountStatus="address" chainStatus="none" /></div>}
         </div>
       </nav>
 
-      <main className="max-w-6xl mx-auto px-6 pt-[100px] pb-20">
-        {/* ── Header ── */}
+      <main className="max-w-6xl mx-auto px-6 pt-[100px] pb-6">
         <div className="flex items-center justify-between mb-12">
           <div>
             <h1 className="font-serif text-3xl tracking-tight" style={{ fontWeight: 400, letterSpacing: '-0.5px' }}>Firewall Dashboard</h1>
-            <p className="font-sans text-sm mt-1 text-zinc-500">Multichain AI Agent Firewall — v0.3.0</p>
+            <p className="font-sans text-sm mt-1 text-zinc-500">Solana AI Agent Firewall — v0.3.0</p>
           </div>
         </div>
 
         {/* ── Stats ── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-12">
-          {[
-            { label: 'Total Audits', value: stats.total, color: '#fff' },
-            { label: 'Allowed', value: stats.allowed, color: '#22c55e' },
-            { label: 'Blocked', value: stats.blocked, color: '#ef4444' },
-            { label: 'Block Rate', value: stats.total > 0 ? `${((stats.blocked / stats.total) * 100).toFixed(1)}%` : '0%', color: '#f59e0b' },
-          ].map((stat) => (
+          {[ { label: 'Total Audits', value: stats.total, color: '#fff' }, { label: 'Allowed', value: stats.allowed, color: '#22c55e' }, { label: 'Blocked', value: stats.blocked, color: '#ef4444' }, { label: 'Block Rate', value: stats.total > 0 ? `${((stats.blocked / stats.total) * 100).toFixed(1)}%` : '0%', color: '#f59e0b' } ].map((stat) => (
             <div key={stat.label} className="rounded-2xl p-5" style={cardBg}>
               <p className="font-sans text-[11px] uppercase tracking-wider text-zinc-500 mb-2">{stat.label}</p>
               <p className="font-mono text-2xl font-bold tabular-nums" style={{ color: stat.color }}>{loading ? '...' : stat.value}</p>
@@ -170,20 +184,32 @@ export default function Dashboard() {
           ))}
         </div>
 
+        {/* ── Pending Approvals ── */}
+        {pendingApprovals.length > 0 && (
+          <div className="rounded-2xl p-6 mb-8" style={{ ...cardBg, borderColor: 'rgba(245,158,11,0.3)' }}>
+            <p className="font-sans text-sm font-medium text-amber-400 mb-4">Pending Approvals ({pendingApprovals.length})</p>
+            <div className="space-y-3">
+              {pendingApprovals.map((pa: any) => (
+                <div key={pa.block_id} className="flex items-center justify-between p-3 rounded-xl" style={{ background: '#000', border: '1px solid rgba(245,158,11,0.1)' }}>
+                  <div>
+                    <p className="font-mono text-xs text-zinc-300">{pa.block_id?.slice(0, 16)}...</p>
+                    <p className="font-sans text-xs text-zinc-500 mt-0.5">{pa.intent || 'No intent provided'}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleOverride(pa.block_id, 'ALLOW')} disabled={txPending} className="px-3 py-1.5 rounded-lg font-sans text-xs font-medium bg-green-600/20 text-green-400 border border-green-600/30 hover:bg-green-600/30 transition-colors disabled:opacity-50">Approve</button>
+                    <button onClick={() => handleOverride(pa.block_id, 'REJECT')} disabled={txPending} className="px-3 py-1.5 rounded-lg font-sans text-xs font-medium bg-red-600/20 text-red-400 border border-red-600/30 hover:bg-red-600/30 transition-colors disabled:opacity-50">Reject</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── Tabs ── */}
         <div className="flex gap-1 mb-8 p-1 rounded-xl w-fit" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' }} role="tablist">
-          {[
-            { key: 'logs' as const, label: 'Audit Logs' },
-            { key: 'policy' as const, label: 'Policy' },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              role="tab"
-              aria-selected={activeTab === tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className="px-5 py-2.5 rounded-lg font-sans text-sm font-medium transition-all duration-150"
-              style={activeTab === tab.key ? { background: '#fff', color: '#000' } : { background: 'transparent', color: '#71717a' }}
-            >
+          {[ { key: 'logs' as const, label: 'Audit Logs' }, { key: 'policy' as const, label: 'Policy' }, { key: 'cases' as const, label: 'Cases' } ].map((tab) => (
+            <button key={tab.key} role="tab" aria-selected={activeTab === tab.key} onClick={() => setActiveTab(tab.key)} className="px-5 py-2.5 rounded-lg font-sans text-sm font-medium transition-all duration-150"
+              style={activeTab === tab.key ? { background: '#fff', color: '#000' } : { background: 'transparent', color: '#71717a' }}>
               {tab.label}
             </button>
           ))}
@@ -193,13 +219,11 @@ export default function Dashboard() {
         <div className="rounded-2xl p-6" style={cardBg} role="tabpanel">
           {loading && <p className="font-sans text-center py-16 text-zinc-500">Loading data...</p>}
 
+          {/* Audit Logs Tab */}
           {!loading && activeTab === 'logs' && (
             <div className="space-y-2">
               {logs.length === 0 ? (
-                <div className="text-center py-16">
-                  <p className="font-sans text-sm text-zinc-500 mb-2">No audit entries yet.</p>
-                  <p className="font-sans text-xs text-zinc-600">Start the sidecar with /simulate to see entries here.</p>
-                </div>
+                <div className="text-center py-16"><p className="font-sans text-sm text-zinc-500 mb-2">No audit entries yet.</p><p className="font-sans text-xs text-zinc-600">Start the sidecar with /simulate to see entries here.</p></div>
               ) : (
                 logs.map((log) => {
                   const colors = DECISION_COLORS[log.decision] ?? DEFAULT_DECISION;
@@ -207,9 +231,7 @@ export default function Dashboard() {
                     <div key={log.id} className="p-4 rounded-xl" style={{ background: '#000', border: '1px solid rgba(255,255,255,0.04)', borderLeft: `3px solid ${colors.border}` }}>
                       <div className="flex justify-between items-center">
                         <span className="font-mono text-xs font-semibold" style={{ color: colors.text }}>{log.decision}</span>
-                        <span className="font-mono text-xs text-zinc-600">
-                          {log.timestamp > 10000000000 ? new Date(log.timestamp * 1000).toLocaleTimeString() : new Date(log.timestamp).toLocaleTimeString()}
-                        </span>
+                        <span className="font-mono text-xs text-zinc-600">{log.timestamp > 10000000000 ? new Date(log.timestamp * 1000).toLocaleTimeString() : new Date(log.timestamp).toLocaleTimeString()}</span>
                       </div>
                       <p className="font-sans text-sm mt-1.5 text-zinc-300">{log.intent}</p>
                       {log.account && <p className="font-mono text-xs mt-1 text-zinc-600">{log.account.slice(0, 16)}...</p>}
@@ -220,29 +242,24 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* Policy Tab */}
           {!loading && activeTab === 'policy' && (
             <div className="space-y-6 max-w-lg">
               {chain !== 'solana' && <p className="font-sans text-sm text-zinc-500">Policy management is available on Solana. EVM support is coming soon.</p>}
-
               <div>
                 <label className="block font-sans text-sm font-medium mb-2 text-zinc-300">Max SOL per Transaction</label>
                 <input type="number" min="0" step="0.1" value={editingPolicy ? policyForm.maxSolPerTx : (policy?.maxSolPerTx ?? 0)} onChange={(e) => setPolicyForm((p) => ({ ...p, maxSolPerTx: Number(e.target.value) }))} readOnly={!editingPolicy} className="w-full p-3 rounded-lg font-mono text-sm outline-none" style={inputStyle(editingPolicy)} />
               </div>
-
               <div>
                 <label className="block font-sans text-sm font-medium mb-2 text-zinc-300">Rate Limit (tx/min)</label>
                 <input type="number" min="1" value={editingPolicy ? policyForm.rateLimitPerMinute : (policy?.rateLimit ?? 0)} onChange={(e) => setPolicyForm((p) => ({ ...p, rateLimitPerMinute: Number(e.target.value) }))} readOnly={!editingPolicy} className="w-full p-3 rounded-lg font-mono text-sm outline-none" style={inputStyle(editingPolicy)} />
               </div>
-
               <div>
                 <label className="block font-sans text-sm font-medium mb-2 text-zinc-300">Allowed Programs (one per line)</label>
                 <textarea rows={5} value={editingPolicy ? policyForm.allowedProgramsText : (policy?.allowedPrograms?.join('\n') ?? '')} onChange={(e) => setPolicyForm((p) => ({ ...p, allowedProgramsText: e.target.value }))} readOnly={!editingPolicy} placeholder="Paste Solana program IDs" className="w-full p-3 rounded-lg font-mono text-sm resize-y outline-none" style={inputStyle(editingPolicy)} />
               </div>
-
               <div className="flex gap-3">
-                {!editingPolicy && (
-                  <button onClick={() => setEditingPolicy(true)} className="flex-1 py-3 rounded-xl font-sans font-semibold text-sm bg-white text-black hover:bg-zinc-200 transition-colors">Edit Policy</button>
-                )}
+                {!editingPolicy && <button onClick={() => setEditingPolicy(true)} className="flex-1 py-3 rounded-xl font-sans font-semibold text-sm bg-white text-black hover:bg-zinc-200 transition-colors">Edit Policy</button>}
                 {editingPolicy && (
                   <>
                     <button onClick={handleSavePolicy} disabled={txPending} className="flex-1 py-3 rounded-xl font-sans font-semibold text-sm bg-green-600 text-white hover:bg-green-500 transition-colors disabled:opacity-50">{txPending ? 'Saving...' : 'Save Policy'}</button>
@@ -250,16 +267,63 @@ export default function Dashboard() {
                   </>
                 )}
               </div>
-
               {chain === 'solana' && (
-                <button onClick={handlePause} disabled={txPending} className="w-full py-3 rounded-xl font-sans font-semibold text-sm transition-all duration-150 hover:opacity-90 disabled:opacity-50"
-                  style={isPaused ? { background: '#22c55e', color: '#fff' } : { background: '#ef4444', color: '#fff' }}>
+                <button onClick={handlePause} disabled={txPending} className="w-full py-3 rounded-xl font-sans font-semibold text-sm transition-all duration-150 hover:opacity-90 disabled:opacity-50" style={isPaused ? { background: '#22c55e', color: '#fff' } : { background: '#ef4444', color: '#fff' }}>
                   {txPending ? 'Processing...' : isPaused ? 'Resume Protocol' : 'Pause Protocol (Emergency)'}
                 </button>
               )}
             </div>
           )}
+
+          {/* Cases Tab */}
+          {!loading && activeTab === 'cases' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <p className="font-sans text-sm text-zinc-500">Investigation cases promoted from blocked audit events.</p>
+                <button onClick={() => setShowNewCase(!showNewCase)} className="px-4 py-2 rounded-xl font-sans text-sm font-medium bg-white text-black hover:bg-zinc-200 transition-colors">
+                  {showNewCase ? 'Cancel' : 'New Case'}
+                </button>
+              </div>
+
+              {showNewCase && (
+                <div className="p-4 rounded-xl mb-6" style={{ background: '#000', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <input value={newCaseTitle} onChange={(e) => setNewCaseTitle(e.target.value)} placeholder="Case title" className="w-full p-3 rounded-lg font-mono text-sm mb-3 outline-none" style={inputStyle(true)} />
+                  <textarea value={newCaseDesc} onChange={(e) => setNewCaseDesc(e.target.value)} placeholder="Description and evidence notes" rows={3} className="w-full p-3 rounded-lg font-mono text-sm resize-y mb-3 outline-none" style={inputStyle(true)} />
+                  <button onClick={handleCreateCase} className="px-6 py-2.5 rounded-xl font-sans text-sm font-medium bg-green-600 text-white hover:bg-green-500 transition-colors">Create Case</button>
+                </div>
+              )}
+
+              {cases.length === 0 && !showNewCase && (
+                <div className="text-center py-16">
+                  <p className="font-sans text-sm text-zinc-500 mb-2">No investigation cases yet.</p>
+                  <p className="font-sans text-xs text-zinc-600">Promote a blocked audit event to start investigating.</p>
+                </div>
+              )}
+
+              <div className="space-y-3">
+                {cases.map((c) => (
+                  <div key={c.id} className="p-4 rounded-xl" style={{ background: '#000', border: '1px solid rgba(255,255,255,0.04)' }}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-sans text-sm font-medium text-zinc-200">{c.title}</span>
+                      <span className="font-mono text-xs px-2 py-0.5 rounded" style={{ background: `${CASE_STATUS_COLORS[c.status]}15`, color: CASE_STATUS_COLORS[c.status], border: `1px solid ${CASE_STATUS_COLORS[c.status]}30` }}>{c.status.replace('_', ' ')}</span>
+                    </div>
+                    <p className="font-sans text-xs text-zinc-500 mb-2">{c.description || 'No description'}</p>
+                    <div className="flex items-center gap-4">
+                      <span className="font-mono text-[10px] text-zinc-600">{new Date(c.createdAt).toLocaleString()}</span>
+                      {c.assignedTo && <span className="font-mono text-[10px] text-zinc-600">Assigned: {c.assignedTo.slice(0, 8)}...</span>}
+                      {c.evidenceHashes.length > 0 && <span className="font-mono text-[10px] text-zinc-600">{c.evidenceHashes.length} evidence hash(es)</span>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* ── Footer ── */}
+        <footer className="mt-12 pt-8 border-t border-white/[0.06]">
+          <p className="font-sans text-xs text-zinc-600 text-center">Built on Daemon BlockInt Technologies. Bastion v0.3.0 — Solana AI Agent Firewall. Apache 2.0.</p>
+        </footer>
       </main>
     </div>
   );

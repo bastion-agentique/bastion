@@ -1,0 +1,18 @@
+[package]
+name = "bastion-correlation"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+description = "SIEM correlation engine for Bastion — sliding window event buffer with YAML-defined threat detection rules"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = "0.9"
+thiserror = { workspace = true }
+tokio = { workspace = true }
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { workspace = true }
+tracing = "0.1"
+
+bastion-core = { path = "../core" }
