@@ -94,4 +94,4 @@ Repository: https://github.com/bastion-agentic-defense/bastion
 Version: 1.0.0 draft
 Date: June 3, 2026
 Author: Daemon Blockint Technologies
-License: MIT
+License: Apache-2.0

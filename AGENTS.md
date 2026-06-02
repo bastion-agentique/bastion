@@ -465,6 +465,6 @@ Chain switching is handled by `ChainContext` — toggles between Solana and Celo
 
 ## 15. License & Security
 
-- **License:** MIT
+- **License:** Apache-2.0
 - **Security policy:** `SECURITY.md`
 - **Protocols:** ERC-7579 (validator module), ERC-4337 (account abstraction), ERC-8004 (agent identity), EIP-712 (typed structured data)

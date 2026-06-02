@@ -6,6 +6,8 @@ import { useAccount } from 'wagmi';
 import { useChain } from '../context/ChainContext';
 import { Navbar } from '../components/Navbar';
 import { VideoBackground } from '../components/VideoBackground';
+import SilkWaves from '../components/react-bits/silk-waves';
+import GlassCursor from '../components/react-bits/glass-cursor';
 
 const FEATURES = [
   {
@@ -83,6 +85,18 @@ export default function Landing() {
 
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden" style={{ background: 'var(--bg)' }}>
+
+      {/* ── Animated background ── */}
+      <div className="fixed inset-0 -z-10 opacity-40">
+        <SilkWaves
+          speed={0.8}
+          scale={1.5}
+          colors={["#0a0a0a", "#111111", "#1a1a1a", "#222222", "#2a2a2a", "#333333", "#3a3a3a", "#444444"]}
+        />
+      </div>
+
+      {/* ── Cursor trail ── */}
+      <GlassCursor />
 
       {/* ── Video background ── */}
       <VideoBackground />
