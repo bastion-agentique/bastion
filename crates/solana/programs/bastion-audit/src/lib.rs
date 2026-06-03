@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("BaSZuLcwjfh75T3TjbVYpTH4qpJt1tNoZ3S6PTkvNhCb");
+declare_id!("BKxmG4p8w6ztbHw2mJuEijFi12yxCSiADLJeRf9C7JVX");
 
 pub const AUDIT_SEED: &str = "bastion_audit";
 pub const AGENT_SEED: &str = "bastion_agent";

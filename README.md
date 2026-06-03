@@ -235,7 +235,7 @@ The Anchor program provides immutable audit records on Solana.
 ### Program ID
 
 ```
-BaSZuLcwjfh75T3TjbVYpTH4qpJt1tNoZ3S6PTkvNhCb
+BaSZuLcwjfh75T3TjbVYpTH4qpJt1tNoZ3S6PTkvNhCb (deprecated) | **New:** `BKxmG4p8w6ztbHw2mJuEijFi12yxCSiADLJeRf9C7JVX` (devnet)
 ```
 
 ### Instructions

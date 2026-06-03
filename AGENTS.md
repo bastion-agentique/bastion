@@ -193,7 +193,7 @@ Agent Operator (policy config, HITL review)
 
 2. **`crates/sidecar`** — Axum HTTP server (port 3000) that runs the policy evaluator. Exposes REST API for simulation, audit logging, policy management, circuit breaker, and human override. Uses Helius API for Solana simulation, Sled DB for audit logs, GrondOSINT for risk oracle.
 
-3. **`crates/solana/programs/bastion-audit`** — Anchor program deployed on Solana devnet. Program ID: `BaSZuLcwjfh75T3TjbVYpTH4qpJt1tNoZ3S6PTkvNhCb`. Instructions: `initialize`, `logAudit`, `registerAgent`, `updateAgentReputation`, `setPolicy`, `emergencyPause`, `emergencyResume`.
+3. **`crates/solana/programs/bastion-audit`** — Anchor program deployed on Solana devnet. Program ID: `BKxmG4p8w6ztbHw2mJuEijFi12yxCSiADLJeRf9C7JVX`. Instructions: `initialize`, `logAudit`, `registerAgent`, `updateAgentReputation`, `setPolicy`, `emergencyPause`, `emergencyResume`.
 
 4. **`evm/`** — 6 Solidity contracts implementing ERC-7579 validator module, policy engine, immutable EIP-712 audit trail, agent registry, ERC-8004 identity, and sidecar oracle.
 
@@ -380,7 +380,7 @@ import { BackpackWalletAdapter } from '@solana/wallet-adapter-backpack';
 
 ### Solana program must be deployed before Dashboard works
 
-The Dashboard fetches from the on-chain program at `BaSZuLcwjfh75T3TjbVYpTH4qpJt1tNoZ3S6PTkvNhCb` (devnet). If not deployed, Anchor will fail to fetch accounts. The try-catch in `useBastionProgram.ts` handles this gracefully but will show empty data.
+The Dashboard fetches from the on-chain program at `BKxmG4p8w6ztbHw2mJuEijFi12yxCSiADLJeRf9C7JVX` (devnet). If not deployed, Anchor will fail to fetch accounts. The try-catch in `useBastionProgram.ts` handles this gracefully but will show empty data.
 
 ### EVM dashboard hooks are stubs
 

@@ -4,7 +4,7 @@ import { Program, AnchorProvider, BN } from '@coral-xyz/anchor';
 import { PublicKey } from '@solana/web3.js';
 import idl from '../idl.json';
 
-const PROGRAM_ID = new PublicKey('BaSZuLcwjfh75T3TjbVYpTH4qpJt1tNoZ3S6PTkvNhCb');
+const PROGRAM_ID = new PublicKey('BKxmG4p8w6ztbHw2mJuEijFi12yxCSiADLJeRf9C7JVX');
 const AUDIT_SEED = 'bastion_audit';
 const POLICY_SEED = 'bastion_policy';
 

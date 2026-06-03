@@ -13,7 +13,7 @@ use solana_sdk::{
 use std::str::FromStr;
 use std::sync::Arc;
 
-const BASTION_PROGRAM_ID: &str = "BaSZuLcwjfh75T3TjbVYpTH4qpJt1tNoZ3S6PTkvNhCb";
+const BASTION_PROGRAM_ID: &str = "BKxmG4p8w6ztbHw2mJuEijFi12yxCSiADLJeRf9C7JVX";
 const AUDIT_SEED: &[u8] = b"bastion_audit";
 
 #[derive(Debug, Clone, Serialize)]
