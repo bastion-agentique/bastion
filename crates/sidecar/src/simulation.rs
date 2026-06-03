@@ -217,6 +217,110 @@ impl Simulate for HeliusSimulator {
     }
 }
 
+pub struct AlchemySimulator {
+    api_key: String,
+    client: Client,
+    rpc_url: String,
+}
+
+impl AlchemySimulator {
+    pub fn new(api_key: String, rpc_url: String) -> Result<Self> {
+        let full_url = if api_key.is_empty() {
+            rpc_url
+        } else {
+            format!("{}{}", rpc_url, api_key)
+        };
+        Ok(Self {
+            api_key,
+            client: Client::new(),
+            rpc_url: full_url,
+        })
+    }
+
+    fn rpc_endpoint(&self) -> String {
+        self.rpc_url.clone()
+    }
+
+    /// Fetch token balances for a wallet address using Alchemy Enhanced API.
+    pub fn fetch_token_balances(&self, address: &str) -> Result<serde_json::Value> {
+        let body = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "getTokenAccountsByOwner",
+            "params": [
+                address,
+                { "programId": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" },
+                { "encoding": "jsonParsed" }
+            ]
+        });
+
+        let resp = self
+            .client
+            .post(self.rpc_endpoint())
+            .json(&body)
+            .send()
+            .map_err(|e| anyhow!("Alchemy token request failed: {e}"))?;
+
+        let json: serde_json::Value = resp.json().map_err(|e| anyhow!("Alchemy parse: {e}"))?;
+        Ok(json)
+    }
+}
+
+impl Simulate for AlchemySimulator {
+    fn simulate_transaction(&self, tx: &Transaction) -> Result<SimulationResult> {
+        let encoded = base64::engine::general_purpose::STANDARD.encode(
+            bincode::serialize(tx).map_err(|e| anyhow!("Alchemy bincode: {e}"))?,
+        );
+
+        let body = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "simulateTransaction",
+            "params": [
+                encoded,
+                { "encoding": "base64", "commitment": "processed", "sigVerify": false }
+            ]
+        });
+
+        let resp = self
+            .client
+            .post(self.rpc_endpoint())
+            .json(&body)
+            .send()
+            .map_err(|e| anyhow!("Alchemy simulate request: {e}"))?;
+
+        let json: serde_json::Value = resp.json().map_err(|e| anyhow!("Alchemy parse: {e}"))?;
+
+        if let Some(err) = json.get("error") {
+            return Ok(SimulationResult {
+                logs: vec![],
+                units_consumed: None,
+                return_data: None,
+                error: Some(err.clone()),
+                balance_changes: HashMap::new(),
+                simulation_hash: None,
+            });
+        }
+
+        let result = &json["result"]["value"];
+        let logs: Vec<String> = result["logs"]
+            .as_array()
+            .map(|a| a.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+            .unwrap_or_default();
+
+        let units = result["unitsConsumed"].as_u64();
+
+        Ok(SimulationResult {
+            logs,
+            units_consumed: units,
+            return_data: None,
+            error: result.get("err").and_then(|v| if v.is_null() { None } else { Some(v.clone()) }),
+            balance_changes: HashMap::new(),
+            simulation_hash: None,
+        })
+    }
+}
+
 impl HeliusSimulator {
     fn fetch_pre_balances(&self, addresses: &[String]) -> Result<HashMap<String, i64>> {
         if addresses.is_empty() {
