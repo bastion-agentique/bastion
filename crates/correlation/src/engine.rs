@@ -165,12 +165,6 @@ fn matches_condition(event: &SecurityEvent, condition: &crate::rules::RuleCondit
         "description" => event.description.as_deref().unwrap_or(""),
         "severity" => &event.severity,
         "success" => {
-            let val = match event.success {
-                Some(true) => "true",
-                Some(false) => "false",
-                None => "",
-            };
-            // Can't return a reference to a temp string. Skip this check.
             return event.success == Some(condition.value == "true");
         }
         _ => "",

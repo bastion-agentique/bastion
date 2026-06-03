@@ -72,6 +72,7 @@ struct AppState {
     pending_approvals: Arc<RwLock<HashMap<String, PendingApproval>>>,
     grond_oracle: GrondOracle,
     celo_simulator: Option<Arc<CeloSimulator>>,
+    alchemy_sim: Option<Arc<crate::simulation::AlchemySimulator>>,
     event_tx: broadcast::Sender<String>,
     started_at: std::time::Instant,
     case_store: Arc<RwLock<cases::CaseStore>>,
@@ -1196,6 +1197,23 @@ async fn resolve_did_handler(
     Ok(Json(result))
 }
 
+// ── Alchemy Token Balances Handler ──
+
+#[derive(serde::Deserialize)]
+struct TokenBalancesQuery {
+    address: String,
+}
+
+async fn get_token_balances(
+    State(state): State<AppState>,
+    Query(q): Query<TokenBalancesQuery>,
+) -> Result<Json<serde_json::Value>, StatusCode> {
+    let sim = state.alchemy_sim.as_ref().ok_or(StatusCode::SERVICE_UNAVAILABLE)?;
+    sim.fetch_token_balances(&q.address)
+        .map(Json)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+}
+
 // ── SSE Event Stream Handler ──
 
 #[derive(serde::Serialize, serde::Deserialize, Clone)]
@@ -1247,6 +1265,7 @@ pub fn build_app(
     on_chain: OnChainClient,
     grond_oracle: GrondOracle,
     celo_simulator: Option<Arc<CeloSimulator>>,
+    alchemy_sim: Option<Arc<crate::simulation::AlchemySimulator>>,
 ) -> Router {
     let (event_tx, _) = broadcast::channel(256);
     let app_state = AppState {
@@ -1257,10 +1276,11 @@ pub fn build_app(
         pending_approvals: Arc::new(RwLock::new(HashMap::new())),
         grond_oracle,
         celo_simulator,
+        alchemy_sim,
         event_tx,
         started_at: std::time::Instant::now(),
         case_store: Arc::new(RwLock::new(cases::CaseStore::new())),
-        correlation_engine: None, // Disabled by default; enable with feature flag
+        correlation_engine: None,
         did_cache: Arc::new(RwLock::new(HashMap::new())),
     };
 
@@ -1320,6 +1340,7 @@ pub fn build_app(
         .route("/cases/:id/evidence", post(post_case_evidence))
         // W3C DID resolution
         .route("/did/resolve/:did", get(resolve_did_handler))
+        .route("/token-balances", get(get_token_balances))
         // Static dashboard
         .nest_service("/dashboard", ServeDir::new("static"))
         .with_state(app_state)

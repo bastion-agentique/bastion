@@ -22,10 +22,18 @@ pub struct Policy {
     pub simulation_checks_enabled: bool,
     #[serde(default = "default_helius_rpc_url")]
     pub helius_rpc_url: String,
+    #[serde(default)]
+    pub alchemy_api_key: String,
+    #[serde(default = "default_alchemy_rpc_url")]
+    pub alchemy_rpc_url: String,
 }
 
 fn default_helius_rpc_url() -> String {
     "https://mainnet.helius-rpc.com/".to_string()
+}
+
+fn default_alchemy_rpc_url() -> String {
+    "https://solana-mainnet.g.alchemy.com/v2/".to_string()
 }
 
 impl Policy {

@@ -231,6 +231,21 @@ server.tool(
 );
 
 // ═══════════════════════════════════════════════
+//  ALCHEMY ENHANCED TOOLS
+// ═══════════════════════════════════════════════
+
+server.tool(
+  "bastion_get_token_balances",
+  "Fetch all SPL token balances for a Solana wallet address using Alchemy Enhanced API. Returns token mint, amount, decimals, and USD value if available.",
+  {
+    address: z.string().describe("Solana wallet address to check token balances for"),
+  },
+  async ({ address }) => ({
+    content: [{ type: "text", text: JSON.stringify(await sidecar(`/token-balances?address=${encodeURIComponent(address)}`), null, 2) }],
+  }),
+);
+
+// ═══════════════════════════════════════════════
 //  PROMPTS
 // ═══════════════════════════════════════════════
 

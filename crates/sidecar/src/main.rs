@@ -4,7 +4,7 @@ use bastion_sidecar::{
     grond_oracle::GrondOracle,
     policy::Policy,
     program_client::OnChainClient,
-    simulation::{HeliusSimulator, Simulate},
+    simulation::{AlchemySimulator, HeliusSimulator, Simulate},
     simulation_evm::CeloSimulator,
 };
 use std::env;
@@ -25,6 +25,23 @@ async fn main() {
         HeliusSimulator::with_rpc_url(&policy.helius_rpc_url)
             .expect("create Helius simulator"),
     );
+
+    let alchemy_sim = if !policy.alchemy_api_key.is_empty() {
+        eprintln!(
+            "[bastion] Alchemy simulator enabled: {}",
+            policy.alchemy_rpc_url
+        );
+        Some(Arc::new(
+            AlchemySimulator::new(
+                policy.alchemy_api_key.clone(),
+                policy.alchemy_rpc_url.clone(),
+            )
+            .expect("create Alchemy simulator"),
+        ))
+    } else {
+        eprintln!("[bastion] Alchemy simulator disabled (set alchemy_api_key in config.toml)");
+        None
+    };
     let logger = Arc::new(AuditLogger::new("audit_logs").expect("create audit logger"));
 
     let on_chain_enabled = env::var("BASTION_ON_CHAIN").is_ok();
@@ -61,7 +78,7 @@ async fn main() {
         }
     };
 
-    let app = build_app(policy, simulator, logger, on_chain, grond_oracle, celo_sim);
+    let app = build_app(policy, simulator, logger, on_chain, grond_oracle, celo_sim, alchemy_sim);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
         .await
