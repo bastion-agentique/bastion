@@ -3,7 +3,7 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useAccount } from 'wagmi';
 import { useChain } from '../context/ChainContext';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 
 const FEATURES = [
   {
@@ -22,20 +22,9 @@ const FEATURES = [
 
 function FeaturesCarousel() {
   const [active, setActive] = useState(0);
-  const scrollRef = useCallback((el: HTMLDivElement | null) => {
-    if (!el) return;
-    const onScroll = () => {
-      const idx = Math.round(el.scrollLeft / 356);
-      setActive(Math.min(Math.max(idx, 0), FEATURES.length - 1));
-    };
-    el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
-  }, []);
 
-  function scrollTo(index: number) {
-    const el = document.querySelector('#features-carousel');
-    if (el) el.scrollTo({ left: index * 356, behavior: 'smooth' });
-  }
+  const prev = () => setActive(a => Math.max(a - 1, 0));
+  const next = () => setActive(a => Math.min(a + 1, FEATURES.length - 1));
 
   return (
     <section id="features" className="max-w-6xl mx-auto px-6 py-32">
@@ -44,43 +33,41 @@ function FeaturesCarousel() {
         Each feature was built to solve a distinct operational problem. Deploy one or all of them. They work independently and together.
       </p>
 
-      <div className="relative group">
+      <div className="relative">
         {/* Arrow: left */}
-        <button
-          onClick={() => scrollTo(Math.max(active - 1, 0))}
-          disabled={active === 0}
-          className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100 disabled:opacity-0"
-          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
-          aria-label="Previous feature"
-        >
-          ←
-        </button>
+        {active > 0 && (
+          <button
+            onClick={prev}
+            className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-opacity"
+            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+            aria-label="Previous feature"
+          >
+            ←
+          </button>
+        )}
 
         {/* Arrow: right */}
-        <button
-          onClick={() => scrollTo(Math.min(active + 1, FEATURES.length - 1))}
-          disabled={active === FEATURES.length - 1}
-          className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100 disabled:opacity-0"
-          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
-          aria-label="Next feature"
-        >
-          →
-        </button>
+        {active < FEATURES.length - 1 && (
+          <button
+            onClick={next}
+            className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-opacity"
+            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+            aria-label="Next feature"
+          >
+            →
+          </button>
+        )}
 
-        <div
-          id="features-carousel"
-          ref={scrollRef}
-          className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory"
-          style={{ scrollbarWidth: 'none' }}
-        >
+        {/* Active card */}
+        <div className="flex justify-center">
           {FEATURES.map((product, i) => (
             <div
               key={product.title}
-              className="flex-shrink-0 w-[340px] snap-center rounded-2xl p-8 transition-all duration-300"
+              className="w-full max-w-md rounded-2xl p-8 transition-all duration-500 ease-in-out"
               style={{
                 background: '#0a0a0a',
                 border: '1px solid rgba(255,255,255,0.06)',
-                opacity: active === i ? 1 : 0.5,
+                display: active === i ? 'block' : 'none',
               }}
             >
               <span className="font-mono text-xs text-zinc-600 mb-6 block">/0.{i + 1}</span>
@@ -90,11 +77,12 @@ function FeaturesCarousel() {
           ))}
         </div>
 
+        {/* Dots */}
         <div className="flex gap-2 justify-center mt-6">
           {FEATURES.map((_, i) => (
             <button
               key={i}
-              onClick={() => scrollTo(i)}
+              onClick={() => setActive(i)}
               className="w-2 h-2 rounded-full transition-all duration-300"
               style={{ background: active === i ? '#fff' : 'rgba(255,255,255,0.15)', transform: active === i ? 'scale(1.3)' : 'scale(1)' }}
               aria-label={`Feature ${i + 1}`}
