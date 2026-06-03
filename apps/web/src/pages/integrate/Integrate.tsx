@@ -40,7 +40,7 @@ export default function Integrate() {
             className="animate-fade-rise-delay font-sans mt-6 max-w-xl mx-auto text-base leading-relaxed"
             style={{ color: 'var(--text-muted)' }}
           >
-            Install the SDK, register your agent, set a policy. Every transaction validated before signing. Solana native. Zero trust.
+            Install the SDK, register your agent, set a policy, spawn sub-agents with delegated authority. Every transaction validated before signing. Solana native. Zero trust.
           </p>
 
           {/* Action buttons */}

@@ -39,7 +39,22 @@ await connection.sendTransaction(policyTx, [wallet]);
 
 // 4. Circuit breaker
 const pauseTx = await client.emergencyPause(wallet);
-await connection.sendTransaction(pauseTx, [wallet]);`;
+await connection.sendTransaction(pauseTx, [wallet]);
+
+// 5. Spawn sub-agent with delegated authority
+const subWallet = Keypair.generate();
+const subTx = await client.delegateAgent(
+  wallet,         // parent signer
+  subWallet,
+  "SubAgent-ETH",
+  AGENT_CAPABILITIES.TRANSFER,  // restricted capabilities
+  Math.floor(Date.now() / 1000) + 86400  // expires in 24h
+);
+await connection.sendTransaction(subTx, [wallet, subWallet]);
+
+// 6. Fetch delegation tree
+const tree = await client.fetchAgentTree(wallet.publicKey);
+console.log(tree.children);`;
 
 export default function QuickStartSection() {
   const [copied, setCopied] = useState(false);

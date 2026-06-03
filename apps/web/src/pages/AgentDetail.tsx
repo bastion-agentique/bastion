@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAgents, type TrackedAgent, type AgentAuditResponse } from '../hooks/useAgents';
 
 const CAPABILITY_LABELS: Record<number, string> = {
@@ -122,6 +122,89 @@ export default function AgentDetail() {
 }, null, 2)}
             </pre>
           </details>
+
+          {/* Delegation Info */}
+          {((agent as any).parent_did || (agent as any).is_delegator || (agent as any).child_dids?.length > 0) && (
+            <div className="mb-4 p-4 rounded-lg" style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.15)' }}>
+              <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-500 mb-3">Delegation</p>
+
+              {/* Parent chain */}
+              {(agent as any).parent_did && (
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="font-mono text-[9px] text-zinc-500">Parent:</span>
+                  <Link
+                    to={`/agents/${encodeURIComponent((agent as any).parent_did)}`}
+                    className="font-mono text-[10px] text-purple-400 hover:underline truncate"
+                  >
+                    {((agent as any).parent_did as string)?.split(':').pop()?.slice(0, 12)}...
+                  </Link>
+                  {(agent as any).delegation_depth !== undefined && (
+                    <span className="ml-auto font-mono text-[8px] text-zinc-600">Depth: {(agent as any).delegation_depth}</span>
+                  )}
+                </div>
+              )}
+
+              {/* Delegated capabilities */}
+              {(agent as any).delegated_capabilities?.length > 0 && (
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="font-mono text-[9px] text-zinc-500">Delegated:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {(agent as any).delegated_capabilities.map((c: string) => (
+                      <span key={c} className="font-mono text-[8px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(139,92,246,0.15)', color: '#a78bfa' }}>{c}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Budget bar */}
+              {(agent as any).delegation_budget && (
+                <div className="mb-2">
+                  <div className="flex items-center justify-between font-mono text-[9px] mb-1">
+                    <span className="text-zinc-500">Budget: {Number((agent as any).delegation_budget).toLocaleString()} lamports</span>
+                    <span className="text-zinc-600">Spent: {Number((agent as any).delegation_spent ?? 0).toLocaleString()}</span>
+                  </div>
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${Math.min(((agent as any).delegation_spent ?? 0) / Number((agent as any).delegation_budget) * 100, 100)}%`,
+                        background: 'linear-gradient(90deg, #a78bfa, #c084fc)',
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Expiry */}
+              {(agent as any).delegation_expires_at && (
+                <div className="font-mono text-[9px] text-zinc-500 mb-2">
+                  Expires: {formatDate((agent as any).delegation_expires_at)}
+                </div>
+              )}
+
+              {/* Sub-agents */}
+              {((agent as any).child_dids?.length > 0 || (agent as any).is_delegator) && (
+                <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(139,92,246,0.15)' }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-mono text-[9px] text-zinc-500">Sub-Agents: {(agent as any).child_dids?.length ?? 0}</span>
+                  </div>
+                  {(agent as any).child_dids?.slice(0, 5).map((childDid: string) => (
+                    <Link
+                      key={childDid}
+                      to={`/agents/${encodeURIComponent(childDid)}`}
+                      className="flex items-center gap-2 py-1 font-mono text-[10px] text-purple-400 hover:underline truncate block"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: '#a78bfa' }} />
+                      {childDid.split(':').pop()?.slice(0, 12)}...
+                    </Link>
+                  ))}
+                  {(agent as any).child_dids?.length > 5 && (
+                    <p className="font-mono text-[9px] text-zinc-600 mt-1">+{((agent as any).child_dids?.length ?? 0) - 5} more</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Audit Timeline */}

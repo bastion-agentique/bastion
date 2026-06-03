@@ -97,6 +97,57 @@ console.log(policy.allowedPrograms);`,
     example: `const policyPda = client.getPolicyAddress();`,
   },
   {
+    method: 'getAgentDID',
+    signature: 'getAgentDID(authority): string',
+    description: 'Derive the W3C DID identifier for an agent. Format: did:bastion:solana:{agent_pda_base58}.',
+    example: `const did = client.getAgentDID(wallet.publicKey);`,
+  },
+  {
+    method: 'fetchAllAgents',
+    signature: 'fetchAllAgents(): Promise<Agent[]>',
+    description: 'Fetch all registered agents from the on-chain program via getProgramAccounts.',
+    example: `const agents = await client.fetchAllAgents();
+agents.forEach(a => console.log(a.name));`,
+  },
+  {
+    method: 'delegateAgent',
+    signature: 'delegateAgent(parentSigner, childSigner, name, capabilities, expiry?): Promise<Transaction>',
+    description: 'Spawn a sub-agent under a parent agent. Child inherits a subset of parent capabilities. Max depth 3.',
+    example: `const tx = await client.delegateAgent(
+  parentWallet,
+  childWallet,
+  "MarketBot",
+  AGENT_CAPABILITIES.TRANSFER,
+  Math.floor(Date.now() / 1000) + 86400
+);
+await connection.sendTransaction(tx, [parentWallet, childWallet]);`,
+  },
+  {
+    method: 'revokeDelegation',
+    signature: 'revokeDelegation(parentSigner, childAuthority): Promise<Transaction>',
+    description: 'Revoke a sub-agent delegation. Only the parent agent can revoke.',
+    example: `const tx = await client.revokeDelegation(
+  parentWallet,
+  childAuthority
+);
+await connection.sendTransaction(tx, [parentWallet]);`,
+  },
+  {
+    method: 'fetchAgentTree',
+    signature: 'fetchAgentTree(authority): Promise<AgentTreeData>',
+    description: 'Fetch the full delegation tree for an agent, including all nested children.',
+    example: `const tree = await client.fetchAgentTree(
+  wallet.publicKey
+);
+console.log(tree.children.length, 'sub-agents');`,
+  },
+  {
+    method: 'getAuditEntryAddress',
+    signature: 'getAuditEntryAddress(index): PublicKey',
+    description: 'Derive the PDA for an audit entry by its sequential index.',
+    example: `const entryPda = client.getAuditEntryAddress(0);`,
+  },
+  {
     method: 'addEventListener',
     signature: 'addEventListener<T>(event, callback): number',
     description: 'Subscribe to on-chain events emitted by the Bastion program.',

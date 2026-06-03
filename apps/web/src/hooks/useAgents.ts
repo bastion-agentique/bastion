@@ -12,6 +12,15 @@ export interface TrackedAgent {
   registered_at: number;
   sidecar_endpoint: string | null;
   on_chain_verified: boolean;
+  // Delegation fields
+  parent_did?: string | null;
+  delegation_depth?: number;
+  delegated_capabilities?: string[];
+  delegation_budget?: number | null;
+  delegation_spent?: number;
+  delegation_expires_at?: number | null;
+  is_delegator?: boolean;
+  child_dids?: string[];
 }
 
 export interface AgentListResponse {
@@ -84,15 +93,81 @@ export function useAgents() {
   );
 
   const registerAgent = useCallback(
-    async (did: string, authorityPubkey: string, sidecarEndpoint?: string): Promise<boolean> => {
+    async (
+      did: string,
+      authorityPubkey: string,
+      sidecarEndpoint?: string,
+      parentDid?: string,
+      delegationDepth?: number,
+      delegatedCapabilities?: string[],
+      delegationBudgetSol?: number | null,
+      delegationExpiresAt?: number | null,
+    ): Promise<boolean> => {
       try {
+        const body: Record<string, unknown> = {
+          did,
+          authority_pubkey: authorityPubkey,
+          sidecar_endpoint: sidecarEndpoint ?? null,
+        };
+        if (parentDid) body.parent_did = parentDid;
+        if (delegationDepth !== undefined) body.delegation_depth = delegationDepth;
+        if (delegatedCapabilities) body.delegated_capabilities = delegatedCapabilities;
+        if (delegationBudgetSol !== undefined) body.delegation_budget_sol = delegationBudgetSol;
+        if (delegationExpiresAt !== undefined) body.delegation_expires_at = delegationExpiresAt;
+
         const res = await fetch(`${SIDECAR_URL}/agents`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        return res.ok;
+      } catch {
+        return false;
+      }
+    },
+    [],
+  );
+
+  const fetchAgentChildren = useCallback(async (did: string): Promise<TrackedAgent[]> => {
+    try {
+      const res = await fetch(`${SIDECAR_URL}/agents/${encodeURIComponent(did)}/children`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.children ?? [];
+    } catch {
+      return [];
+    }
+  }, []);
+
+  const fetchAgentTree = useCallback(async (did: string): Promise<unknown | null> => {
+    try {
+      const res = await fetch(`${SIDECAR_URL}/agents/${encodeURIComponent(did)}/tree`);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const delegateAgent = useCallback(
+    async (
+      parentDid: string,
+      childDid: string,
+      childName: string,
+      capabilities: string[],
+      budgetSol?: number | null,
+      expiresAt?: number | null,
+    ): Promise<boolean> => {
+      try {
+        const res = await fetch(`${SIDECAR_URL}/agents/${encodeURIComponent(parentDid)}/delegate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            did,
-            authority_pubkey: authorityPubkey,
-            sidecar_endpoint: sidecarEndpoint ?? null,
+            child_did: childDid,
+            child_name: childName,
+            delegated_capabilities: capabilities,
+            delegation_budget_sol: budgetSol ?? null,
+            delegation_expires_at: expiresAt ?? null,
           }),
         });
         return res.ok;
@@ -103,5 +178,31 @@ export function useAgents() {
     [],
   );
 
-  return { agents, loading, fetchAgents, fetchAgent, fetchAgentAudit, registerAgent };
+  const revokeDelegation = useCallback(
+    async (parentDid: string, childDid: string): Promise<boolean> => {
+      try {
+        const res = await fetch(
+          `${SIDECAR_URL}/agents/${encodeURIComponent(parentDid)}/delegation/${encodeURIComponent(childDid)}`,
+          { method: 'DELETE' },
+        );
+        return res.ok;
+      } catch {
+        return false;
+      }
+    },
+    [],
+  );
+
+  return {
+    agents,
+    loading,
+    fetchAgents,
+    fetchAgent,
+    fetchAgentAudit,
+    fetchAgentChildren,
+    fetchAgentTree,
+    registerAgent,
+    delegateAgent,
+    revokeDelegation,
+  };
 }
