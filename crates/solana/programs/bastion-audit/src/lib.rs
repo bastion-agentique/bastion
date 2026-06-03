@@ -140,23 +140,24 @@ pub mod bastion_audit {
     }
 
     pub fn stake_lamports(ctx: Context<StakeLamports>, amount: u64) -> Result<()> {
-        let agent_stake = &mut ctx.accounts.agent_stake;
-
         // Transfer SOL from authority to agent_stake PDA
-        let ix = anchor_lang::solana_program::system_instruction::transfer(
-            &ctx.accounts.authority.key(),
-            &ctx.accounts.agent_stake.to_account_info().key(),
-            amount,
-        );
-        anchor_lang::solana_program::program::invoke(
-            &ix,
-            &[
-                ctx.accounts.authority.to_account_info(),
-                ctx.accounts.agent_stake.to_account_info(),
-                ctx.accounts.system_program.to_account_info(),
-            ],
-        )?;
+        {
+            let ix = anchor_lang::solana_program::system_instruction::transfer(
+                &ctx.accounts.authority.key(),
+                &ctx.accounts.agent_stake.key(),
+                amount,
+            );
+            anchor_lang::solana_program::program::invoke(
+                &ix,
+                &[
+                    ctx.accounts.authority.to_account_info(),
+                    ctx.accounts.agent_stake.to_account_info(),
+                    ctx.accounts.system_program.to_account_info(),
+                ],
+            )?;
+        }
 
+        let agent_stake = &mut ctx.accounts.agent_stake;
         agent_stake.staked_lamports += amount;
         if agent_stake.stake_started_at == 0 {
             agent_stake.stake_started_at = Clock::get()?.unix_timestamp;
@@ -217,21 +218,25 @@ pub mod bastion_audit {
     }
 
     pub fn slash_stake(ctx: Context<SlashStake>, penalty: u64) -> Result<()> {
-        let agent_stake = &mut ctx.accounts.agent_stake;
         require!(penalty > 0, BastionError::InvalidReputation);
-        require!(agent_stake.staked_lamports >= penalty, BastionError::InsufficientStake);
+        require!(ctx.accounts.agent_stake.staked_lamports >= penalty, BastionError::InsufficientStake);
 
+        let agent_stake = &mut ctx.accounts.agent_stake;
         agent_stake.staked_lamports -= penalty;
         agent_stake.penalty_accrued += penalty;
 
-        // Transfer slashed SOL to treasury (payer)
+        let authority = agent_stake.authority;
+        let remaining = agent_stake.staked_lamports;
+        drop(agent_stake);
+
+        // Transfer slashed SOL to treasury
         **ctx.accounts.treasury.try_borrow_mut_lamports()? += penalty;
         **ctx.accounts.agent_stake.to_account_info().try_borrow_mut_lamports()? -= penalty;
 
         emit!(StakeSlashed {
-            authority: agent_stake.authority,
+            authority,
             penalty,
-            remaining: agent_stake.staked_lamports,
+            remaining,
         });
 
         Ok(())
@@ -390,7 +395,7 @@ pub struct ClaimUnstake<'info> {
 pub struct SlashStake<'info> {
     #[account(
         mut,
-        seeds = ["agent_stake".as_bytes(), authority.key().as_ref()],
+        seeds = ["agent_stake".as_bytes(), agent_authority.key().as_ref()],
         bump = agent_stake.bump,
         constraint = treasury.key() == audit_state.authority @ BastionError::Unauthorized,
     )]
@@ -400,6 +405,8 @@ pub struct SlashStake<'info> {
         bump = audit_state.bump,
     )]
     pub audit_state: Account<'info, AuditState>,
+    /// CHECK: Used for PDA seed derivation only
+    pub agent_authority: UncheckedAccount<'info>,
     #[account(mut)]
     pub treasury: Signer<'info>,
 }
