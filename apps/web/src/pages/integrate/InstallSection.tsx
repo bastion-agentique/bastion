@@ -1,9 +1,4 @@
 import { useState } from 'react';
-import type { ChainId } from '../../lib/chains';
-
-interface Props {
-  chain: ChainId;
-}
 
 const SOLANA_INSTALL = `npm install @bastion-agentic-defense/sdk @solana/web3.js @coral-xyz/anchor`;
 const SOLANA_DEPS = `# or
@@ -11,20 +6,11 @@ pnpm add @bastion-agentic-defense/sdk @solana/web3.js @coral-xyz/anchor
 # or
 yarn add @bastion-agentic-defense/sdk @solana/web3.js @coral-xyz/anchor`;
 
-const CELO_INSTALL = `# Celo support via Bastion REST API
-# No npm package required -- use fetch()
-
-# For full EVM SDK (coming soon):
-# npm install @bastion-agentic-defense/sdk-evm viem`;
-
-export default function InstallSection({ chain }: Props) {
+export default function InstallSection() {
   const [copied, setCopied] = useState(false);
 
-  const code = chain === 'solana' ? SOLANA_INSTALL : CELO_INSTALL;
-  const deps = chain === 'solana' ? SOLANA_DEPS : null;
-
   function handleCopy() {
-    navigator.clipboard.writeText(code);
+    navigator.clipboard.writeText(SOLANA_INSTALL);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -40,11 +26,11 @@ export default function InstallSection({ chain }: Props) {
       </h3>
 
       <div
-        className="rounded-xl overflow-hidden"
+        className="rounded-xl overflow-hidden mb-4"
         style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
       >
         <div className="flex items-center justify-between px-4 py-2" style={{ borderBottom: '1px solid var(--border)' }}>
-          <span className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>Terminal</span>
+          <span className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>Solana — Terminal</span>
           <button
             onClick={handleCopy}
             className="font-sans text-xs font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded px-2 py-0.5"
@@ -55,16 +41,28 @@ export default function InstallSection({ chain }: Props) {
         </div>
         <pre className="p-4 overflow-x-auto">
           <code className="font-mono text-sm leading-relaxed block" style={{ color: 'var(--text-primary)' }}>
-            {code}
+            {SOLANA_INSTALL}
           </code>
         </pre>
-        {deps && (
-          <pre className="px-4 pb-4 overflow-x-auto">
-            <code className="font-mono text-sm leading-relaxed block" style={{ color: 'var(--text-muted)' }}>
-              {deps}
-            </code>
-          </pre>
-        )}
+        <pre className="px-4 pb-4 overflow-x-auto">
+          <code className="font-mono text-sm leading-relaxed block" style={{ color: 'var(--text-muted)' }}>
+            {SOLANA_DEPS}
+          </code>
+        </pre>
+      </div>
+
+      {/* EVM Coming Soon */}
+      <div
+        className="rounded-xl p-4 opacity-50"
+        style={{ background: 'var(--bg-subtle)', border: '1px dashed var(--border)' }}
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <span className="font-mono text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(107,114,128,0.1)', color: '#6B7280' }}>Coming Soon</span>
+          <span className="font-sans text-xs" style={{ color: 'var(--text-muted)' }}>EVM SDK (Solidity + TypeScript)</span>
+        </div>
+        <code className="font-mono text-xs" style={{ color: '#6B7280' }}>
+          # npm install @bastion-agentic-defense/sdk-evm viem
+        </code>
       </div>
     </section>
   );

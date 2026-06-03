@@ -1,4 +1,4 @@
-export type ChainId = 'solana' | 'celo';
+export type ChainId = 'solana' | 'evm';
 
 export interface ChainConfig {
   id: ChainId;
@@ -20,14 +20,14 @@ export const CHAINS: Record<ChainId, ChainConfig> = {
     rpcUrl: 'https://api.devnet.solana.com',
     explorerUrl: 'https://explorer.solana.com',
   },
-  celo: {
-    id: 'celo',
-    name: 'Celo',
-    shortName: 'CELO',
-    icon: '⊚',
-    color: '#35D07F',
-    rpcUrl: 'https://rpc.ankr.com/celo',
-    explorerUrl: 'https://celoscan.io',
+  evm: {
+    id: 'evm',
+    name: 'EVM (Celo/Base/Polygon)',
+    shortName: 'EVM',
+    icon: '⟠',
+    color: '#6B7280',
+    rpcUrl: '',
+    explorerUrl: '',
   },
 };
 

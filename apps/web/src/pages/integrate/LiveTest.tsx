@@ -1,34 +1,15 @@
 import { useState } from 'react';
-import type { ChainId } from '../../lib/chains';
-import { CHAINS } from '../../lib/chains';
 import { useSidecar } from '../../hooks/useSidecar';
 
-interface Props {
-  chain: ChainId;
-}
-
-async function checkChainHealth(chain: ChainId): Promise<{ ok: boolean; detail: string }> {
-  if (chain === 'solana') {
-    const res = await fetch('https://api.devnet.solana.com/health', { method: 'GET' });
-    if (!res.ok) return { ok: false, detail: `HTTP ${res.status}` };
-    const text = await res.text();
-    if (text.trim() === 'ok') return { ok: true, detail: 'ok' };
-    return { ok: false, detail: text.trim() };
-  }
-
-  const res = await fetch(CHAINS.celo.rpcUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_blockNumber', params: [] }),
-  });
+async function checkSolanaHealth(): Promise<{ ok: boolean; detail: string }> {
+  const res = await fetch('https://api.devnet.solana.com/health', { method: 'GET' });
   if (!res.ok) return { ok: false, detail: `HTTP ${res.status}` };
-  const json = await res.json();
-  if (json.error) return { ok: false, detail: json.error.message ?? 'RPC error' };
-  const block = parseInt(json.result, 16);
-  return { ok: true, detail: `block #${block.toLocaleString()}` };
+  const text = await res.text();
+  if (text.trim() === 'ok') return { ok: true, detail: 'ok' };
+  return { ok: false, detail: text.trim() };
 }
 
-export default function LiveTest({ chain }: Props) {
+export default function LiveTest() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [simTx, setSimTx] = useState('');
@@ -47,17 +28,17 @@ export default function LiveTest({ chain }: Props) {
     setStatus('loading');
     setMessage('');
     try {
-      const { ok, detail } = await checkChainHealth(chain);
+      const { ok, detail } = await checkSolanaHealth();
       if (ok) {
         setStatus('ok');
-        setMessage(`Connected to ${CHAINS[chain].name}. RPC is healthy. (${detail})`);
+        setMessage(`Connected to Solana devnet. RPC is healthy. (${detail})`);
       } else {
         setStatus('error');
         setMessage(`RPC check failed: ${detail}`);
       }
     } catch (err) {
       setStatus('error');
-      setMessage(`Could not reach ${CHAINS[chain].name} RPC. Check your network.`);
+      setMessage('Could not reach Solana devnet. Check your network.');
       console.error('[Bastion] LiveTest error:', err);
     }
   }
@@ -116,10 +97,10 @@ export default function LiveTest({ chain }: Props) {
         style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
       >
         <h4 className="font-sans text-base font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
-          RPC Connection
+          Solana RPC Connection
         </h4>
         <p className="font-sans text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
-          Verify your connection to the {CHAINS[chain].name} network before integrating.
+          Verify your connection to Solana devnet before integrating.
         </p>
         <button
           onClick={handleTest}

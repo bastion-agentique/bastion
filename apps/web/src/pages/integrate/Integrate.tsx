@@ -1,11 +1,6 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { useAccount } from 'wagmi';
-import { useChain } from '../../context/ChainContext';
 import { Navbar } from '../../components/Navbar';
-import { CHAIN_LIST } from '../../lib/chains';
-import type { ChainId } from '../../lib/chains';
 import InstallSection from './InstallSection';
 import QuickStartSection from './QuickStartSection';
 import ChainSupportSection from './ChainSupportSection';
@@ -13,19 +8,11 @@ import PersistentSetup from './PersistentSetup';
 import ApiReference from './ApiReference';
 import LiveTest from './LiveTest';
 
+const CHAIN = 'solana' as const;
+
 export default function Integrate() {
-  const { chain: storedChain, setChain } = useChain();
-  const [chain, setChainLocal] = useState<ChainId>(storedChain);
   const { connected: solConnected } = useWallet();
-  const { isConnected: evmConnected } = useAccount();
   const navigate = useNavigate();
-
-  const connected = storedChain === 'solana' ? solConnected : evmConnected;
-
-  function handleChainToggle(id: ChainId) {
-    setChainLocal(id);
-    setChain(id);
-  }
 
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden" style={{ background: 'var(--bg)' }}>
@@ -53,37 +40,12 @@ export default function Integrate() {
             className="animate-fade-rise-delay font-sans mt-6 max-w-xl mx-auto text-base leading-relaxed"
             style={{ color: 'var(--text-muted)' }}
           >
-            Install the SDK, register your agent, set a policy. Every transaction validated before signing. Multi-chain. Zero trust.
+            Install the SDK, register your agent, set a policy. Every transaction validated before signing. Solana native. Zero trust.
           </p>
 
-          {/* Chain Toggle */}
-          <div
-            className="animate-fade-rise-delay-2 inline-flex gap-1 mt-10 p-1 rounded-xl"
-            style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border)' }}
-            role="radiogroup"
-            aria-label="Select chain"
-          >
-            {CHAIN_LIST.map((c) => (
-              <button
-                key={c.id}
-                role="radio"
-                aria-checked={chain === c.id}
-                onClick={() => handleChainToggle(c.id)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-sans text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
-                style={chain === c.id
-                  ? { background: 'var(--accent)', color: '#ffffff' }
-                  : { background: 'transparent', color: 'var(--text-muted)' }
-                }
-              >
-                <span>{c.icon}</span>
-                <span>{c.name}</span>
-              </button>
-            ))}
-          </div>
-
           {/* Action buttons */}
-          <div className="flex items-center justify-center gap-4 mt-8">
-            {connected ? (
+          <div className="flex items-center justify-center gap-4 mt-10">
+            {solConnected ? (
               <button
                 onClick={() => navigate('/dashboard')}
                 className="rounded-full px-8 py-3 text-sm font-medium font-sans transition-transform duration-150 hover:scale-[1.03] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
@@ -110,16 +72,39 @@ export default function Integrate() {
               GitHub
             </a>
           </div>
+
+          {/* EVM Coming Soon */}
+          <div
+            className="animate-fade-rise-delay-2 mt-10 mx-auto max-w-sm rounded-xl p-5 opacity-60"
+            style={{ background: 'var(--bg-subtle)', border: '1px dashed var(--border)' }}
+          >
+            <div className="flex items-center gap-3 mb-2">
+              <span style={{ fontSize: '1.3em', filter: 'grayscale(1)' }}>⟠</span>
+              <span className="font-sans text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
+                EVM (Celo / Base / Polygon)
+              </span>
+              <span
+                className="font-mono text-[9px] px-2 py-0.5 rounded-full ml-auto"
+                style={{ background: 'rgba(107,114,128,0.15)', color: '#6B7280', border: '1px solid rgba(107,114,128,0.25)' }}
+              >
+                Coming Soon
+              </span>
+            </div>
+            <p className="font-sans text-xs" style={{ color: 'var(--text-muted)' }}>
+              Solidity contracts are in active development. Solana is our primary deployment target.
+              EVM support (ERC-7579 validator, EIP-712 audit trail) expected Q3 2026.
+            </p>
+          </div>
         </section>
 
         {/* Sections */}
         <div className="space-y-20 pb-20" id="install">
-          <InstallSection chain={chain} />
-          <QuickStartSection chain={chain} />
+          <InstallSection />
+          <QuickStartSection />
           <PersistentSetup />
           <ApiReference />
-          <ChainSupportSection chain={chain} />
-          <LiveTest chain={chain} />
+          <ChainSupportSection />
+          <LiveTest />
         </div>
       </main>
     </div>

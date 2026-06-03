@@ -4,7 +4,7 @@ import { PublicKey } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';
 
 interface Props {
-  chain: 'solana' | 'celo';
+  chain: 'solana' | 'evm';
 }
 
 const CAPABILITIES = [
