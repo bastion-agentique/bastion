@@ -7,6 +7,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useChain } from '../context/ChainContext';
 import { useBastionProgram, type AuditEntryData, type PolicyData, type StatsData } from '../hooks/useBastionProgram';
 import { useSidecar } from '../hooks/useSidecar';
+import { useAgents, type TrackedAgent } from '../hooks/useAgents';
 import AgentFloor from '../components/AgentFloor';
 import { useAgentEvents } from '../hooks/useAgentEvents';
 
@@ -126,6 +127,7 @@ export default function Dashboard() {
   const sol = useBastionProgram();
   const sidecar = useSidecar();
   const { events: sseEvents, connected: sseConnected } = useAgentEvents();
+  const { agents: trackedAgents, fetchAgents } = useAgents();
   const [history, setHistory] = useState<number[]>(Array(30).fill(0));
 
   const [activeTab, setActiveTab] = useState<'overview' | 'logs' | 'policy' | 'cases'>('overview');
@@ -147,6 +149,7 @@ export default function Dashboard() {
     setSidecarOnline(sh);
     if (sh) {
       const [s, l, pol, pend] = await Promise.all([sidecar.fetchStats(), sidecar.fetchLogs(50), sidecar.fetchPolicy(), sidecar.fetchPending()]);
+      fetchAgents(); // Refresh agent fleet from sidecar
       if (s) {
         setStats(s);
         setHistory((h) => [...h.slice(-29), s.total]);
@@ -203,22 +206,32 @@ export default function Dashboard() {
 
   const blockRate = stats.total > 0 ? (stats.blocked / stats.total * 100) : 0;
 
-  // Build agent floor data from SSE events or audit logs
-  const agentEntities = (sseEvents.length > 0 ? sseEvents : logs)
-    .filter((l: any, i: number) => (l.agent_id || l.account) && i < 20)
-    .map((l: any, i: number) => {
-      const id = l.agent_id || l.account || `agent-${i}`;
-      const decision = l.decision || 'ALLOWED';
-      return {
-        id,
-        name: id.slice(0, 8),
+  // Build agent floor data from tracked agents (sidecar registry)
+  const agentEntities = trackedAgents.length > 0
+    ? trackedAgents.map((a: TrackedAgent, i: number) => ({
+        id: a.did,
+        name: a.name,
         x: (i * 3 + 2) % 24,
         y: Math.floor(i / 6) * 3 + 2,
-        status: decision === 'ALLOWED' ? 'idle' as const : decision === 'BLOCKED' ? 'waiting' as const : 'walking' as const,
-        intent: l.intent || '',
-        reputation: decision === 'ALLOWED' ? 85 : 40,
-      };
-    });
+        status: (a.capability_bitmask & 0b00000010 ? 'walking' as const : 'idle' as const),
+        intent: a.name,
+        reputation: a.reputation_score,
+      }))
+    : (sseEvents.length > 0 ? sseEvents : logs)
+        .filter((l: any, i: number) => (l.agent_id || l.account) && i < 20)
+        .map((l: any, i: number) => {
+          const id = l.agent_id || l.account || `agent-${i}`;
+          const decision = l.decision || 'ALLOWED';
+          return {
+            id,
+            name: id.slice(0, 8),
+            x: (i * 3 + 2) % 24,
+            y: Math.floor(i / 6) * 3 + 2,
+            status: decision === 'ALLOWED' ? 'idle' as const : decision === 'BLOCKED' ? 'waiting' as const : 'walking' as const,
+            intent: l.intent || '',
+            reputation: decision === 'ALLOWED' ? 85 : 40,
+          };
+        });
 
   const inputStyle = (editable: boolean) => ({
     background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.08)', color: '#fff', opacity: editable ? 1 : 0.6,
@@ -308,9 +321,38 @@ export default function Dashboard() {
             <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-500 mb-2">Source Chain</p>
             <DonutChart size={100} segments={[
               { label: 'Solana', value: stats.total, color: '#9945FF' },
-            ]} />
+             ]} />
           </div>
         </div>
+
+        {/* Registered Agents */}
+        {trackedAgents.length > 0 && (
+          <div className="max-w-7xl mx-auto mb-4 rounded-xl p-4" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex items-center justify-between mb-3">
+              <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-500">Registered Agents ({trackedAgents.length})</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {trackedAgents.map((agent) => {
+                const scorePct = Math.min(agent.reputation_score / 100, 1);
+                const scoreColor = scorePct > 0.7 ? '#22c55e' : scorePct > 0.4 ? '#f59e0b' : '#ef4444';
+                return (
+                  <button
+                    key={agent.did}
+                    onClick={() => navigate(`/agents/${encodeURIComponent(agent.did)}`)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors hover:opacity-80"
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', minWidth: 200 }}
+                  >
+                    <div className="w-2 h-2 rounded-full shrink-0" style={{ background: scoreColor }} />
+                    <div className="min-w-0">
+                      <p className="font-mono text-[11px] text-zinc-200 truncate">{agent.name}</p>
+                      <p className="font-mono text-[8px] text-zinc-600 truncate">{agent.did.split(':').pop()?.slice(0, 12)}...</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Row 4: Data Tables */}
         <div className="max-w-7xl mx-auto mb-6">

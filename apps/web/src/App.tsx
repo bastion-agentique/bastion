@@ -15,6 +15,7 @@ import { ChainProvider } from './context/ChainContext';
 import { EvmProviderErrorBoundary } from './components/EvmProviderErrorBoundary';
 import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
+import AgentDetail from './pages/AgentDetail';
 import Integrate from './pages/integrate/Integrate';
 import '@solana/wallet-adapter-react-ui/styles.css';
 import '@rainbow-me/rainbowkit/styles.css';
@@ -124,6 +125,7 @@ function AppRoutes() {
                     <Route path="/"          element={<Landing />} />
                     <Route path="/integrate"  element={<Integrate />} />
                     <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/agents/:did" element={<AgentDetail />} />
                     <Route path="*"          element={<Navigate to="/" replace />} />
                   </Routes>
                 </RainbowKitProvider>

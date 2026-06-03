@@ -208,6 +208,11 @@ export class BastionClient {
     return address;
   }
 
+  getAgentDID(authority: PublicKey): string {
+    const agentPda = this.getAgentAddress(authority);
+    return `did:bastion:solana:${agentPda.toBase58()}`;
+  }
+
   getPolicyAddress(): PublicKey {
     const [address] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from(POLICY_SEED)],
@@ -224,6 +229,20 @@ export class BastionClient {
   async fetchAgent(authority: PublicKey): Promise<any> {
     const address = this.getAgentAddress(authority);
     return this.program.account.agent.fetch(address);
+  }
+
+  async fetchAllAgents(): Promise<any[]> {
+    return this.program.account.agent.all();
+  }
+
+  getAuditEntryAddress(index: number): PublicKey {
+    const buf = Buffer.alloc(8);
+    buf.writeBigUInt64LE(BigInt(index));
+    const [address] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(AUDIT_SEED), buf],
+      this.program.programId
+    );
+    return address;
   }
 
   async fetchPolicy(): Promise<any> {

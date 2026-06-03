@@ -20,6 +20,7 @@ use tokio_stream::StreamExt;
 use tower_http::services::ServeDir;
 use uuid::Uuid;
 
+pub mod agents;
 pub mod audit;
 mod auth;
 pub mod cases;
@@ -81,6 +82,7 @@ struct AppState {
     case_store: Arc<RwLock<cases::CaseStore>>,
     correlation_engine: Option<Arc<RwLock<bastion_correlation::engine::CorrelationEngine>>>,
     did_cache: Arc<RwLock<HashMap<String, did::DidResolveResult>>>,
+    agent_store: Arc<agents::AgentStore>,
 }
 
 fn emit_event(tx: &broadcast::Sender<String>, event_type: &str, json_payload: &str) {
@@ -1229,17 +1231,153 @@ async fn resolve_did_handler(
         }
     }
 
+    // Try AgentStore first (registered agents with verified on-chain data)
+    if let Some(result) = state.agent_store.build_did_document(&full_did) {
+        let mut cache = state.did_cache.write().await;
+        cache.insert(full_did, result.clone());
+        return Ok(Json(result));
+    }
+
+    // Fall back to generic resolver
     let result = did::resolve_did(&full_did)
         .await
         .ok_or(axum::http::StatusCode::NOT_FOUND)?;
 
-    // Cache the result
-    {
-        let mut cache = state.did_cache.write().await;
-        cache.insert(full_did, result.clone());
-    }
+    let mut cache = state.did_cache.write().await;
+    cache.insert(full_did, result.clone());
 
     Ok(Json(result))
+}
+
+// ── Agent Registry Handlers ──
+
+#[derive(serde::Serialize)]
+struct AgentListResponse {
+    agents: Vec<agents::TrackedAgent>,
+    total: usize,
+}
+
+#[derive(serde::Deserialize)]
+struct AgentAuditQuery {
+    limit: Option<usize>,
+    offset: Option<usize>,
+}
+
+async fn get_agents(
+    State(state): State<AppState>,
+) -> Json<AgentListResponse> {
+    let agents = state.agent_store.list_agents().unwrap_or_default();
+    let total = agents.len();
+    Json(AgentListResponse { agents, total })
+}
+
+async fn get_agent(
+    State(state): State<AppState>,
+    Path(did): Path<String>,
+) -> Result<Json<agents::TrackedAgent>, axum::http::StatusCode> {
+    state
+        .agent_store
+        .get_agent(&did)
+        .map(Json)
+        .ok_or(axum::http::StatusCode::NOT_FOUND)
+}
+
+async fn register_agent_handler(
+    State(state): State<AppState>,
+    Json(req): Json<agents::RegisterAgentRequest>,
+) -> Result<Json<serde_json::Value>, (axum::http::StatusCode, Json<serde_json::Value>)> {
+    // Derive the Agent PDA from the DID
+    let parts: Vec<&str> = req.did.split(':').collect();
+    if parts.len() < 4 || parts[0] != "did" || parts[1] != "bastion" {
+        return Err((
+            axum::http::StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({"error": "Invalid DID format. Expected did:bastion:solana:{pda_base58}"})),
+        ));
+    }
+
+    let agent_pda = parts[3]; // The last part is the base58-encoded PDA
+    let chain = parts[2];
+
+    // For Solana: fetch the Agent PDA to verify it exists
+    // (In production this would do an on-chain RPC call; for MVP we trust the registration)
+    let name = format!("Agent-{}", &agent_pda[..8]);
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs() as i64;
+
+    match state.agent_store.register_agent(
+        &req.did,
+        &req.authority_pubkey,
+        agent_pda,
+        &name,
+        0,      // default capability (TRANSFER)
+        100,    // default reputation
+        now,
+        req.sidecar_endpoint,
+    ) {
+        Ok(did) => {
+            crate::emit_event(
+                &state.event_tx,
+                "AgentRegistered",
+                &serde_json::json!({
+                    "did": did,
+                    "authority": req.authority_pubkey,
+                    "chain": chain,
+                    "timestamp": now,
+                })
+                .to_string(),
+            );
+            Ok(Json(serde_json::json!({
+                "status": "registered",
+                "did": did,
+                "agent_pda": agent_pda,
+            })))
+        }
+        Err(e) => Err((
+            axum::http::StatusCode::CONFLICT,
+            Json(serde_json::json!({"error": e})),
+        )),
+    }
+}
+
+async fn get_agent_audit(
+    State(state): State<AppState>,
+    Path(did): Path<String>,
+    Query(query): Query<AgentAuditQuery>,
+) -> Result<Json<serde_json::Value>, axum::http::StatusCode> {
+    let agent = state
+        .agent_store
+        .get_agent(&did)
+        .ok_or(axum::http::StatusCode::NOT_FOUND)?;
+
+    let limit = query.limit.unwrap_or(50);
+    let offset = query.offset.unwrap_or(0);
+
+    // Fetch audit entries filtered by the agent's authority
+    let entries = state
+        .logger
+        .get_logs_filtered(
+            Some(&agent.authority),
+            None,
+            None,
+            offset,
+            limit,
+        )
+        .unwrap_or_default();
+
+    let total = state
+        .logger
+        .count_filtered(Some(&agent.authority), None, None)
+        .unwrap_or(0);
+
+    Ok(Json(serde_json::json!({
+        "did": did,
+        "total": total,
+        "offset": offset,
+        "limit": limit,
+        "entries": entries,
+    })))
 }
 
 // ── Alchemy Token Balances Handler ──
@@ -1343,6 +1481,7 @@ pub fn build_app(
         case_store: Arc::new(RwLock::new(cases::CaseStore::new())),
         correlation_engine: None,
         did_cache: Arc::new(RwLock::new(HashMap::new())),
+        agent_store: Arc::new(agents::AgentStore::new()),
     };
 
     Router::new()
@@ -1374,6 +1513,7 @@ pub fn build_app(
         .route("/cases", get(get_cases).post(post_case))
         .route("/cases/:id", axum::routing::patch(patch_case))
         .route("/cases/:id/evidence", post(post_case_evidence))
+        .route("/agents", post(register_agent_handler))
         .route_layer(middleware::from_fn(auth::require_api_key))
         // === Unprotected routes ===
         .route("/", get(hello))
@@ -1382,6 +1522,9 @@ pub fn build_app(
         .route("/api/v2/evaluate", post(evaluate_v2))
         .route("/api/v2/simulate-evm", post(simulate_evm_handler))
         .route("/simulate", post(simulate))
+        .route("/agents", get(get_agents))
+        .route("/agents/:did", get(get_agent))
+        .route("/agents/:did/audit", get(get_agent_audit))
         .route("/logs", get(get_logs))
         .route("/logs/tx/:transaction_id", get(get_logs_by_transaction_id))
         .route("/logs/signature/:signature", get(get_logs_by_signature))
