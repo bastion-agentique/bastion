@@ -2,7 +2,11 @@ use axum::{
     Json, Router,
     extract::{Path, Query, State},
     http::StatusCode,
-    response::{IntoResponse, sse::{Event, KeepAlive, Sse}},
+    middleware,
+    response::{
+        IntoResponse,
+        sse::{Event, KeepAlive, Sse},
+    },
     routing::{get, post},
 };
 use base64::Engine as _;
@@ -17,6 +21,7 @@ use tower_http::services::ServeDir;
 use uuid::Uuid;
 
 pub mod audit;
+mod auth;
 pub mod cases;
 pub mod core_adapter;
 pub mod did;
@@ -40,9 +45,7 @@ use policy::{
 };
 use program_client::OnChainClient;
 use simulation::{Simulate, SimulationResult};
-use simulation_evm::{
-    CeloSimulator, EvmSimulate, EvmSimulateRequest, EvmSimulateResponse,
-};
+use simulation_evm::{CeloSimulator, EvmSimulate, EvmSimulateRequest, EvmSimulateResponse};
 
 #[derive(Clone, serde::Serialize)]
 struct PendingApproval {
@@ -543,14 +546,19 @@ async fn simulate(
                 intent.clone(),
                 Some(tx_details.clone()),
             )
-    };
-    let _ = state.logger.log(entry);
+        };
+        let _ = state.logger.log(entry);
 
-    emit_event(&state.event_tx, "AuditRecorded", &serde_json::json!({
-        "decision": "Allowed",
-        "reason": "All policy and simulation checks passed",
-        "timestamp": current_timestamp()
-    }).to_string());
+        emit_event(
+            &state.event_tx,
+            "AuditRecorded",
+            &serde_json::json!({
+                "decision": "Allowed",
+                "reason": "All policy and simulation checks passed",
+                "timestamp": current_timestamp()
+            })
+            .to_string(),
+        );
 
         return (
             StatusCode::FORBIDDEN,
@@ -913,6 +921,18 @@ async fn engage_circuit_breaker(State(state): State<AppState>) -> Json<CircuitBr
             }
         });
     }
+    let _ = state.logger.log(AuditEntry {
+        timestamp: current_timestamp(),
+        transaction_id: None,
+        transaction_signature: None,
+        decision: Decision::Blocked("circuit_breaker_engaged".into()),
+        simulation_result: None,
+        intent: None,
+        result: AuditResult::Blocked,
+        reasoning: "Circuit breaker engaged — all transactions paused".into(),
+        simulation_logs: vec![],
+        transaction_details: None,
+    });
     Json(CircuitBreakerStatus { engaged: true })
 }
 
@@ -930,6 +950,18 @@ async fn disengage_circuit_breaker(State(state): State<AppState>) -> Json<Circui
             }
         });
     }
+    let _ = state.logger.log(AuditEntry {
+        timestamp: current_timestamp(),
+        transaction_id: None,
+        transaction_signature: None,
+        decision: Decision::Allowed,
+        simulation_result: None,
+        intent: None,
+        result: AuditResult::Allowed,
+        reasoning: "Circuit breaker disengaged — transactions resumed".into(),
+        simulation_logs: vec![],
+        transaction_details: None,
+    });
     Json(CircuitBreakerStatus { engaged: false })
 }
 
@@ -948,10 +980,11 @@ async fn events_handler(
 }
 
 fn parse_sse_message(msg: &str) -> (&str, &str) {
-    if let Some(rest) = msg.strip_prefix("event: ") {
-        if let Some((event, data)) = rest.split_once("\ndata: ") {
-            return (event, data);
-        }
+    if let Some((event, data)) = msg
+        .strip_prefix("event: ")
+        .and_then(|rest| rest.split_once("\ndata: "))
+    {
+        return (event, data);
     }
     ("message", msg)
 }
@@ -1023,10 +1056,17 @@ async fn simulate_evm_handler(
     let decision = if has_error { "blocked" } else { "passed" };
 
     let transaction_id = agent_id.as_deref().map(|id| {
-        hash_transaction_payload(&format!("{}:{}:{}:{}",
-            id, req.transaction.from, req.transaction.to,
-            simulation_result.simulation_hash.unwrap_or([0u8; 32]).iter()
-                .map(|b| format!("{:02x}", b)).collect::<String>()
+        hash_transaction_payload(&format!(
+            "{}:{}:{}:{}",
+            id,
+            req.transaction.from,
+            req.transaction.to,
+            simulation_result
+                .simulation_hash
+                .unwrap_or([0u8; 32])
+                .iter()
+                .map(|b| format!("{:02x}", b))
+                .collect::<String>()
         ))
     });
 
@@ -1038,7 +1078,11 @@ async fn simulate_evm_handler(
             } else {
                 Decision::Allowed
             },
-            if has_error { AuditResult::Blocked } else { AuditResult::Allowed },
+            if has_error {
+                AuditResult::Blocked
+            } else {
+                AuditResult::Allowed
+            },
             format!("EVM simulation on chain={chain}, agent={agent_id:?}, intent={intent:?}"),
             Some(simulation_result.clone()),
             intent.clone(),
@@ -1058,7 +1102,8 @@ async fn simulate_evm_handler(
         simulation_result: Some(simulation_result),
         risk_score: None,
         risk_summary: None,
-    }).into_response()
+    })
+    .into_response()
 }
 
 // ── Case Management Handlers ──
@@ -1208,7 +1253,10 @@ async fn get_token_balances(
     State(state): State<AppState>,
     Query(q): Query<TokenBalancesQuery>,
 ) -> Result<Json<serde_json::Value>, StatusCode> {
-    let sim = state.alchemy_sim.as_ref().ok_or(StatusCode::SERVICE_UNAVAILABLE)?;
+    let sim = state
+        .alchemy_sim
+        .as_ref()
+        .ok_or(StatusCode::SERVICE_UNAVAILABLE)?;
     sim.fetch_token_balances(&q.address)
         .map(Json)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
@@ -1226,6 +1274,7 @@ struct SseAgentEvent {
     simulation_hash: Option<String>,
 }
 
+#[allow(dead_code)]
 async fn sse_events_handler(
     State(state): State<AppState>,
 ) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
@@ -1268,6 +1317,18 @@ pub fn build_app(
     alchemy_sim: Option<Arc<crate::simulation::AlchemySimulator>>,
 ) -> Router {
     let (event_tx, _) = broadcast::channel(256);
+
+    // Periodic audit log flush (every 10 seconds)
+    let flush_logger = logger.clone();
+    tokio::spawn(async move {
+        loop {
+            tokio::time::sleep(Duration::from_secs(10)).await;
+            if let Err(e) = flush_logger.flush() {
+                eprintln!("[bastion] audit log flush failed: {e}");
+            }
+        }
+    });
+
     let app_state = AppState {
         policy_engine: Arc::new(RwLock::new(PolicyEngine::new(policy))),
         simulator,
@@ -1285,33 +1346,11 @@ pub fn build_app(
     };
 
     Router::new()
-        .route("/", get(hello))
-        .route("/health", get(health))
-        .route("/events", get(sse_events_handler))
-        .route("/api/v2/evaluate", post(evaluate_v2))
-        .route("/api/v2/simulate-evm", post(simulate_evm_handler))
-        .route("/events", get(events_handler))
-        .route("/simulate", post(simulate))
-        // Audit log endpoints
-        .route("/logs", get(get_logs))
-        .route("/logs/tx/:transaction_id", get(get_logs_by_transaction_id))
-        .route("/logs/signature/:signature", get(get_logs_by_signature))
-        .route("/audit/logs", get(get_logs))
-        .route(
-            "/audit/logs/tx/:transaction_id",
-            get(get_logs_by_transaction_id),
-        )
-        .route(
-            "/audit/logs/signature/:signature",
-            get(get_logs_by_signature),
-        )
+        // === Protected routes (auth required) ===
         .route("/audit/stats", get(get_audit_stats))
         .route("/audit/logs/clear", post(clear_audit_logs))
         .route("/audit/logs/:id", axum::routing::delete(delete_audit_log))
-        // Pending approvals & override
-        .route("/pending", get(get_pending))
         .route("/override", post(override_block))
-        // Policy endpoints
         .route(
             "/policy",
             get(get_policy).post(update_policy).put(update_policy),
@@ -1325,23 +1364,39 @@ pub fn build_app(
             post(update_full_policy).put(update_full_policy),
         )
         .route("/policy/export", get(export_policy_toml))
-        // Circuit breaker
         .route("/circuit-breaker/status", get(get_circuit_breaker_status))
         .route("/circuit-breaker/engage", post(engage_circuit_breaker))
         .route(
             "/circuit-breaker/disengage",
             post(disengage_circuit_breaker),
         )
-        // SIEM universal ingestion
         .route("/ingest", post(ingestion::ingest_event))
-        // Case management
         .route("/cases", get(get_cases).post(post_case))
         .route("/cases/:id", axum::routing::patch(patch_case))
         .route("/cases/:id/evidence", post(post_case_evidence))
-        // W3C DID resolution
+        .route_layer(middleware::from_fn(auth::require_api_key))
+        // === Unprotected routes ===
+        .route("/", get(hello))
+        .route("/health", get(health))
+        .route("/events", get(events_handler))
+        .route("/api/v2/evaluate", post(evaluate_v2))
+        .route("/api/v2/simulate-evm", post(simulate_evm_handler))
+        .route("/simulate", post(simulate))
+        .route("/logs", get(get_logs))
+        .route("/logs/tx/:transaction_id", get(get_logs_by_transaction_id))
+        .route("/logs/signature/:signature", get(get_logs_by_signature))
+        .route("/audit/logs", get(get_logs))
+        .route(
+            "/audit/logs/tx/:transaction_id",
+            get(get_logs_by_transaction_id),
+        )
+        .route(
+            "/audit/logs/signature/:signature",
+            get(get_logs_by_signature),
+        )
+        .route("/pending", get(get_pending))
         .route("/did/resolve/:did", get(resolve_did_handler))
         .route("/token-balances", get(get_token_balances))
-        // Static dashboard
         .nest_service("/dashboard", ServeDir::new("static"))
         .with_state(app_state)
 }

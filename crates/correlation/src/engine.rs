@@ -93,9 +93,10 @@ impl CorrelationEngine {
         // Check if the most recent event matches the then_condition (trigger)
         let trigger = events.last().unwrap();
         if !rule.then_condition.is_empty() {
-            let trigger_matches = rule.then_condition.iter().all(|cond| {
-                matches_condition(trigger, cond)
-            });
+            let trigger_matches = rule
+                .then_condition
+                .iter()
+                .all(|cond| matches_condition(trigger, cond));
             if !trigger_matches {
                 return None;
             }
@@ -112,7 +113,10 @@ impl CorrelationEngine {
                 break;
             }
 
-            let all_match = rule.conditions.iter().all(|cond| matches_condition(event, cond));
+            let all_match = rule
+                .conditions
+                .iter()
+                .all(|cond| matches_condition(event, cond));
             if all_match {
                 matching_event_ids.push(event.id.clone());
             }

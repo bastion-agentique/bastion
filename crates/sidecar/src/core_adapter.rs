@@ -45,7 +45,7 @@ fn normalize_request(req: &EvaluateRequest) -> NormalizedTransaction {
         Some("arbitrum") => Chain::Arbitrum,
         Some("celo") => Chain::Celo,
         Some("midnight") => Chain::Midnight,
-        Some("solana") | _ => Chain::Solana,
+        _ => Chain::Solana,
     };
 
     let tx_type = match req.tx_type.as_deref() {
@@ -87,10 +87,7 @@ pub fn default_policy_set() -> PolicySet {
 /// Evaluate a transaction using the core policy engine.
 ///
 /// When `grond` is `Some`, the evaluator uses GrondOSINT as its risk oracle.
-pub async fn evaluate_core(
-    req: EvaluateRequest,
-    grond: Option<GrondOracle>,
-) -> EvaluateResponse {
+pub async fn evaluate_core(req: EvaluateRequest, grond: Option<GrondOracle>) -> EvaluateResponse {
     evaluate_core_with_policy(req, default_policy_set(), grond).await
 }
 

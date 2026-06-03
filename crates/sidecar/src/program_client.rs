@@ -200,8 +200,8 @@ impl OnChainClient {
             .decode(&value.data[0])
             .ok()?;
 
-        if bytes.len() >= 16 {
-            Some(u64::from_le_bytes(bytes[8..16].try_into().ok()?))
+        if bytes.len() >= 49 {
+            Some(u64::from_le_bytes(bytes[41..49].try_into().ok()?))
         } else {
             None
         }

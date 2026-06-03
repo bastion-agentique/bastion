@@ -59,11 +59,20 @@ export class BastionClient {
       this.program.programId
     );
 
+    const state = await this.program.account.auditState.fetch(auditState);
+    const totalAudits = state.totalAudits as anchor.BN;
+    const leBytes = Buffer.alloc(8);
+    leBytes.writeBigUInt64LE(BigInt(totalAudits.toString()));
+    const [auditEntry] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(AUDIT_SEED), leBytes],
+      this.program.programId
+    );
+
     const simulationResultArray = new Uint8Array(32);
     simulationResult.forEach((v, i) => simulationResultArray[i] = v);
 
-    const programIdArray = programId 
-      ? new Uint8Array(programId) 
+    const programIdArray = programId
+      ? new Uint8Array(programId)
       : null;
 
     return this.program.methods
@@ -75,6 +84,7 @@ export class BastionClient {
       )
       .accounts({
         auditState,
+        auditEntry,
         signer: signer.publicKey,
         systemProgram: anchor.web3.SystemProgram.programId,
       })

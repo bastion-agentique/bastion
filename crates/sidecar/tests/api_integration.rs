@@ -118,6 +118,9 @@ fn test_policy(
         allowed_programs,
         blocked_addresses: vec![],
         simulation_checks_enabled,
+        helius_rpc_url: String::new(),
+        alchemy_api_key: String::new(),
+        alchemy_rpc_url: String::new(),
     }
 }
 
@@ -133,7 +136,15 @@ fn test_app_with_result_and_policy(
     });
 
     (
-        build_app(policy, simulator, logger, OnChainClient::disabled(), GrondOracle::disabled(), None),
+        build_app(
+            policy,
+            simulator,
+            logger,
+            OnChainClient::disabled(),
+            GrondOracle::disabled(),
+            None,
+            None,
+        ),
         tmp_dir,
     )
 }

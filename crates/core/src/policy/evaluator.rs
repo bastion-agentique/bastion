@@ -13,8 +13,8 @@ use std::time::{Duration, Instant};
 struct RateLimitState {
     /// Timestamps of recent transactions for frequency tracking.
     recent_txs: Vec<Instant>,
-    /// Cumulative 24h volume per currency.
-    volume_24h: HashMap<String, u64>,
+    /// Cumulative 24h volume per currency with window start time.
+    volume_24h: HashMap<String, (u64, Instant)>,
 }
 
 /// Core policy evaluator — evaluates a normalized transaction against a policy set.
@@ -105,6 +105,10 @@ impl<O: RiskOracle> PolicyEvaluator<O> {
         max_per_24h: Option<u64>,
         currency: &str,
     ) -> FirewallDecision {
+        if tx.currency != currency {
+            return FirewallDecision::Pass;
+        }
+
         if tx.amount > max_per_tx {
             return FirewallDecision::Block {
                 reason: format!(
@@ -117,14 +121,25 @@ impl<O: RiskOracle> PolicyEvaluator<O> {
 
         if let Some(limit_24h) = max_per_24h {
             let mut state = self.rate_state.lock().unwrap();
-            let total = state.volume_24h.entry(currency.to_string()).or_insert(0);
-            *total += tx.amount;
+            let now = Instant::now();
+            let window = Duration::from_secs(86400);
 
-            if *total > limit_24h {
+            let entry = state
+                .volume_24h
+                .entry(currency.to_string())
+                .or_insert((0, now));
+
+            if now.duration_since(entry.1) >= window {
+                *entry = (0, now);
+            }
+
+            entry.0 += tx.amount;
+
+            if entry.0 > limit_24h {
                 return FirewallDecision::Block {
                     reason: format!(
                         "24h volume {} {} exceeds limit {} {}",
-                        total, tx.currency, limit_24h, currency
+                        entry.0, tx.currency, limit_24h, currency
                     ),
                     policy_id: None,
                 };
@@ -224,8 +239,10 @@ impl<O: RiskOracle> PolicyEvaluator<O> {
                 },
             }
         } else {
-            // No oracle configured — allow through
-            FirewallDecision::Pass
+            FirewallDecision::Block {
+                reason: "Reputation rule configured but no risk oracle available".into(),
+                policy_id: None,
+            }
         }
     }
 

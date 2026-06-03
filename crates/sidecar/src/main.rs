@@ -22,8 +22,7 @@ async fn main() {
     let config_text = fs::read_to_string("config.toml").expect("read config.toml");
     let policy: Policy = toml::from_str(&config_text).expect("parse config.toml");
     let simulator: Arc<dyn Simulate + Send + Sync> = Arc::new(
-        HeliusSimulator::with_rpc_url(&policy.helius_rpc_url)
-            .expect("create Helius simulator"),
+        HeliusSimulator::with_rpc_url(&policy.helius_rpc_url).expect("create Helius simulator"),
     );
 
     let alchemy_sim = if !policy.alchemy_api_key.is_empty() {
@@ -78,7 +77,15 @@ async fn main() {
         }
     };
 
-    let app = build_app(policy, simulator, logger, on_chain, grond_oracle, celo_sim, alchemy_sim);
+    let app = build_app(
+        policy,
+        simulator,
+        logger,
+        on_chain,
+        grond_oracle,
+        celo_sim,
+        alchemy_sim,
+    );
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
         .await

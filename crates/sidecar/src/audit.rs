@@ -137,10 +137,13 @@ impl AuditLogger {
             .insert(key, value)
             .map_err(|e| anyhow!("Failed to insert into sled: {}", e))?;
 
+        Ok(())
+    }
+
+    pub fn flush(&self) -> Result<()> {
         self.db
             .flush()
             .map_err(|e| anyhow!("Failed to flush sled: {}", e))?;
-
         Ok(())
     }
 

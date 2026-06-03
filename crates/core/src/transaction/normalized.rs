@@ -13,6 +13,10 @@ impl Address {
     pub fn as_str(&self) -> &str {
         &self.0
     }
+
+    pub fn is_valid(&self) -> bool {
+        !self.0.is_empty()
+    }
 }
 
 impl std::fmt::Display for Address {

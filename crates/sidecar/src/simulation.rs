@@ -218,7 +218,6 @@ impl Simulate for HeliusSimulator {
 }
 
 pub struct AlchemySimulator {
-    api_key: String,
     client: Client,
     rpc_url: String,
 }
@@ -231,7 +230,6 @@ impl AlchemySimulator {
             format!("{}{}", rpc_url, api_key)
         };
         Ok(Self {
-            api_key,
             client: Client::new(),
             rpc_url: full_url,
         })
@@ -268,9 +266,8 @@ impl AlchemySimulator {
 
 impl Simulate for AlchemySimulator {
     fn simulate_transaction(&self, tx: &Transaction) -> Result<SimulationResult> {
-        let encoded = base64::engine::general_purpose::STANDARD.encode(
-            bincode::serialize(tx).map_err(|e| anyhow!("Alchemy bincode: {e}"))?,
-        );
+        let encoded = base64::engine::general_purpose::STANDARD
+            .encode(bincode::serialize(tx).map_err(|e| anyhow!("Alchemy bincode: {e}"))?);
 
         let body = serde_json::json!({
             "jsonrpc": "2.0",
@@ -305,7 +302,11 @@ impl Simulate for AlchemySimulator {
         let result = &json["result"]["value"];
         let logs: Vec<String> = result["logs"]
             .as_array()
-            .map(|a| a.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+            .map(|a| {
+                a.iter()
+                    .filter_map(|v| v.as_str().map(String::from))
+                    .collect()
+            })
             .unwrap_or_default();
 
         let units = result["unitsConsumed"].as_u64();
@@ -314,7 +315,9 @@ impl Simulate for AlchemySimulator {
             logs,
             units_consumed: units,
             return_data: None,
-            error: result.get("err").and_then(|v| if v.is_null() { None } else { Some(v.clone()) }),
+            error: result
+                .get("err")
+                .and_then(|v| if v.is_null() { None } else { Some(v.clone()) }),
             balance_changes: HashMap::new(),
             simulation_hash: None,
         })

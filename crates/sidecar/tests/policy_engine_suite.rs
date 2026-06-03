@@ -87,6 +87,9 @@ fn policy_with_allowed(program_ids: &[Pubkey]) -> Policy {
         allowed_programs: program_ids.iter().map(Pubkey::to_string).collect(),
         blocked_addresses: vec![],
         simulation_checks_enabled: true,
+        helius_rpc_url: String::new(),
+        alchemy_api_key: String::new(),
+        alchemy_rpc_url: String::new(),
     }
 }
 
@@ -239,6 +242,9 @@ fn blocks_transactions_when_rate_limit_is_exceeded() {
         allowed_programs: vec![transfer_id.to_string()],
         blocked_addresses: vec![],
         simulation_checks_enabled: true,
+        helius_rpc_url: String::new(),
+        alchemy_api_key: String::new(),
+        alchemy_rpc_url: String::new(),
     });
     let transfer_tx = system_transfer_transaction();
 

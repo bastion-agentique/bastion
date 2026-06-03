@@ -2,7 +2,7 @@
 /// Detects known injection markers in user-supplied strings
 /// (agent intent, policy reasoning, audit descriptions) before
 /// they reach the policy engine or are stored in the audit log.
-
+///
 /// Known prompt injection markers. Extend this list as new patterns emerge.
 const INJECTION_PATTERNS: &[&str] = &[
     "ignore previous instructions",
@@ -79,10 +79,7 @@ pub fn check_prompt_safety(input: &str) -> SafetyResult {
     // Check maximum length
     if input.len() > MAX_INPUT_LENGTH {
         return SafetyResult::Unsafe {
-            reason: format!(
-                "Input exceeds maximum length of {} bytes",
-                MAX_INPUT_LENGTH
-            ),
+            reason: format!("Input exceeds maximum length of {} bytes", MAX_INPUT_LENGTH),
         };
     }
 
@@ -90,7 +87,7 @@ pub fn check_prompt_safety(input: &str) -> SafetyResult {
 
     // Check injection patterns
     for pattern in INJECTION_PATTERNS {
-        if lower.contains(pattern) {
+        if lower.contains(&pattern.to_lowercase()) {
             return SafetyResult::Unsafe {
                 reason: format!("Input matches blocked injection pattern: '{pattern}'"),
             };
@@ -114,9 +111,7 @@ pub fn check_prompt_safety(input: &str) -> SafetyResult {
 
     if control_count > 10 {
         return SafetyResult::Unsafe {
-            reason: format!(
-                "Input contains {control_count} control characters (max 10 allowed)"
-            ),
+            reason: format!("Input contains {control_count} control characters (max 10 allowed)"),
         };
     }
 

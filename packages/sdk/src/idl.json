@@ -91,7 +91,6 @@
       "type": {
         "kind": "struct",
         "fields": [
-          { "name": "owner", "type": "publicKey" },
           { "name": "authority", "type": "publicKey" },
           { "name": "bump", "type": "u8" },
           { "name": "totalAudits", "type": "u64" },
@@ -179,6 +178,7 @@
     { "code": 100, "name": "InvalidReputation", "msg": "Invalid reputation score" },
     { "code": 101, "name": "NotPaused", "msg": "Protocol is not paused" },
     { "code": 102, "name": "IsPaused", "msg": "Protocol is paused" },
-    { "code": 103, "name": "Unauthorized", "msg": "Unauthorized" }
+    { "code": 103, "name": "AlreadyPaused", "msg": "Protocol is already paused" },
+    { "code": 104, "name": "Unauthorized", "msg": "Unauthorized" }
   ]
 }

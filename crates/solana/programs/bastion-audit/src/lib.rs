@@ -5,13 +5,16 @@ declare_id!("BaSZuLcwjfh75T3TjbVYpTH4qpJt1tNoZ3S6PTkvNhCb");
 pub const AUDIT_SEED: &str = "bastion_audit";
 pub const AGENT_SEED: &str = "bastion_agent";
 
+const MAX_REASONING_LEN: usize = 256;
+const MAX_NAME_LEN: usize = 64;
+const MAX_ALLOWED_PROGRAMS: usize = 50;
+
 #[program]
 pub mod bastion_audit {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         let audit_state = &mut ctx.accounts.audit_state;
-        audit_state.owner = ctx.accounts.authority.key();
         audit_state.authority = ctx.accounts.authority.key();
         audit_state.bump = ctx.bumps.audit_state;
         audit_state.total_audits = 0;
@@ -75,7 +78,10 @@ pub mod bastion_audit {
     pub fn update_agent_reputation(ctx: Context<UpdateReputation>, delta: i64) -> Result<()> {
         let agent = &mut ctx.accounts.agent;
 
-        let new_score = agent.reputation_score as i64 + delta;
+        let new_score = i64::try_from(agent.reputation_score)
+            .map_err(|_| BastionError::InvalidReputation)?
+            .checked_add(delta)
+            .ok_or(BastionError::InvalidReputation)?;
         require!(new_score >= 0, BastionError::InvalidReputation);
 
         agent.reputation_score = new_score as u64;
@@ -106,6 +112,8 @@ pub mod bastion_audit {
 
     pub fn emergency_pause(ctx: Context<EmergencyPause>) -> Result<()> {
         let audit_state = &mut ctx.accounts.audit_state;
+        require!(!audit_state.paused, BastionError::AlreadyPaused);
+
         audit_state.paused = true;
         audit_state.paused_at = Clock::get()?.unix_timestamp;
 
@@ -156,13 +164,15 @@ pub struct LogAudit<'info> {
         ],
         bump,
         payer = signer,
-        space = 8 + std::mem::size_of::<AuditEntry>()
+        space = 8 + 32 + 8 + 1 + 32 + 4 + MAX_REASONING_LEN + 1 + 32 + 1
     )]
     pub audit_entry: Account<'info, AuditEntry>,
     #[account(
         mut,
         seeds = [AUDIT_SEED.as_bytes()],
-        bump = audit_state.bump
+        bump = audit_state.bump,
+        constraint = signer.key() == audit_state.authority @ BastionError::Unauthorized,
+        constraint = !audit_state.paused @ BastionError::IsPaused,
     )]
     pub audit_state: Account<'info, AuditState>,
     #[account(mut)]
@@ -177,7 +187,7 @@ pub struct RegisterAgent<'info> {
         seeds = [AGENT_SEED.as_bytes(), signer.key().as_ref()],
         bump,
         payer = signer,
-        space = 8 + std::mem::size_of::<Agent>()
+        space = 8 + 32 + 4 + MAX_NAME_LEN + 8 + 8 + 1
     )]
     pub agent: Account<'info, Agent>,
     #[account(mut)]
@@ -190,7 +200,8 @@ pub struct UpdateReputation<'info> {
     #[account(
         mut,
         seeds = [AGENT_SEED.as_bytes(), agent.authority.as_ref()],
-        bump = agent.bump
+        bump = agent.bump,
+        constraint = signer.key() == agent.authority @ BastionError::Unauthorized,
     )]
     pub agent: Account<'info, Agent>,
     pub signer: Signer<'info>,
@@ -203,7 +214,8 @@ pub struct SetPolicy<'info> {
         seeds = [b"bastion_policy".as_ref()],
         bump,
         payer = signer,
-        space = 8 + std::mem::size_of::<Policy>()
+        space = 8 + 32 + 4 + (MAX_ALLOWED_PROGRAMS * 32) + 8 + 4 + 1,
+        constraint = policy.authority == Pubkey::default() || signer.key() == policy.authority @ BastionError::Unauthorized,
     )]
     pub policy: Account<'info, Policy>,
     #[account(mut)]
@@ -238,7 +250,6 @@ pub struct EmergencyResume<'info> {
 #[account]
 #[derive(Debug)]
 pub struct AuditState {
-    pub owner: Pubkey,
     pub authority: Pubkey,
     pub bump: u8,
     pub total_audits: u64,
@@ -313,6 +324,8 @@ pub enum BastionError {
     NotPaused,
     #[msg("Protocol is paused")]
     IsPaused,
+    #[msg("Protocol is already paused")]
+    AlreadyPaused,
     #[msg("Unauthorized")]
     Unauthorized,
 }

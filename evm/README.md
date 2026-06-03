@@ -1,8 +1,19 @@
 # Bastion EVM
 
+> **UNDER ACTIVE DEVELOPMENT — Not production-ready.**  
+> These contracts are in early-stage development. Bastion's primary deployment target is **Solana**.  
+> The EVM contracts have not undergone a formal audit and should not be deployed to mainnet with real funds.
+
+## Roadmap (in priority order)
+
+1. Complete test coverage for all contracts
+2. Formal security audit by a third-party firm
+3. Mainnet deployment on Base, Celo, Polygon
+4. Cross-chain agent identity via ERC-8004
+
 On-chain transaction firewall for autonomous AI agents on Ethereum. ERC-7579 compatible validator module. Policy engine with per-agent rules. Immutable audit trail with EIP-712 typed data.
 
-**Status:** v0.1.0 | Solidity 0.8.28 | Foundry | via-ir optimized
+**Status:** v0.1.0 | Solidity 0.8.28 | Foundry | via-ir optimized | **PRE-AUDIT**
 
 ## Architecture
 

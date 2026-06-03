@@ -179,9 +179,20 @@ fn build_test_app(
         allowed_programs: allowed,
         blocked_addresses: vec![],
         simulation_checks_enabled: sim_checks,
+        helius_rpc_url: String::new(),
+        alchemy_api_key: String::new(),
+        alchemy_rpc_url: String::new(),
     };
     (
-        build_app(policy, sim, logger, OnChainClient::disabled(), GrondOracle::disabled(), None),
+        build_app(
+            policy,
+            sim,
+            logger,
+            OnChainClient::disabled(),
+            GrondOracle::disabled(),
+            None,
+            None,
+        ),
         tmp,
     )
 }

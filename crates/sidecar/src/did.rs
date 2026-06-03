@@ -101,7 +101,8 @@ pub fn build_did_document(
                     "name": agent_name,
                     "capability_bitmask": capability_bitmask,
                     "reputation_score": reputation_score,
-                })).unwrap_or_default(),
+                }))
+                .unwrap_or_default(),
             },
         ],
     }
@@ -136,21 +137,17 @@ pub async fn resolve_did(did: &str) -> Option<DidResolveResult> {
                 ],
                 id: did.to_string(),
                 controller: vec![did.to_string()],
-                verification_method: vec![
-                    VerificationMethod {
-                        id: vm_id,
-                        kind: "JubjubVerificationKey2021".to_string(),
-                        controller: did.to_string(),
-                        public_key_base58: identifier.to_string(),
-                    },
-                ],
-                service: vec![
-                    ServiceEndpoint {
-                        id: format!("{did}#midnight-disclosure"),
-                        kind: "MidnightSelectiveDisclosure".to_string(),
-                        service_endpoint: "http://localhost:3000/midnight/disclose".to_string(),
-                    },
-                ],
+                verification_method: vec![VerificationMethod {
+                    id: vm_id,
+                    kind: "JubjubVerificationKey2021".to_string(),
+                    controller: did.to_string(),
+                    public_key_base58: identifier.to_string(),
+                }],
+                service: vec![ServiceEndpoint {
+                    id: format!("{did}#midnight-disclosure"),
+                    kind: "MidnightSelectiveDisclosure".to_string(),
+                    service_endpoint: "http://localhost:3000/midnight/disclose".to_string(),
+                }],
             }
         }
         _ => return None,

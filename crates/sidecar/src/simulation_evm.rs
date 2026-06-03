@@ -45,8 +45,8 @@ pub struct CeloSimulator {
 
 impl CeloSimulator {
     pub fn new() -> Result<Self> {
-        let rpc_url = env::var("CELO_RPC_URL")
-            .unwrap_or_else(|_| "https://forno.celo.org".to_string());
+        let rpc_url =
+            env::var("CELO_RPC_URL").unwrap_or_else(|_| "https://forno.celo.org".to_string());
         Ok(Self {
             client: Client::new(),
             rpc_url,
@@ -133,7 +133,10 @@ impl EvmSimulate for CeloSimulator {
                 "code": err.code,
                 "message": err.message.clone(),
             }));
-            sim_logs.push(format!("eth_call error: {} (code {})", err.message, err.code));
+            sim_logs.push(format!(
+                "eth_call error: {} (code {})",
+                err.message, err.code
+            ));
         }
 
         let post_from = self.fetch_balance(&tx.from).unwrap_or(pre_from);
@@ -168,6 +171,7 @@ impl EvmSimulate for CeloSimulator {
 #[derive(Debug, Deserialize)]
 struct RpcResponse<T> {
     result: Option<T>,
+    #[allow(dead_code)]
     error: Option<RpcErrorBody>,
 }
 

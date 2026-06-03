@@ -58,7 +58,7 @@ pub struct IngestResponse {
 ///
 /// The event is then written to the Sled audit log and routed to the
 /// correlation engine if configured.
-pub async fn ingest_event(
+pub(crate) async fn ingest_event(
     State(state): State<AppState>,
     Json(request): Json<IngestRequest>,
 ) -> Json<IngestResponse> {
@@ -91,7 +91,11 @@ pub async fn ingest_event(
             transaction_signature: None,
             decision: crate::audit::Decision::Allowed,
             simulation_result: None,
-            intent: Some(format!("[{}] {}", event.source, event.description.as_deref().unwrap_or("ingested event"))),
+            intent: Some(format!(
+                "[{}] {}",
+                event.source,
+                event.description.as_deref().unwrap_or("ingested event")
+            )),
             result: crate::audit::AuditResult::Allowed,
             reasoning: format!("Ingested from {}", event.source),
             simulation_logs: vec![],
@@ -99,7 +103,10 @@ pub async fn ingest_event(
                 request_payload_base64: None,
                 signature: None,
                 program_ids: vec![],
-                account_keys: vec![event.principal.clone().unwrap_or_default(), event.target.clone().unwrap_or_default()],
+                account_keys: vec![
+                    event.principal.clone().unwrap_or_default(),
+                    event.target.clone().unwrap_or_default(),
+                ],
             }),
         };
         let _ = logger.log(entry);
@@ -144,7 +151,11 @@ pub fn parse_cef(cef_string: &str) -> Option<SecurityEvent> {
         _ => "info",
     };
 
-    let source = format!("{}-{}", device_vendor.to_lowercase(), device_product.to_lowercase());
+    let source = format!(
+        "{}-{}",
+        device_vendor.to_lowercase(),
+        device_product.to_lowercase()
+    );
 
     Some(SecurityEvent {
         id: uuid::Uuid::new_v4().to_string(),
@@ -175,7 +186,11 @@ pub fn parse_cef(cef_string: &str) -> Option<SecurityEvent> {
 pub fn parse_cloudtrail_event(json: &serde_json::Value) -> Option<SecurityEvent> {
     let event_name = json.get("eventName")?.as_str()?;
     let event_source = json.get("eventSource")?.as_str()?;
-    let user_identity = json.get("userIdentity")?.get("arn")?.as_str().unwrap_or("unknown");
+    let user_identity = json
+        .get("userIdentity")?
+        .get("arn")?
+        .as_str()
+        .unwrap_or("unknown");
     let event_time = json.get("eventTime")?.as_str()?;
 
     let timestamp = chrono::DateTime::parse_from_rfc3339(event_time)
@@ -188,14 +203,20 @@ pub fn parse_cloudtrail_event(json: &serde_json::Value) -> Option<SecurityEvent>
         });
 
     Some(SecurityEvent {
-        id: json.get("eventID").and_then(|v| v.as_str()).map(|s| s.to_string())
+        id: json
+            .get("eventID")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string())
             .unwrap_or_else(|| uuid::Uuid::new_v4().to_string()),
         timestamp,
         source: format!("{}-{}", event_source, event_name.to_lowercase()),
         classification: "configuration".to_string(),
         description: Some(event_name.to_string()),
         principal: Some(user_identity.to_string()),
-        target: json.get("awsRegion").and_then(|v| v.as_str()).map(|s| s.to_string()),
+        target: json
+            .get("awsRegion")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string()),
         payload: json.clone(),
         value: None,
         success: None,

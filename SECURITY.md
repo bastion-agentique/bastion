@@ -8,7 +8,7 @@
 
 ## Reporting a Vulnerability
 
-If you find a security vulnerability, please report it to security@bastiondefend.com. We appreciate responsible disclosure.
+If you find a security vulnerability, please report it to hello@bastionagentique.com. We appreciate responsible disclosure.
 
 ## Known Issues
 

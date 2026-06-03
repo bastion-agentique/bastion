@@ -85,7 +85,10 @@ impl RiskOracle for GrondOracle {
                         "[grond] failed to parse risk response from {} for {}",
                         self.api_url, addr_str
                     );
-                    Ok(RiskScore::new(0))
+                    Err(RiskOracleError::ProviderError(format!(
+                        "grond: failed to parse risk response for {}",
+                        addr_str
+                    )))
                 }
             },
             Err(e) => {
@@ -93,7 +96,10 @@ impl RiskOracle for GrondOracle {
                     "[grond] risk check failed for {} ({}): {}",
                     self.api_url, addr_str, e
                 );
-                Ok(RiskScore::new(0))
+                Err(RiskOracleError::ProviderError(format!(
+                    "grond: risk check failed for {}: {}",
+                    addr_str, e
+                )))
             }
         }
     }

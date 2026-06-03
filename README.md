@@ -308,6 +308,12 @@ await client.setPolicy(wallet, [jupiterProgram], 5, 10);
 await client.emergencyPause(wallet);
 ```
 
+## EVM (Ethereum/Celo/Polygon/Base)
+
+> **UNDER ACTIVE DEVELOPMENT — Not production-ready.**  
+> The EVM contracts (`evm/`) are in early development. Bastion's primary deployment target is **Solana**.  
+> See [`evm/README.md`](evm/README.md) for current status and roadmap.
+
 ## Tech Stack
 
 | Component | Technology |
