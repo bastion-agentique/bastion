@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
@@ -132,6 +132,8 @@ export default function Dashboard() {
   const [dataSource, setDataSource] = useState<'network' | 'sidecar'>('network');
   const [onChainAgents, setOnChainAgents] = useState<any[]>([]);
   const [onChainAudits, setOnChainAudits] = useState<AuditEntryData[]>([]);
+  const [loadingAgents, setLoadingAgents] = useState(false);
+  const networkLastFetch = useRef(0);
   const [onChainStats, setOnChainStats] = useState<StatsData | null>(null);
 
   const [activeTab, setActiveTab] = useState<'overview' | 'logs' | 'policy' | 'cases'>('overview');
@@ -148,18 +150,26 @@ export default function Dashboard() {
   const [editingPolicy, setEditingPolicy] = useState(false);
   const [policyForm, setPolicyForm] = useState({ maxSolPerTx: 1, rateLimitPerMinute: 120, allowedProgramsText: '' });
 
-  const loadNetworkData = useCallback(async () => {
-    setLoading(true);
-    const [stats, agents, audits] = await Promise.all([
-      sol.fetchStats(),
-      sol.fetchAgents(),
-      sol.fetchAllAudits(50),
-    ]);
-    if (stats) { setStats(stats); setHistory((h) => [...h.slice(-29), stats.total]); }
-    if (agents) setOnChainAgents(agents);
-    if (audits) { setOnChainAudits(audits); setLogs(audits); }
-    setLoading(false);
-  }, [sol]);
+  const loadNetworkData = useCallback(async (force = false) => {
+    const now = Date.now();
+    if (!force && networkLastFetch.current > 0 && now - networkLastFetch.current < 60000 && onChainAgents.length > 0) {
+      return; // Cache hit — skip fetch if < 60s old
+    }
+    setLoadingAgents(true);
+    try {
+      const [stats, agents, audits] = await Promise.all([
+        sol.fetchStats(),
+        sol.fetchAgents(),
+        sol.fetchAllAudits(15), // Reduced: 15 instead of 50 for network view
+      ]);
+      if (stats) { setStats(stats); setHistory((h) => [...h.slice(-29), stats.total]); }
+      if (agents) { setOnChainAgents(agents); networkLastFetch.current = now; }
+      if (audits) { setOnChainAudits(audits); setLogs(audits); }
+    } finally {
+      setLoadingAgents(false);
+      setLoading(false);
+    }
+  }, [sol, onChainAgents]);
 
   const loadSidecarData = useCallback(async () => {
     setLoading(true);
@@ -195,9 +205,12 @@ export default function Dashboard() {
   useEffect(() => {
     if (!connected) { navigate('/'); return; }
     loadData();
-    const iv = setInterval(loadData, 30000);
+    // Network mode: refresh every 2 minutes (60s cache + 1 refresh) to avoid RPC spam
+    // Sidecar mode: refresh every 30 seconds (local, fast)
+    const interval = dataSource === 'network' ? 120000 : 30000;
+    const iv = setInterval(loadData, interval);
     return () => clearInterval(iv);
-  }, [connected, navigate, loadData]);
+  }, [connected, navigate, loadData, dataSource]);
 
   const handlePause = useCallback(async () => {
     if (chain !== 'solana') return;
@@ -227,8 +240,9 @@ export default function Dashboard() {
   const blockRate = stats.total > 0 ? (stats.blocked / stats.total * 100) : 0;
 
   // Build agent floor data from tracked agents (sidecar registry)
-  const agentEntities = dataSource === 'network' && onChainAgents.length > 0
-    ? onChainAgents.map((a: any, i: number) => ({
+  const agentEntities = useMemo(() => {
+    if (dataSource === 'network' && onChainAgents.length > 0) {
+      return onChainAgents.map((a: any, i: number) => ({
         id: a.did || `agent-${i}`,
         name: a.name?.slice(0, 12) || a.authority?.slice(0, 8) || `?`,
         x: (i * 3 + 2) % 24,
@@ -236,9 +250,10 @@ export default function Dashboard() {
         status: ((a.capabilityBitmask || 0) & 0b00000010 ? 'walking' as const : 'idle' as const),
         intent: a.name || '',
         reputation: a.reputationScore || 0,
-      }))
-    : trackedAgents.length > 0
-    ? trackedAgents.map((a: TrackedAgent, i: number) => ({
+      }));
+    }
+    if (trackedAgents.length > 0) {
+      return trackedAgents.map((a: TrackedAgent, i: number) => ({
         id: a.did,
         name: a.name,
         x: (i * 3 + 2) % 24,
@@ -246,22 +261,20 @@ export default function Dashboard() {
         status: (a.capability_bitmask & 0b00000010 ? 'walking' as const : 'idle' as const),
         intent: a.name,
         reputation: a.reputation_score,
-      }))
-    : (sseEvents.length > 0 ? sseEvents : logs)
-        .filter((l: any, i: number) => (l.agent_id || l.account) && i < 20)
-        .map((l: any, i: number) => {
-          const id = l.agent_id || l.account || `agent-${i}`;
-          const decision = l.decision || 'ALLOWED';
-          return {
-            id,
-            name: id.slice(0, 8),
-            x: (i * 3 + 2) % 24,
-            y: Math.floor(i / 6) * 3 + 2,
-            status: decision === 'ALLOWED' ? 'idle' as const : decision === 'BLOCKED' ? 'waiting' as const : 'walking' as const,
-            intent: l.intent || '',
-            reputation: decision === 'ALLOWED' ? 85 : 40,
-          };
-        });
+      }));
+    }
+    return (sseEvents.length > 0 ? sseEvents : logs)
+      .filter((l: any, i: number) => (l.agent_id || l.account) && i < 20)
+      .map((l: any, i: number) => ({
+        id: l.agent_id || l.account || `agent-${i}`,
+        name: (l.agent_id || l.account || `?`).slice(0, 8),
+        x: (i * 3 + 2) % 24,
+        y: Math.floor(i / 6) * 3 + 2,
+        status: (l.decision === 'ALLOWED' ? 'idle' as const : l.decision === 'BLOCKED' ? 'waiting' as const : 'walking' as const),
+        intent: l.intent || '',
+        reputation: l.decision === 'ALLOWED' ? 85 : 40,
+      }));
+  }, [dataSource, onChainAgents, trackedAgents, sseEvents, logs]);
 
   const inputStyle = (editable: boolean) => ({
     background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.08)', color: '#fff', opacity: editable ? 1 : 0.6,
