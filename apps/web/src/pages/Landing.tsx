@@ -32,9 +32,9 @@ function FeaturesCarousel() {
         className="gap-5"
         style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))' }}
       >
-        {FEATURES.map((product, i) => (
+        {FEATURES.map((feature, i) => (
           <div
-            key={product.title}
+            key={feature.title}
             className="animate-fade-rise rounded-2xl p-8 transition-all duration-500 hover:scale-[1.02] hover:border-white/15 group cursor-default"
             style={{
               background: '#0a0a0a',
@@ -44,8 +44,8 @@ function FeaturesCarousel() {
             }}
           >
             <span className="font-mono text-xs text-zinc-600 mb-6 block transition-colors duration-300 group-hover:text-zinc-400">/0.{i + 1}</span>
-            <h3 className="font-serif text-xl mb-4 tracking-tight transition-colors duration-300 group-hover:text-white" style={{ fontWeight: 400, letterSpacing: '-0.5px' }}>{product.title}</h3>
-            <p className="font-sans text-sm leading-relaxed text-zinc-400 transition-colors duration-300 group-hover:text-zinc-300">{product.description}</p>
+              <h3 className="font-serif text-xl mb-4 tracking-tight transition-colors duration-300 group-hover:text-white" style={{ fontWeight: 400, letterSpacing: '-0.5px' }}>{feature.title}</h3>
+              <p className="font-sans text-sm leading-relaxed text-zinc-400 transition-colors duration-300 group-hover:text-zinc-300">{feature.description}</p>
           </div>
         ))}
       </div>
@@ -66,7 +66,7 @@ const FAQ_ITEMS = [
     a: 'Bastion is a unified agent security platform built on Daemon BlockInt Technologies. It includes Bastion Firewall (transaction simulation and policy enforcement), Bastion Audit (immutable on chain audit trail), Bastion Identity (Solana native agent identity and reputation registry with W3C DID compliance), and Bastion Circuit (fleet wide circuit breaker with human override). Each component operates independently and shares a common intelligence layer powered by Daemon BlockInt Technologies.',
   },
   {
-    q: 'Which product should I start with?',
+    q: 'Which feature should I start with?',
     a: 'Start with Bastion Firewall. Integrate the TypeScript SDK into your agent, configure a policy, and begin simulating transactions against live chain state. The audit trail and identity registry activate automatically when you deploy the on chain program.',
   },
   {
@@ -106,7 +106,7 @@ export default function Landing() {
           Bastion<span className="text-[10px] align-super ml-px">&reg;</span>
         </a>
         <div className="hidden md:flex items-center gap-8">
-          <a href="#products" className="text-sm text-zinc-400 hover:text-white transition-colors no-underline">Products</a>
+                <a href="#features" className="text-sm text-zinc-400 hover:text-white transition-colors no-underline">Features</a>
           <a href="#how-it-works" className="text-sm text-zinc-400 hover:text-white transition-colors no-underline">How it works</a>
           <a href="#faq" className="text-sm text-zinc-400 hover:text-white transition-colors no-underline">FAQ</a>
           <a href="#contact" className="text-sm text-zinc-400 hover:text-white transition-colors no-underline">Contact</a>
@@ -133,7 +133,7 @@ export default function Landing() {
               to="/integrate"
               className="rounded-full bg-white text-black px-14 py-4 text-base font-medium font-sans hover:bg-zinc-200 transition-colors no-underline"
             >
-              Explore products
+              Integrate your agent
             </Link>
             <a
               href="https://github.com/bastion-agentic-defense/bastion"
@@ -158,7 +158,7 @@ export default function Landing() {
             has a cost and no one was closing it as a coherent system.
           </p>
           <p className="font-serif text-center mt-8 text-white" style={{ fontSize: 'clamp(1.3rem, 3vw, 1.7rem)', fontWeight: 400, lineHeight: '1.15' }}>
-            The first SIEM where the audit trail<br />itself is the product.
+            The first SIEM where the audit trail<br />itself is the feature.
           </p>
         </section>
 
@@ -214,7 +214,7 @@ export default function Landing() {
           <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between gap-12">
             <div className="flex flex-col gap-6">
               <a href="#main-content" className="font-serif text-xl tracking-tight no-underline text-white">Bastion<span className="text-[10px] align-super ml-px">&reg;</span></a>
-              <p className="font-sans text-xs text-zinc-600 max-w-xs leading-relaxed">Built on Daemon BlockInt Technologies. The first SIEM where the audit trail itself is the product.</p>
+              <p className="font-sans text-xs text-zinc-600 max-w-xs leading-relaxed">Built on Daemon BlockInt Technologies. The first SIEM where the audit trail itself is the feature.</p>
               <div className="flex gap-4">
                 <a href="https://github.com/bastion-agentic-defense/bastion" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white transition-colors text-sm no-underline">GitHub</a>
                 <a href="https://x.com/DaemonProtocol" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white transition-colors text-sm no-underline">X</a>
@@ -223,14 +223,14 @@ export default function Landing() {
             <div>
               <p className="font-sans text-xs uppercase tracking-widest text-zinc-600 mb-4">Company</p>
               <div className="flex flex-col gap-3">
-                <a href="#products" className="text-sm text-zinc-400 hover:text-white transition-colors no-underline">Products</a>
+          <a href="#features" className="text-sm text-zinc-400 hover:text-white transition-colors no-underline">Features</a>
                 <a href="#how-it-works" className="text-sm text-zinc-400 hover:text-white transition-colors no-underline">How it works</a>
                 <a href="#faq" className="text-sm text-zinc-400 hover:text-white transition-colors no-underline">FAQ</a>
                 <a href="#contact" className="text-sm text-zinc-400 hover:text-white transition-colors no-underline">Contact</a>
               </div>
             </div>
             <div>
-              <p className="font-sans text-xs uppercase tracking-widest text-zinc-600 mb-4">Products</p>
+              <p className="font-sans text-xs uppercase tracking-widest text-zinc-600 mb-4">Features</p>
               <div className="flex flex-col gap-3">
                 <span className="text-sm text-zinc-400">Bastion Firewall</span>
                 <span className="text-sm text-zinc-400">Bastion Audit</span>

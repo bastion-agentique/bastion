@@ -49,7 +49,7 @@ export default function FAQ1() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="text-base sm:text-lg text-neutral-600 dark:text-neutral-400 leading-relaxed max-w-[25ch]"
             >
-              Everything you need to know about our product and billing.
+              Everything you need to know about our features and billing.
             </motion.p>
           </div>
 

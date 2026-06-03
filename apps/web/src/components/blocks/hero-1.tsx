@@ -32,7 +32,7 @@ export function Hero1() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl tracking-tight font-medium text-neutral-900 dark:text-white leading-[1.15]"
             >
-              Transform your product with intelligent design
+              Transform your project with intelligent design
             </motion.h1>
 
             {/* Sub-headline */}
@@ -102,7 +102,7 @@ export function Hero1() {
                   50k+
                 </span>
                 <span className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400">
-                  Engineers shipping products daily.
+                  Engineers shipping features daily.
                 </span>
               </div>
             </motion.div>

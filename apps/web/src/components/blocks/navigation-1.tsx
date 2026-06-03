@@ -10,7 +10,7 @@ export default function Navigation1() {
   const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
 
   const menuItems = {
-    products: [
+    features: [
       { name: "Analytics Dashboard", href: "#" },
       { name: "Marketing Suite", href: "#" },
       { name: "CRM Platform", href: "#" },
@@ -52,16 +52,14 @@ export default function Navigation1() {
               {/* Products Dropdown */}
               <div
                 className="relative"
-                onMouseEnter={() => setActiveMenu("products")}
-                onMouseLeave={() => setActiveMenu(null)}
-              >
-                <button className="flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white">
-                  Products
+                onMouseEnter={() => setActiveMenu("features")}
+                ...
+                  Features
                   <ChevronDown className="h-4 w-4" />
                 </button>
 
                 <AnimatePresence>
-                  {activeMenu === "products" && (
+                  {activeMenu === "features" && (
                     <>
                       {/* Invisible bridge to prevent flickering */}
                       <div className="absolute left-0 top-full h-2 w-full" />
@@ -73,7 +71,7 @@ export default function Navigation1() {
                         className="absolute left-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-lg dark:border-neutral-800 dark:bg-neutral-950"
                       >
                         <div className="p-2">
-                          {menuItems.products.map((item, index) => (
+                          {menuItems.features.map((item, index) => (
                             <motion.a
                               key={item.name}
                               href={item.href}
@@ -203,7 +201,7 @@ export default function Navigation1() {
             <div className="mx-auto flex h-[calc(100%-73px)] max-w-[1400px] flex-col px-6">
               {/* Menu Content */}
               <div className="flex flex-1 flex-col gap-8 overflow-y-auto py-8 pb-0">
-                {/* Products Dropdown */}
+              {/* Features Dropdown */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -212,18 +210,18 @@ export default function Navigation1() {
                   <button
                     onClick={() =>
                       setMobileAccordion(
-                        mobileAccordion === "products" ? null : "products",
+                        mobileAccordion === "features" ? null : "features",
                       )
                     }
                     className="flex w-full items-center justify-between text-left text-2xl font-medium text-neutral-900 dark:text-white"
                   >
                     Products
                     <ChevronDown
-                      className={`h-6 w-6 transition-transform ${mobileAccordion === "products" ? "rotate-180" : ""}`}
+                      className={`h-6 w-6 transition-transform ${mobileAccordion === "features" ? "rotate-180" : ""}`}
                     />
                   </button>
                   <AnimatePresence>
-                    {mobileAccordion === "products" && (
+                    {mobileAccordion === "features" && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
@@ -232,7 +230,7 @@ export default function Navigation1() {
                         className="overflow-hidden"
                       >
                         <div className="space-y-2 pt-4">
-                          {menuItems.products.map((item) => (
+                          {menuItems.features.map((item) => (
                             <a
                               key={item.name}
                               href={item.href}
