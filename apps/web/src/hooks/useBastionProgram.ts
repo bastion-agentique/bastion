@@ -288,7 +288,7 @@ export function useBastionProgram() {
     [program, getPolicyAddress, wallet.publicKey],
   );
 
-  return {
+  return useMemo(() => ({
     program,
     fetchStats,
     fetchPaused,
@@ -300,5 +300,5 @@ export function useBastionProgram() {
     emergencyPause,
     emergencyResume,
     updatePolicy,
-  };
+  }), [program, fetchStats, fetchPaused, fetchAuditEntries, fetchPolicy, fetchAgents, fetchStake, fetchAllAudits, emergencyPause, emergencyResume, updatePolicy]);
 }

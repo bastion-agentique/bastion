@@ -244,7 +244,7 @@ export function useAgents() {
     }
   }, []);
 
-  return {
+  return useMemo(() => ({
     agents,
     loading,
     fetchAgents,
@@ -259,5 +259,10 @@ export function useAgents() {
     requestUnstake,
     claimUnstake,
     revokeDelegation,
-  };
+  }), [agents, loading, fetchAgents, fetchAgent, fetchAgentAudit, fetchAgentChildren, fetchAgentTree, fetchAgentStake, registerAgent, delegateAgent, stakeLamports, requestUnstake, claimUnstake, revokeDelegation]);
+}
+
+export function useAgentsStable() {
+  const { agents, loading, ...rest } = useAgents();
+  return useMemo(() => ({ ...rest, agents, loading }), [agents, loading, ...Object.values(rest)]);
 }

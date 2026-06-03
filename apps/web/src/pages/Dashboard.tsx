@@ -152,7 +152,7 @@ export default function Dashboard() {
 
   const loadNetworkData = useCallback(async (force = false) => {
     const now = Date.now();
-    if (!force && networkLastFetch.current > 0 && now - networkLastFetch.current < 60000 && onChainAgents.length > 0) {
+    if (!force && networkLastFetch.current > 0 && now - networkLastFetch.current < 60000) {
       return; // Cache hit — skip fetch if < 60s old
     }
     setLoadingAgents(true);
@@ -169,7 +169,7 @@ export default function Dashboard() {
       setLoadingAgents(false);
       setLoading(false);
     }
-  }, [sol, onChainAgents]);
+  }, [sol]); // Removed onChainAgents — was creating infinite loop
 
   const loadSidecarData = useCallback(async () => {
     setLoading(true);
@@ -188,19 +188,19 @@ export default function Dashboard() {
       if (pend) setPendingApprovals(pend);
     }
     setLoading(false);
-  }, [sidecar, fetchSidecarAgents]);
+  }, [sidecar]); // Removed fetchSidecarAgents — identity changes every render
 
   const loadData = useCallback(async () => {
     if (dataSource === 'network') {
       await loadNetworkData();
     } else {
       await loadSidecarData();
-      if (sol) {
+      if (sol?.program) {
         const paused = await sol.fetchPaused();
         if (paused !== null) setIsPaused(paused);
       }
     }
-  }, [dataSource, loadNetworkData, loadSidecarData, sol]);
+  }, [dataSource]); // Only re-evaluate when dataSource changes — loadNetworkData/loadSidecarData are stable via useCallback
 
   useEffect(() => {
     if (!connected) { navigate('/'); return; }

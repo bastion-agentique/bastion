@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 const SIDECAR_URL = import.meta.env.VITE_SIDECAR_URL || 'http://localhost:3000';
 const API_KEY = import.meta.env.VITE_BASTION_API_KEY || '';
@@ -239,7 +239,7 @@ export function useSidecar() {
     [],
   );
 
-  return {
+  return useMemo(() => ({
     fetchHealth,
     fetchStats,
     fetchLogs,
@@ -250,5 +250,5 @@ export function useSidecar() {
     overrideBlock,
     fetchCircuitBreakerStatus,
     toggleCircuitBreaker,
-  };
+  }), [fetchHealth, fetchStats, fetchLogs, fetchPolicy, updatePolicy, simulateTransaction, fetchPending, overrideBlock, fetchCircuitBreakerStatus, toggleCircuitBreaker]);
 }
