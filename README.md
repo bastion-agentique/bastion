@@ -77,18 +77,20 @@ Bastion intercepts transaction requests, simulates them via Helius Simulation AP
 | Audit Logging | Sled DB for local audit records |
 | On-Chain Audit | Anchor program for immutable records |
 | Agent Registry | On-chain agent identity + reputation |
+| Agent Delegation | Parent agents spawn sub-agents with delegated authority, capability inheritance, budget limits |
 | Emergency Pause | Circuit breaker for protocol |
 
 ## Architecture
 
-Bastion consists of five main components:
+Bastion consists of six main components:
 
 1. **Interceptor (Axum)**: Rust HTTP proxy for transaction validation
 2. **Simulation Core**: Helius API integration for outcome prediction
 3. **Policy Engine**: Static (whitelist), Simulation (balance check), Behavioral (rate limit)
-4. **GrondOSINT Oracle**: Address risk scoring powered by Grond's agentic OSINT pipeline (Tavily, Shodan, Twitter)
-5. **On-Chain Audit Program**: Anchor program for immutable records
-6. **Dashboard**: React+Vite UI for monitoring and policy management
+4. **Agent Registry**: DID-based agent identity with delegation hierarchy (parent → sub-agents)
+5. **GrondOSINT Oracle**: Address risk scoring powered by Grond's agentic OSINT pipeline (Tavily, Shodan, Twitter)
+6. **On-Chain Audit Program**: Anchor program for immutable records
+7. **Dashboard**: React+Vite UI for monitoring, agent fleet visualization, and policy management
 
 ## Quick Start
 

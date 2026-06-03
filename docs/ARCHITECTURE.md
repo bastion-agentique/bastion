@@ -174,3 +174,61 @@ bastion/
 | Middleware | Axum (Rust) | Sidecar HTTP | Sidecar HTTP |
 | SDK | @bastion/sdk (TS) | ethers.js / viem | @midnight-js |
 | Dashboard | React 18 + Vite | Same | Same |
+
+## Agent Delegation System
+
+Bastion supports hierarchical agent delegation — parent agents spawn sub-agents with delegated authority.
+
+### Delegation Flow
+
+```
+  POST /agents (parent registration)
+       │
+       ▼
+  AgentStore.register_agent(did, authority, capabilities)
+       │
+       ├── Parent agent stored in tree root
+       │
+       ▼
+  POST /agents/:did/delegate (spawn sub-agent)
+       │
+       ├── Validates: parent exists, depth < 3, capabilities ⊆ parent
+       │
+       ▼
+  AgentStore stores child with parent_did = parent.did
+       │
+       ▼
+  Dashboard: AgentFloor shows parent-child hierarchy
+  GET /agents: flat list with delegation depth filter
+  GET /agents/:did/tree: full delegation tree
+```
+
+### Data Model
+
+```
+TrackedAgent {
+    did, authority, agent_pda, name
+    capability_bitmask, reputation_score
+    parent_did: Option<String>        ← null for root agents
+    delegation_depth: u8              ← 0=root, 1=sub, 2=sub-sub
+    delegated_capabilities: Vec       ← subset of parent caps
+    delegation_budget: Option<u64>    ← lamport ceiling
+    delegation_spent: u64             ← running counter
+    delegation_expires_at: Option<i64> ← unix timestamp
+    child_dids: Vec<String>           ← children list
+}
+```
+
+### Policy Constraints
+
+- **Max depth**: 3 levels (root → sub → sub-sub)
+- **Capability inheritance**: child must be subset of parent
+- **Budget enforcement**: sidecar tracks delegation_spent ≤ delegation_budget
+- **Expiry**: optional timestamp, evaluated at policy check time
+
+### Security
+
+- Only parent can revoke its own delegations
+- Revocation invalidates all sub-delegations under the revoked child
+- API key auth required for mutating delegation endpoints
+- Audit trail records all delegation lifecycle events
