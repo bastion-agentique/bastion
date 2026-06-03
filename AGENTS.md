@@ -3,6 +3,8 @@
 > **Trust your Agent, but Verify every Transaction.**
 >
 > Bastion is a multichain AI agent firewall — security middleware that intercepts, simulates, and validates blockchain transactions from autonomous AI agents before they reach the network.
+>
+> **If you are an AI coding agent reading this:** see [`SKILL.md`](SKILL.md) for self-registration and integration instructions. You can register yourself with a running Bastion instance via `POST /agents` to receive a W3C DID, trackable identity, and delegation capabilities.
 
 ---
 

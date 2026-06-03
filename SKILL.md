@@ -62,6 +62,77 @@ Then call `POST /override` with:
 }
 ```
 
+## Agent Self-Registration (NEW — v0.3.0)
+
+**An AI coding agent MUST register itself with Bastion before sending transactions.** This gives you a DID, tracks your audit trail, and enables delegation.
+
+### Step 1: Generate your DID
+
+Your DID is `did:bastion:solana:{agent_pda_base58}`. You need a Solana keypair:
+```bash
+# Generate a keypair (or use your existing agent wallet)
+solana-keygen new --outfile ~/.config/solana/bastion-agent.json
+```
+
+### Step 2: Register with the sidecar
+
+```bash
+# Default host: localhost:3000 (running Bastion instance)
+# Auth: only needed if BASTION_API_KEY is set. Check with an unauthenticated request first.
+curl -s -X POST http://localhost:3000/agents \
+  -H "Content-Type: application/json" \
+  -d '{
+    "did": "did:bastion:solana:YOUR_AGENT_PDA_BASE58",
+    "authority_pubkey": "YOUR_SOLANA_PUBKEY_BASE58",
+    "sidecar_endpoint": null
+  }'
+```
+
+**If BASTION_API_KEY is set** (you get a 401 response), add the header:
+```bash
+curl -s -X POST http://localhost:3000/agents \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: YOUR_API_KEY" \
+  -d '...'
+```
+
+### Step 3: Verify registration
+
+```bash
+# List all agents (no auth required)
+curl -s http://localhost:3000/agents | python3 -m json.tool
+
+# Get your agent by DID
+curl -s http://localhost:3000/agents/did:bastion:solana:YOUR_DID | python3 -m json.tool
+```
+
+### Step 4: Spawn sub-agents (delegation)
+
+```bash
+# Parent spawns a sub-agent with restricted capabilities
+curl -s -X POST "http://localhost:3000/agents/did:bastion:solana:PARENT_DID/delegate" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "child_did": "did:bastion:solana:CHILD_DID",
+    "child_name": "SubAgent-ETH",
+    "delegated_capabilities": ["TRANSFER"],
+    "delegation_budget_sol": 5
+  }'
+```
+
+### Step 5: See your delegation tree
+
+```bash
+curl -s "http://localhost:3000/agents/did:bastion:solana:PARENT_DID/tree" | python3 -m json.tool
+```
+
+### Auth Notes
+
+- `BASTION_API_KEY` is optional — if not set, all endpoints are open
+- Mutating endpoints (`POST /agents`, `POST /override`, `/policy/*`, `/circuit-breaker/*`) require the header when `BASTION_API_KEY` is configured
+- Read-only endpoints (`GET /agents`, `GET /health`, `GET /logs`) are always open
+- The correct header is `X-Api-Key` (not `Authorization`)
+
 ## API Endpoints
 - `POST /simulate`: Intercept and verify a transaction.
 - `GET /logs`: Fetch audit history.

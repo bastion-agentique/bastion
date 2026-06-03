@@ -101,7 +101,7 @@ pub struct TrackedAgent {
 
 ```
 POST /agents
-Authorization: X-Api-Key: <key>
+X-Api-Key: <key>
 Content-Type: application/json
 ```
 
@@ -131,7 +131,7 @@ Content-Type: application/json
 
 ```
 POST /agents/:did/delegate
-Authorization: X-Api-Key: <key>
+X-Api-Key: <key>
 ```
 
 ```json
@@ -148,7 +148,7 @@ Authorization: X-Api-Key: <key>
 
 ```
 DELETE /agents/:did/delegation/:child_did
-Authorization: X-Api-Key: <key>
+X-Api-Key: <key>
 ```
 
 ### List Children

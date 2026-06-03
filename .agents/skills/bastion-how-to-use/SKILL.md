@@ -21,11 +21,67 @@ Bastion runs as a local HTTP server (default `http://localhost:3000`). Agents se
 ## Quick Start: Agent Integration Flow
 
 1. Start Bastion server (see README)
-2. Configure policy (whitelist programs, set SOL caps, enable blockint checks)
-3. Send transactions to `POST /simulate` before signing
-4. If allowed, sign and send the transaction
-5. If blocked, request human override via `POST /override`
-6. Monitor audit logs via `GET /logs`
+2. **Register your agent identity** via `POST /agents` (NEW in v0.3.0)
+3. Configure policy (whitelist programs, set SOL caps, enable blockint checks)
+4. Send transactions to `POST /simulate` before signing
+5. If allowed, sign and send the transaction
+6. If blocked, request human override via `POST /override`
+7. Monitor audit logs via `GET /logs`
+
+## Agent Identity & Self-Registration (v0.3.0)
+
+**Every AI agent MUST register with Bastion before sending transactions.** Registration gives you a W3C DID, tracks your audit trail, and enables delegation of sub-agents.
+
+### Register (first time)
+
+```bash
+curl -s -X POST http://localhost:3000/agents \
+  -H "Content-Type: application/json" \
+  -d '{
+    "did": "did:bastion:solana:YOUR_AGENT_PDA_BASE58",
+    "authority_pubkey": "YOUR_SOLANA_PUBKEY_BASE58",
+    "sidecar_endpoint": null
+  }'
+```
+
+**If BASTION_API_KEY is set** (you get 401), add: `-H "X-Api-Key: YOUR_KEY"`
+
+### Verify
+
+```bash
+curl -s http://localhost:3000/agents | python3 -m json.tool
+```
+
+### Spawn sub-agent (delegation)
+
+```bash
+curl -s -X POST "http://localhost:3000/agents/did:bastion:solana:PARENT_DID/delegate" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "child_did": "did:bastion:solana:CHILD_DID",
+    "child_name": "SubAgent-ETH",
+    "delegated_capabilities": ["TRANSFER"]
+  }'
+```
+
+### See your delegation tree
+
+```bash
+curl -s "http://localhost:3000/agents/did:bastion:solana:DID/tree" | python3 -m json.tool
+```
+
+### Agent Registry API
+
+| Method | Path | Auth | Purpose |
+|--------|------|------|---------|
+| POST | `/agents` | Yes | Register agent (with optional parent_did for delegation) |
+| GET | `/agents` | No | List all registered agents |
+| GET | `/agents/:did` | No | Single agent detail |
+| GET | `/agents/:did/audit` | No | Agent-specific audit trail |
+| GET | `/agents/:did/children` | No | List sub-agents |
+| GET | `/agents/:did/tree` | No | Full delegation tree |
+| POST | `/agents/:did/delegate` | Yes | Spawn sub-agent |
+| DELETE | `/agents/:did/delegation/:child_did` | Yes | Revoke delegation |
 
 ## REST API Reference
 

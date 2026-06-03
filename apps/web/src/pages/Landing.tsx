@@ -5,7 +5,7 @@ import { useAccount } from 'wagmi';
 import { useChain } from '../context/ChainContext';
 import { useState, useEffect } from 'react';
 
-const PRODUCTS = [
+const FEATURES = [
   {
     title: 'Bastion Firewall',
     description: 'Autonomous transaction firewall for Solana. Simulates every transaction against live chain state, enforces configurable native token caps, rate limits, program allowlists, and Daemon BlockInt security checks before signing.',
@@ -133,16 +133,16 @@ export default function Landing() {
           </p>
         </section>
 
-        {/* ── Products ── */}
-        <section id="products" className="max-w-6xl mx-auto px-6 py-32">
+        {/* ── Features ── */}
+        <section id="features" className="max-w-6xl mx-auto px-6 py-32">
           <p className="font-sans text-sm uppercase tracking-widest text-zinc-500 mb-4">Safe. Modular. Connected.</p>
           <p className="font-sans text-base text-zinc-400 max-w-lg mb-16 leading-relaxed">
-            Each product was built to solve a distinct operational problem. Deploy one or all of them. They work independently and together.
+            Each feature was built to solve a distinct operational problem. Deploy one or all of them. They work independently and together.
           </p>
 
           <div className="relative">
             <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory" style={{ scrollbarWidth: 'none' }}>
-              {PRODUCTS.map((product, i) => (
+              {FEATURES.map((product, i) => (
                 <div
                   key={product.title}
                   className="flex-shrink-0 w-[340px] snap-center rounded-2xl p-8 transition-all duration-300"
@@ -155,7 +155,7 @@ export default function Landing() {
               ))}
             </div>
             <div className="flex gap-2 justify-center mt-6">
-              {PRODUCTS.map((_, i) => (
+              {FEATURES.map((_, i) => (
                 <button key={i} onClick={() => { const el = document.querySelector('#products .snap-x'); if (el) el.scrollTo({ left: i * 356, behavior: 'smooth' }); }}
                   className="w-2 h-2 rounded-full transition-colors" style={{ background: i === 0 ? '#fff' : 'rgba(255,255,255,0.15)' }} aria-label={`Product ${i + 1}`} />
               ))}
