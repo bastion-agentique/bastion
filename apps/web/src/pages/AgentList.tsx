@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAgents, type TrackedAgent } from '../hooks/useAgents';
+import { useBastionProgram } from '../hooks/useBastionProgram';
 import { useWallet } from '@solana/wallet-adapter-react';
 
 type Filter = 'all' | 'parents' | 'children' | 'swaps' | 'transfers' | 'stakers';
@@ -28,17 +29,21 @@ function getCapabilityLabels(bitmask: number): string[] {
     .map(([, v]) => v);
 }
 
-function AgentCard({ agent }: { agent: TrackedAgent }) {
+function AgentCard({ agent }: { agent: any }) {
   const navigate = useNavigate();
-  const scorePct = Math.min(agent.reputation_score / 100, 1);
+  const rep = agent.reputation_score ?? agent.reputationScore ?? 0;
+  const caps = getCapabilityLabels(agent.capability_bitmask ?? agent.capabilityBitmask ?? 0);
+  const scorePct = Math.min(rep / 100, 1);
   const scoreColor = scorePct > 0.7 ? '#22c55e' : scorePct > 0.4 ? '#f59e0b' : '#ef4444';
-  const caps = getCapabilityLabels(agent.capability_bitmask);
-  const isParent = (agent as any).is_delegator || (agent as any).child_dids?.length > 0;
-  const isChild = !!(agent as any).parent_did;
+  const isParent = agent.is_delegator || agent.child_dids?.length > 0;
+  const isChild = !!agent.parent_did;
+  const name = agent.name || `Agent-${(agent.authority || '').slice(0, 8)}`;
+  const did = agent.did || '';
+  const staked = agent.staked_lamports ?? 0;
 
   return (
     <button
-      onClick={() => navigate(`/agents/${encodeURIComponent(agent.did)}`)}
+      onClick={() => navigate(`/agents/${encodeURIComponent(did)}`)}
       className="rounded-xl p-4 text-left transition-colors hover:opacity-90 w-full"
       style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
     >
@@ -46,7 +51,7 @@ function AgentCard({ agent }: { agent: TrackedAgent }) {
         <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-2 h-2 rounded-full shrink-0" style={{ background: scoreColor }} />
-            <p className="font-mono text-sm text-zinc-200 truncate">{agent.name}</p>
+              <p className="font-mono text-sm text-zinc-200 truncate">{name}</p>
           </div>
           <p className="font-mono text-[9px] text-zinc-600 truncate">
             {agent.did.split(':').pop()?.slice(0, 16)}...
@@ -95,14 +100,43 @@ function AgentCard({ agent }: { agent: TrackedAgent }) {
 }
 
 export default function AgentList() {
-  const { agents: trackedAgents, fetchAgents, loading } = useAgents();
+  const { agents: trackedAgents, fetchAgents, loading: sidecarLoading } = useAgents();
+  const sol = useBastionProgram();
   const { connected } = useWallet();
   const [filter, setFilter] = useState<Filter>('all');
+  const [onChainAgents, setOnChainAgents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchAgents();
-  }, [fetchAgents]);
+    setLoading(true);
+    sol.fetchAgents().then(agents => {
+      setOnChainAgents(agents || []);
+      setLoading(false);
+    });
+    fetchAgents(); // Try sidecar too for hybrid data
+  }, [sol, fetchAgents]);
+
+  // Merge on-chain + sidecar agents, preferring on-chain
+  const allAgents = useCallback(() => {
+    const seen = new Set<string>();
+    const merged: any[] = [];
+    // On-chain first (network view)
+    for (const a of onChainAgents) {
+      if (!seen.has(a.authority)) {
+        seen.add(a.authority);
+        merged.push({ ...a, onChain: true, did: a.did || `did:bastion:solana:${a.pda}` });
+      }
+    }
+    // Sidecar overlay (adds staking + delegation fields)
+    for (const a of trackedAgents) {
+      if (!seen.has(a.authority)) {
+        seen.add(a.authority);
+        merged.push({ ...a, onChain: false });
+      }
+    }
+    return merged;
+  }, [onChainAgents, trackedAgents]);
 
   const filtered = useCallback(() => {
     switch (filter) {
@@ -126,7 +160,7 @@ export default function AgentList() {
         <Link to="/dashboard" className="font-serif text-lg tracking-tight no-underline text-white">Bastion<span className="text-[8px] align-super ml-px">&reg;</span></Link>
         <div className="flex items-center gap-3">
           <span className="font-sans text-[10px] text-zinc-500">
-            {trackedAgents.length} agents ({parentCount} parents, {childCount} children)
+            {allAgents().length} agents ({parentCount} parents, {childCount} children)
           </span>
           {!connected && (
             <Link to="/integrate" className="font-sans text-xs text-blue-400 hover:underline">Register New Agent</Link>

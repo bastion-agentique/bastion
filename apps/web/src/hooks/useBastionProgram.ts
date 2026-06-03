@@ -163,6 +163,72 @@ export function useBastionProgram() {
     }
   }, [program, getPolicyAddress]);
 
+  const fetchAgents = useCallback(async (): Promise<any[]> => {
+    if (!program) return [];
+    try {
+      const accounts = await program.account.agent.all();
+      return accounts.map((a: any) => ({
+        authority: a.account.authority.toBase58(),
+        name: a.account.name as string,
+        capabilityBitmask: Number(a.account.capabilityBitmask),
+        reputationScore: Number(a.account.reputationScore),
+        delegationDepth: Number(a.account.delegationDepth || 0),
+        registeredAt: Number(a.account.registeredAt),
+        bump: a.account.bump,
+        pda: a.publicKey.toBase58(),
+        did: `did:bastion:solana:${a.publicKey.toBase58()}`,
+      }));
+    } catch {
+      return [];
+    }
+  }, [program]);
+
+  const fetchStake = useCallback(async (authority: PublicKey): Promise<any | null> => {
+    if (!program) return null;
+    try {
+      const [agentStake] = PublicKey.findProgramAddressSync(
+        [Buffer.from("agent_stake"), authority.toBuffer()],
+        programId,
+      );
+      return await program.account.agentStake.fetch(agentStake);
+    } catch {
+      return null;
+    }
+  }, [program, programId]);
+
+  const fetchAllAudits = useCallback(async (limit = 50): Promise<AuditEntryData[]> => {
+    if (!program) return [];
+    try {
+      const stateAddress = getAuditStateAddress();
+      const state = (await program.account.auditState.fetch(stateAddress)) as any;
+      const total = Number(state.totalAudits);
+      if (total === 0) return [];
+
+      const start = Math.max(0, total - limit);
+      const entries: AuditEntryData[] = [];
+
+      for (let i = total - 1; i >= start; i--) {
+        try {
+          const addr = getAuditEntryAddress(i);
+          const entry = (await program.account.auditEntry.fetch(addr)) as any;
+          entries.push({
+            id: i.toString(),
+            timestamp: Number(entry.timestamp),
+            decision: entry.decision === 0 ? 'ALLOWED' : 'BLOCKED',
+            account: entry.authority.toBase58(),
+            intent: (entry.reasoning as string) || 'No description',
+            reason: entry.decision === 0 ? 'Policy passed' : 'Policy violation',
+          });
+        } catch {
+          continue;
+        }
+      }
+      return entries;
+    } catch {
+      return [];
+    }
+  }, [program, getAuditStateAddress, getAuditEntryAddress]);
+
   const emergencyPause = useCallback(async (): Promise<string | null> => {
     if (!program) return null;
     try {
@@ -228,6 +294,9 @@ export function useBastionProgram() {
     fetchPaused,
     fetchAuditEntries,
     fetchPolicy,
+    fetchAgents,
+    fetchStake,
+    fetchAllAudits,
     emergencyPause,
     emergencyResume,
     updatePolicy,

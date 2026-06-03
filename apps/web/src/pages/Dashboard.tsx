@@ -127,8 +127,12 @@ export default function Dashboard() {
   const sol = useBastionProgram();
   const sidecar = useSidecar();
   const { events: sseEvents, connected: sseConnected } = useAgentEvents();
-  const { agents: trackedAgents, fetchAgents } = useAgents();
+  const { agents: trackedAgents, fetchAgents: fetchSidecarAgents } = useAgents();
   const [history, setHistory] = useState<number[]>(Array(30).fill(0));
+  const [dataSource, setDataSource] = useState<'network' | 'sidecar'>('network');
+  const [onChainAgents, setOnChainAgents] = useState<any[]>([]);
+  const [onChainAudits, setOnChainAudits] = useState<AuditEntryData[]>([]);
+  const [onChainStats, setOnChainStats] = useState<StatsData | null>(null);
 
   const [activeTab, setActiveTab] = useState<'overview' | 'logs' | 'policy' | 'cases'>('overview');
   const [logs, setLogs] = useState<AuditEntryData[]>([]);
@@ -144,39 +148,49 @@ export default function Dashboard() {
   const [editingPolicy, setEditingPolicy] = useState(false);
   const [policyForm, setPolicyForm] = useState({ maxSolPerTx: 1, rateLimitPerMinute: 120, allowedProgramsText: '' });
 
-  const loadData = useCallback(async () => {
+  const loadNetworkData = useCallback(async () => {
+    setLoading(true);
+    const [stats, agents, audits] = await Promise.all([
+      sol.fetchStats(),
+      sol.fetchAgents(),
+      sol.fetchAllAudits(50),
+    ]);
+    if (stats) { setStats(stats); setHistory((h) => [...h.slice(-29), stats.total]); }
+    if (agents) setOnChainAgents(agents);
+    if (audits) { setOnChainAudits(audits); setLogs(audits); }
+    setLoading(false);
+  }, [sol]);
+
+  const loadSidecarData = useCallback(async () => {
     setLoading(true);
     const sh = await sidecar.fetchHealth();
     setSidecarOnline(sh);
-    // MCP server health check
     try {
       const mcpRes = await fetch('http://localhost:3001/mcp/health');
       setMcpOnline(mcpRes.ok);
     } catch { setMcpOnline(false); }
     if (sh) {
       const [s, l, pol, pend] = await Promise.all([sidecar.fetchStats(), sidecar.fetchLogs(50), sidecar.fetchPolicy(), sidecar.fetchPending()]);
-      fetchAgents(); // Refresh agent fleet from sidecar
-      if (s) {
-        setStats(s);
-        setHistory((h) => [...h.slice(-29), s.total]);
-      }
-      if (l) {
-        setLogs(l.entries.map((e) => ({ id: String(e.id), timestamp: e.timestamp, decision: e.result === 'ALLOWED' ? 'ALLOWED' : 'BLOCKED', account: e.transaction_details?.signature ?? '', intent: e.intent ?? 'No description', reason: e.reasoning })));
-      }
-      if (pol) {
-        setPolicy({ maxSolPerTx: pol.max_sol_per_tx ?? 0, rateLimit: pol.rate_limit_per_minute ?? 0, allowedPrograms: pol.allowed_programs });
-        setPolicyForm({ maxSolPerTx: pol.max_sol_per_tx ?? 1, rateLimitPerMinute: pol.rate_limit_per_minute ?? 120, allowedProgramsText: pol.allowed_programs.join('\n') });
-      }
+      fetchSidecarAgents();
+      if (s) { setStats(s); setHistory((h) => [...h.slice(-29), s.total]); }
+      if (l) setLogs(l.entries.map((e) => ({ id: String(e.id), timestamp: e.timestamp, decision: e.result === 'ALLOWED' ? 'ALLOWED' : 'BLOCKED', account: e.transaction_details?.signature ?? '', intent: e.intent ?? 'No description', reason: e.reasoning })));
+      if (pol) { setPolicy(pol as any); setPolicyForm({ maxSolPerTx: (pol as any).max_sol_per_tx ?? 1, rateLimitPerMinute: (pol as any).rate_limit_per_minute ?? 120, allowedProgramsText: (pol as any).allowed_programs?.join('\n') ?? '' }); }
       if (pend) setPendingApprovals(pend);
-    } else if (chain === 'solana') {
-      const [s2, p, l2, pol2] = await Promise.all([sol.fetchStats(), sol.fetchPaused(), sol.fetchAuditEntries(50), sol.fetchPolicy()]);
-      if (s2) { setStats(s2); setHistory((h) => [...h.slice(-29), s2.total]); }
-      if (p !== null) setIsPaused(p);
-      if (l2) setLogs(l2);
-      if (pol2) { setPolicy(pol2); setPolicyForm({ maxSolPerTx: pol2.maxSolPerTx, rateLimitPerMinute: pol2.rateLimit, allowedProgramsText: pol2.allowedPrograms.join('\n') }); }
     }
     setLoading(false);
-  }, [chain, sol, sidecar]);
+  }, [sidecar, fetchSidecarAgents]);
+
+  const loadData = useCallback(async () => {
+    if (dataSource === 'network') {
+      await loadNetworkData();
+    } else {
+      await loadSidecarData();
+      if (sol) {
+        const paused = await sol.fetchPaused();
+        if (paused !== null) setIsPaused(paused);
+      }
+    }
+  }, [dataSource, loadNetworkData, loadSidecarData, sol]);
 
   useEffect(() => {
     if (!connected) { navigate('/'); return; }
@@ -213,7 +227,17 @@ export default function Dashboard() {
   const blockRate = stats.total > 0 ? (stats.blocked / stats.total * 100) : 0;
 
   // Build agent floor data from tracked agents (sidecar registry)
-  const agentEntities = trackedAgents.length > 0
+  const agentEntities = dataSource === 'network' && onChainAgents.length > 0
+    ? onChainAgents.map((a: any, i: number) => ({
+        id: a.did || `agent-${i}`,
+        name: a.name?.slice(0, 12) || a.authority?.slice(0, 8) || `?`,
+        x: (i * 3 + 2) % 24,
+        y: Math.floor(i / 6) * 3 + 2,
+        status: ((a.capabilityBitmask || 0) & 0b00000010 ? 'walking' as const : 'idle' as const),
+        intent: a.name || '',
+        reputation: a.reputationScore || 0,
+      }))
+    : trackedAgents.length > 0
     ? trackedAgents.map((a: TrackedAgent, i: number) => ({
         id: a.did,
         name: a.name,
@@ -251,6 +275,15 @@ export default function Dashboard() {
         <div className="flex items-center gap-3">
           <span className="font-sans text-[10px] text-zinc-500">Sidecar: <span style={{ color: sidecarOnline ? '#22c55e' : '#ef4444', fontWeight: 600 }}>{sidecarOnline === null ? '...' : sidecarOnline ? 'ON' : 'OFF'}</span></span>
           <span className="font-sans text-[10px] text-zinc-500">MCP: <span style={{ color: mcpOnline ? '#22c55e' : '#ef4444', fontWeight: 600 }}>{mcpOnline === null ? '...' : mcpOnline ? 'ON' : 'OFF'}</span></span>
+          <button
+            onClick={() => setDataSource(d => d === 'network' ? 'sidecar' : 'network')}
+            className="px-2 py-0.5 rounded-full text-[10px] font-sans font-semibold border transition-colors"
+            style={dataSource === 'network'
+              ? { background: 'rgba(59,130,246,0.1)', color: '#60a5fa', borderColor: 'rgba(59,130,246,0.2)' }
+              : { background: 'rgba(34,197,94,0.1)', color: '#22c55e', borderColor: 'rgba(34,197,94,0.2)' }}
+          >
+            {dataSource === 'network' ? 'NETWORK' : 'MY SIDECAR'}
+          </button>
           <span className="px-2 py-0.5 rounded-full text-[10px] font-sans font-semibold border" style={isPaused ? { background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderColor: 'rgba(239,68,68,0.2)' } : { background: 'rgba(34,197,94,0.1)', color: '#22c55e', borderColor: 'rgba(34,197,94,0.2)' }}>{isPaused ? 'PAUSED' : 'LIVE'}</span>
           <span className="font-sans text-[10px] text-zinc-600">30s</span>
           {chain === 'solana' ? <WalletMultiButton /> : <div className="[&_button]:!rounded-full [&_button]:!text-xs"><ConnectButton showBalance={false} accountStatus="address" chainStatus="none" /></div>}
