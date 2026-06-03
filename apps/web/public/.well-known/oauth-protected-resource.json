@@ -1,0 +1,18 @@
+{
+  "resource": "https://bastionagenticdefense.netlify.app",
+  "authorization_servers": [
+    "https://bastionagenticdefense.netlify.app/.well-known/oauth-authorization-server.json"
+  ],
+  "scopes_supported": [
+    "bastion:simulate",
+    "bastion:audit:read",
+    "bastion:policy:read",
+    "bastion:policy:write",
+    "bastion:override",
+    "bastion:circuit_breaker",
+    "bastion:agents:read",
+    "bastion:agents:write"
+  ],
+  "bearer_methods_supported": ["header"],
+  "resource_signing_alg_values_supported": ["EdDSA"]
+}

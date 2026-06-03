@@ -1,8 +1,9 @@
 use axum::{
     Json, Router,
-    extract::{Path, Query, State},
+    body::Body,
+    extract::{Path, Query, State, Request as AxumRequest},
     http::StatusCode,
-    middleware,
+    middleware::{self, Next},
     response::{
         IntoResponse,
         sse::{Event, KeepAlive, Sse},
@@ -30,6 +31,7 @@ pub mod did;
 pub mod grond_oracle;
 pub mod ingestion;
 pub mod logger;
+pub mod markdown;
 pub mod policy;
 pub mod program_client;
 pub mod prompt_safety;
@@ -1485,6 +1487,13 @@ pub fn build_app(
         agent_store: Arc::new(agents::AgentStore::new()),
     };
 
+    async fn markdown_middleware(req: AxumRequest<Body>, next: Next) -> impl IntoResponse {
+        if let Some(md_response) = crate::markdown::negotiate_markdown(&req) {
+            return md_response;
+        }
+        next.run(req).await
+    }
+
     Router::new()
         // === Protected routes (auth required) ===
         .route("/audit/stats", get(get_audit_stats))
@@ -1554,5 +1563,6 @@ pub fn build_app(
                     "x-payment-chain".parse().unwrap(),
                 ]),
         )
+        .layer(middleware::from_fn(markdown_middleware))
         .with_state(app_state)
 }

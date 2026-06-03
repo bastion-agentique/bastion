@@ -1,0 +1,21 @@
+{
+  "issuer": "https://bastionagenticdefense.netlify.app",
+  "authorization_endpoint": "https://bastionagenticdefense.netlify.app/auth",
+  "token_endpoint": "https://bastionagenticdefense.netlify.app/auth/token",
+  "jwks_uri": "https://bastionagenticdefense.netlify.app/.well-known/jwks.json",
+  "response_types_supported": ["token"],
+  "grant_types_supported": ["client_credentials", "authorization_code"],
+  "token_endpoint_auth_methods_supported": ["client_secret_post"],
+  "scopes_supported": [
+    "bastion:simulate",
+    "bastion:audit:read",
+    "bastion:policy:read",
+    "bastion:policy:write",
+    "bastion:override",
+    "bastion:circuit_breaker",
+    "bastion:agents:read",
+    "bastion:agents:write"
+  ],
+  "service_documentation": "https://github.com/bastion-agentic-defense/bastion",
+  "ui_locales_supported": ["en"]
+}

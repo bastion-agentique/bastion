@@ -66,7 +66,7 @@ const FAQ_ITEMS = [
     a: 'Bastion is a unified agent security platform built on Daemon BlockInt Technologies. It includes Bastion Firewall (transaction simulation and policy enforcement), Bastion Audit (immutable on chain audit trail), Bastion Identity (Solana native agent identity and reputation registry with W3C DID compliance), and Bastion Circuit (fleet wide circuit breaker with human override). Each component operates independently and shares a common intelligence layer powered by Daemon BlockInt Technologies.',
   },
   {
-    q: 'Which feature should I start with?',
+    q: 'Which product should I start with?',
     a: 'Start with Bastion Firewall. Integrate the TypeScript SDK into your agent, configure a policy, and begin simulating transactions against live chain state. The audit trail and identity registry activate automatically when you deploy the on chain program.',
   },
   {
@@ -158,7 +158,7 @@ export default function Landing() {
             has a cost and no one was closing it as a coherent system.
           </p>
           <p className="font-serif text-center mt-8 text-white" style={{ fontSize: 'clamp(1.3rem, 3vw, 1.7rem)', fontWeight: 400, lineHeight: '1.15' }}>
-            The first SIEM where the audit trail<br />itself is the feature.
+            The first SIEM where the audit trail<br />itself is the product.
           </p>
         </section>
 
@@ -214,7 +214,7 @@ export default function Landing() {
           <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between gap-12">
             <div className="flex flex-col gap-6">
               <a href="#main-content" className="font-serif text-xl tracking-tight no-underline text-white">Bastion<span className="text-[10px] align-super ml-px">&reg;</span></a>
-              <p className="font-sans text-xs text-zinc-600 max-w-xs leading-relaxed">Built on Daemon BlockInt Technologies. The first SIEM where the audit trail itself is the feature.</p>
+              <p className="font-sans text-xs text-zinc-600 max-w-xs leading-relaxed">Built on Daemon BlockInt Technologies. The first SIEM where the audit trail itself is the product.</p>
               <div className="flex gap-4">
                 <a href="https://github.com/bastion-agentic-defense/bastion" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white transition-colors text-sm no-underline">GitHub</a>
                 <a href="https://x.com/DaemonProtocol" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white transition-colors text-sm no-underline">X</a>

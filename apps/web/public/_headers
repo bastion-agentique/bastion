@@ -7,6 +7,10 @@
   Link: </.well-known/api-catalog>; rel="api-catalog"
   Link: </.well-known/agent-skills/index.json>; rel="agent-skills"
   Link: </.well-known/mcp/server-card.json>; rel="mcp-server-card"
+  Link: </auth.md>; rel="service-doc"
+  Link: </.well-known/oauth-authorization-server.json>; rel="http://openid.net/specs/connect/1.0/issuer"
+  Link: </.well-known/oauth-protected-resource.json>; rel="resource-protected"
+  Link: </webmcp.js>; rel="webmcp"
 
 # Vite-hashed JS/CSS assets: cache forever — filename changes on every build.
 /assets/*
@@ -28,4 +32,16 @@
 
 /.well-known/mcp/server-card.json
   Content-Type: application/json
+  Cache-Control: public, max-age=3600
+
+/.well-known/oauth-authorization-server.json
+  Content-Type: application/json
+  Cache-Control: public, max-age=3600
+
+/.well-known/oauth-protected-resource.json
+  Content-Type: application/json
+  Cache-Control: public, max-age=3600
+
+/auth.md
+  Content-Type: text/markdown
   Cache-Control: public, max-age=3600
