@@ -3,12 +3,12 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useAccount } from 'wagmi';
 import { useChain } from '../context/ChainContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 const FEATURES = [
   {
     title: 'Bastion Firewall',
-    description: 'Autonomous transaction firewall for Solana. Simulates every transaction against live chain state, enforces configurable native token caps, rate limits, program allowlists, and Daemon BlockInt security checks before signing.',
+    description: 'Autonomous transaction firewall for Solana. Simulates every transaction against live chain state, enforces configurable native token caps, rate limits, program allowlists, and Daemon BlockInt security checks before signing. Fleet-wide circuit breaker pauses all processing with one command.',
   },
   {
     title: 'Bastion Audit',
@@ -16,13 +16,95 @@ const FEATURES = [
   },
   {
     title: 'Bastion Identity',
-    description: 'On chain agent identity and reputation registry on Solana. Every agent receives a unique PDA identity with verifiable metadata including capability declarations, MCP endpoints, and wallet addresses. Reputation accrues in real time with sub second finality, enabling trust gated marketplaces, agent scoring protocols, and portable identity across the Solana ecosystem.',
-  },
-  {
-    title: 'Bastion Circuit',
-    description: 'Fleet wide circuit breaker with human override. One command pauses all transaction processing. Blocked transactions surface for human review with immutable audit trail preserved regardless of decision.',
+    description: 'On chain agent identity and reputation registry on Solana. Every agent receives a unique PDA identity with verifiable metadata. Reputation accrues in real time, enabling trust-gated marketplaces, agent scoring, and portable identity across the Solana ecosystem.',
   },
 ];
+
+function FeaturesCarousel() {
+  const [active, setActive] = useState(0);
+  const scrollRef = useCallback((el: HTMLDivElement | null) => {
+    if (!el) return;
+    const onScroll = () => {
+      const idx = Math.round(el.scrollLeft / 356);
+      setActive(Math.min(Math.max(idx, 0), FEATURES.length - 1));
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
+  function scrollTo(index: number) {
+    const el = document.querySelector('#features-carousel');
+    if (el) el.scrollTo({ left: index * 356, behavior: 'smooth' });
+  }
+
+  return (
+    <section id="features" className="max-w-6xl mx-auto px-6 py-32">
+      <p className="font-sans text-sm uppercase tracking-widest text-zinc-500 mb-4">Safe. Modular. Connected.</p>
+      <p className="font-sans text-base text-zinc-400 max-w-lg mb-16 leading-relaxed">
+        Each feature was built to solve a distinct operational problem. Deploy one or all of them. They work independently and together.
+      </p>
+
+      <div className="relative group">
+        {/* Arrow: left */}
+        <button
+          onClick={() => scrollTo(Math.max(active - 1, 0))}
+          disabled={active === 0}
+          className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100 disabled:opacity-0"
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+          aria-label="Previous feature"
+        >
+          ←
+        </button>
+
+        {/* Arrow: right */}
+        <button
+          onClick={() => scrollTo(Math.min(active + 1, FEATURES.length - 1))}
+          disabled={active === FEATURES.length - 1}
+          className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100 disabled:opacity-0"
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+          aria-label="Next feature"
+        >
+          →
+        </button>
+
+        <div
+          id="features-carousel"
+          ref={scrollRef}
+          className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory"
+          style={{ scrollbarWidth: 'none' }}
+        >
+          {FEATURES.map((product, i) => (
+            <div
+              key={product.title}
+              className="flex-shrink-0 w-[340px] snap-center rounded-2xl p-8 transition-all duration-300"
+              style={{
+                background: '#0a0a0a',
+                border: '1px solid rgba(255,255,255,0.06)',
+                opacity: active === i ? 1 : 0.5,
+              }}
+            >
+              <span className="font-mono text-xs text-zinc-600 mb-6 block">/0.{i + 1}</span>
+              <h3 className="font-serif text-xl mb-4 tracking-tight" style={{ fontWeight: 400, letterSpacing: '-0.5px' }}>{product.title}</h3>
+              <p className="font-sans text-sm leading-relaxed text-zinc-400">{product.description}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex gap-2 justify-center mt-6">
+          {FEATURES.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => scrollTo(i)}
+              className="w-2 h-2 rounded-full transition-all duration-300"
+              style={{ background: active === i ? '#fff' : 'rgba(255,255,255,0.15)', transform: active === i ? 'scale(1.3)' : 'scale(1)' }}
+              aria-label={`Feature ${i + 1}`}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 const FLOW_STEPS = [
   { num: '01', label: 'Define the target', desc: 'Set the policy, configure allowlists, rate limits, and security checks tailored to your agent fleet.' },
@@ -134,34 +216,7 @@ export default function Landing() {
         </section>
 
         {/* ── Features ── */}
-        <section id="features" className="max-w-6xl mx-auto px-6 py-32">
-          <p className="font-sans text-sm uppercase tracking-widest text-zinc-500 mb-4">Safe. Modular. Connected.</p>
-          <p className="font-sans text-base text-zinc-400 max-w-lg mb-16 leading-relaxed">
-            Each feature was built to solve a distinct operational problem. Deploy one or all of them. They work independently and together.
-          </p>
-
-          <div className="relative">
-            <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory" style={{ scrollbarWidth: 'none' }}>
-              {FEATURES.map((product, i) => (
-                <div
-                  key={product.title}
-                  className="flex-shrink-0 w-[340px] snap-center rounded-2xl p-8 transition-all duration-300"
-                  style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' }}
-                >
-                  <span className="font-mono text-xs text-zinc-600 mb-6 block">/{i === 0 ? '0.1' : i === 1 ? '0.2' : i === 2 ? '0.3' : '0.4'}</span>
-                  <h3 className="font-serif text-xl mb-4 tracking-tight" style={{ fontWeight: 400, letterSpacing: '-0.5px' }}>{product.title}</h3>
-                  <p className="font-sans text-sm leading-relaxed text-zinc-400">{product.description}</p>
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-2 justify-center mt-6">
-              {FEATURES.map((_, i) => (
-                <button key={i} onClick={() => { const el = document.querySelector('#products .snap-x'); if (el) el.scrollTo({ left: i * 356, behavior: 'smooth' }); }}
-                  className="w-2 h-2 rounded-full transition-colors" style={{ background: i === 0 ? '#fff' : 'rgba(255,255,255,0.15)' }} aria-label={`Product ${i + 1}`} />
-              ))}
-            </div>
-          </div>
-        </section>
+        <FeaturesCarousel />
 
         {/* ── How it works ── */}
         <section id="how-it-works" className="max-w-5xl mx-auto px-6 py-32">
