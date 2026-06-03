@@ -250,7 +250,7 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      <main className="pt-20 px-4 pb-8">
+      <main className="pt-32 px-4 pb-8">
         {/* Row 1: Gauges */}
         <div className="grid grid-cols-5 gap-3 mb-4 max-w-7xl mx-auto">
           <StatWidget label="Active Agents" value={trackedAgents.length || agentEntities.length} color="#3b82f6" sub={trackedAgents.length > 0 ? `${trackedAgents.length} registered` : 'from events'} />
