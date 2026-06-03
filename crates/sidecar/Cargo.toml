@@ -22,7 +22,7 @@ bincode = "1"
 dotenv = "0.15"
 sled = "0.34"
 uuid = { version = "1.20.0", features = ["v4"] }
-tower-http = { version = "0.5", features = ["fs"] }
+tower-http = { version = "0.5", features = ["fs", "cors"] }
 sha2 = "0.10"
 bastion-core = { path = "../core" }
 bastion-correlation = { path = "../correlation" }

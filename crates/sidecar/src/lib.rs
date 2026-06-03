@@ -17,6 +17,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::{RwLock, broadcast};
 use tokio_stream::StreamExt;
+use tower_http::cors::{Any, CorsLayer};
 use tower_http::services::ServeDir;
 use uuid::Uuid;
 
@@ -1541,5 +1542,17 @@ pub fn build_app(
         .route("/did/resolve/:did", get(resolve_did_handler))
         .route("/token-balances", get(get_token_balances))
         .nest_service("/dashboard", ServeDir::new("static"))
+        .layer(
+            CorsLayer::new()
+                .allow_origin(Any)
+                .allow_methods(Any)
+                .allow_headers(vec![
+                    "content-type".parse().unwrap(),
+                    "authorization".parse().unwrap(),
+                    "x-api-key".parse().unwrap(),
+                    "x-payment".parse().unwrap(),
+                    "x-payment-chain".parse().unwrap(),
+                ]),
+        )
         .with_state(app_state)
 }

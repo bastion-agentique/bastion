@@ -1,6 +1,11 @@
 import { useCallback } from 'react';
 
 const SIDECAR_URL = import.meta.env.VITE_SIDECAR_URL || 'http://localhost:3000';
+const API_KEY = import.meta.env.VITE_BASTION_API_KEY || '';
+
+function authHeaders(): Record<string, string> {
+  return API_KEY ? { 'X-Api-Key': API_KEY } : {};
+}
 
 interface AuditLogEntry {
   id: number;
@@ -126,7 +131,7 @@ export function useSidecar() {
       try {
         const res = await fetch(`${SIDECAR_URL}/policy/full`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
           body: JSON.stringify(policy),
         });
         return res.ok;
@@ -147,7 +152,7 @@ export function useSidecar() {
         if (intent) body.intent = intent;
         const res = await fetch(`${SIDECAR_URL}/simulate`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
           body: JSON.stringify(body),
         });
         if (!res.ok) {
@@ -194,7 +199,7 @@ export function useSidecar() {
       try {
         const res = await fetch(`${SIDECAR_URL}/override`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
           body: JSON.stringify({ block_id: blockId, action }),
         });
         return res.ok;

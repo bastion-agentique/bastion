@@ -2,19 +2,22 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
-const SIDECAR_URL = process.env.BASTION_SIDECAR_URL || "http://localhost:3000";
+export const SIDECAR_URL = process.env.BASTION_SIDECAR_URL || "http://localhost:3000";
 
-async function sidecar(path: string, init?: RequestInit) {
+export async function sidecar(path: string, init?: RequestInit) {
+  const apiKey = process.env.BASTION_API_KEY;
+  const headers: Record<string, string> = { "Content-Type": "application/json", ...init?.headers as Record<string, string> || {} };
+  if (apiKey) headers["X-Api-Key"] = apiKey;
   const res = await fetch(`${SIDECAR_URL}${path}`, {
     ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
+    headers,
   });
   const data = await res.json().catch(() => ({ error: res.statusText }));
   if (!res.ok) return { error: (data as any).error || `HTTP ${res.status}` };
   return data;
 }
 
-const server = new McpServer({ name: "bastion-mcp", version: "0.1.0" });
+export function createToolDefinitions(server: McpServer) {
 
 // ═══════════════════════════════════════════════
 //  FIREWALL TOOLS
@@ -299,7 +302,11 @@ async function main() {
   console.error("[bastion-mcp] Sidecar:", SIDECAR_URL);
   console.error("[bastion-mcp] Specialty: Firewall enforcement, policy management, audit trail, circuit breaker, case management");
   console.error("[bastion-mcp] Companion: Daemon MCP handles OSINT, forensics, blockint skills, and threat intelligence");
+  const server = new McpServer({ name: "bastion-mcp", version: "0.1.0" });
+  createToolDefinitions(server);
   await server.connect(transport);
 }
 
 main().catch((e) => { console.error("[bastion-mcp] Fatal:", e); process.exit(1); });
+
+}

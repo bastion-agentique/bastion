@@ -1,51 +1,44 @@
 {
   "serverInfo": {
     "name": "Bastion Agentic Defense",
-    "version": "0.3.0"
+    "version": "0.3.0",
+    "description": "AI Agent Firewall for Solana — simulates, validates, and audits every transaction before signing."
   },
   "transport": {
     "type": "http",
-    "endpoint": "https://bastionagenticdefense.netlify.app/simulate"
+    "endpoint": "http://localhost:3001/mcp"
   },
   "capabilities": {
     "tools": [
-      {
-        "name": "simulate_transaction",
-        "description": "Simulate a Solana transaction through Helius and evaluate against Bastion's policy engine. Returns balance changes, compute units, and any policy violations.",
-        "inputSchema": {
-          "type": "object",
-          "properties": {
-            "transaction": {
-              "type": "string",
-              "description": "Base64-encoded Solana transaction"
-            },
-            "intent": {
-              "type": "string",
-              "description": "Human-readable description of what the transaction should do"
-            }
-          },
-          "required": ["transaction"]
-        }
-      },
-      {
-        "name": "check_policy",
-        "description": "Query Bastion's current policy configuration including allowed programs, SOL caps, rate limits, and blockint rules.",
-        "inputSchema": {
-          "type": "object",
-          "properties": {}
-        }
-      },
-      {
-        "name": "get_audit_logs",
-        "description": "Retrieve paginated audit logs showing all transaction decisions made by Bastion.",
-        "inputSchema": {
-          "type": "object",
-          "properties": {
-            "limit": { "type": "integer", "description": "Max entries to return" },
-            "offset": { "type": "integer", "description": "Pagination offset" }
-          }
-        }
+      { "name": "bastion_simulate_transaction", "description": "Simulate a Solana transaction through Bastion's firewall and policy engine." },
+      { "name": "bastion_get_policy", "description": "Read current firewall policy (allowlists, caps, rate limits)." },
+      { "name": "bastion_update_policy", "description": "Update firewall policy configuration (paid)." },
+      { "name": "bastion_get_audit_logs", "description": "Retrieve paginated audit trail of all transaction decisions." },
+      { "name": "bastion_get_audit_stats", "description": "Get aggregate audit statistics (total, allowed, blocked)." },
+      { "name": "bastion_override_block", "description": "Human-in-the-loop override for blocked transactions (paid)." },
+      { "name": "bastion_get_pending_approvals", "description": "List blocked transactions awaiting override." },
+      { "name": "bastion_circuit_breaker_status", "description": "Check if emergency circuit breaker is engaged." },
+      { "name": "bastion_circuit_breaker_toggle", "description": "Engage/disengage fleet-wide circuit breaker (paid)." },
+      { "name": "bastion_resolve_did", "description": "Resolve a W3C DID for a registered agent." },
+      { "name": "bastion_list_cases", "description": "List investigation cases." },
+      { "name": "bastion_create_case", "description": "Create a new investigation case." },
+      { "name": "bastion_update_case", "description": "Update case status or add evidence." },
+      { "name": "bastion_ingest_event", "description": "Ingest a SIEM security event into the audit trail." },
+      { "name": "bastion_get_token_balances", "description": "Get SPL token balances for a wallet via Alchemy." }
+    ],
+    "prompts": [
+      { "name": "bastion_verify_transaction", "description": "Generate a simulation report for a transaction before signing." },
+      { "name": "bastion_security_review", "description": "Review an agent's security posture: policy, audit stats, recent blocks." },
+      { "name": "bastion_incident_response", "description": "Guide for responding to a blocked transaction: investigate, override, or pause." }
+    ],
+    "pricing": {
+      "free_tier": "100 free simulations/month, unlimited read-only calls",
+      "paid_tools": {
+        "bastion_simulate_transaction": "0.001 SOL per call",
+        "bastion_override_block": "0.01 SOL per call",
+        "bastion_update_policy": "0.05 SOL per call",
+        "bastion_circuit_breaker_toggle": "0.1 SOL per call"
       }
-    ]
+    }
   }
 }

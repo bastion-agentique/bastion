@@ -1,0 +1,72 @@
+# Bastion — AI Agent Firewall Provider Spec (pay.sh)
+# 
+# Agents pay per-call through pay.sh. The pay.sh gateway verifies payment
+# and forwards the request to the Bastion MCP HTTP server with X-Api-Key
+# for trust signaling.
+#
+# Usage:
+#   pay --sandbox server start bastion-provider.yml
+#   pay --sandbox curl -X POST http://127.0.0.1:1402/v1/simulate -d '{"transaction":"...","intent":"..."}'
+
+name: bastion
+subdomain: bastion
+title: 'Bastion — AI Agent Firewall'
+description: 'Security middleware for AI agents. Simulates, validates, and audits every transaction before signing.'
+category: security
+version: v1
+
+routing:
+  type: proxy
+  url: http://localhost:3001
+  auth:
+    method: header
+    key: 'X-Api-Key'
+    value_from_env: BASTION_API_KEY
+
+operator:
+  currencies:
+    sol: ['SOL']
+  network: devnet
+  fee_payer: true
+
+env:
+  BASTION_API_KEY: ''
+
+endpoints:
+  - method: POST
+    path: 'v1/simulate'
+    description: 'Simulate a transaction through the Bastion firewall. Returns Pass/Block/PendingHITL.'
+    metering:
+      dimensions:
+        - direction: usage
+          unit: requests
+          scale: 1
+          tiers:
+            - price_usd: 0.001
+
+  - method: POST
+    path: 'v1/override'
+    description: 'HITL override for a blocked transaction. ALLOW or REJECT.'
+    metering:
+      dimensions:
+        - direction: usage
+          unit: requests
+          scale: 1
+          tiers:
+            - price_usd: 0.01
+
+  - method: GET
+    path: 'v1/health'
+    description: 'Health check (free).'
+
+  - method: GET
+    path: 'v1/audit/{did}'
+    description: 'Agent audit trail (free).'
+
+  - method: GET
+    path: 'v1/policy'
+    description: 'Current policy settings (free).'
+
+  - method: GET
+    path: 'v1/pricing'
+    description: 'Tool pricing and free tier info (free).'
