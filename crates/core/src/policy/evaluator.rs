@@ -95,6 +95,9 @@ impl<O: RiskOracle> PolicyEvaluator<O> {
             } => self.check_reputation(tx, *minimum_score).await,
 
             PolicyRule::TxTypeAllowlist { allowed } => self.check_tx_type(tx, allowed),
+            PolicyRule::StakeWeighted { base_limit, min_stake, stake_multiplier, depth_decay_factor } => {
+                self.check_stake_weighted(tx, *base_limit, *min_stake, *stake_multiplier, *depth_decay_factor)
+            }
         }
     }
 
@@ -244,6 +247,36 @@ impl<O: RiskOracle> PolicyEvaluator<O> {
                 policy_id: None,
             }
         }
+    }
+
+    fn check_stake_weighted(
+        &self,
+        tx: &NormalizedTransaction,
+        base_limit: u64,
+        min_stake: u64,
+        stake_multiplier: f64,
+        depth_decay_factor: f64,
+    ) -> FirewallDecision {
+        let staked = tx.agent_stake.unwrap_or(0);
+        let depth = tx.delegation_depth.unwrap_or(0) as f64;
+
+        let stake_factor = 1.0 + (staked as f64 / min_stake.max(1) as f64) * stake_multiplier;
+        let stake_factor = stake_factor.min(10.0); // MAX_STAKE_MULTIPLIER
+        let decay = depth_decay_factor.powf(depth);
+        let effective_limit = (base_limit as f64) * stake_factor * decay;
+        let min_limit = (base_limit as f64) * 0.1;
+        let effective_limit = effective_limit.max(min_limit) as u64;
+
+        if tx.amount > effective_limit {
+            return FirewallDecision::Block {
+                reason: format!(
+                    "Amount {} exceeds stake-weighted limit {} (stake: {}, depth: {}, base: {})",
+                    tx.amount, effective_limit, staked, tx.delegation_depth.unwrap_or(0), base_limit
+                ),
+                policy_id: None,
+            };
+        }
+        FirewallDecision::Pass
     }
 
     fn check_tx_type(&self, tx: &NormalizedTransaction, allowed: &[String]) -> FirewallDecision {

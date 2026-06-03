@@ -84,6 +84,10 @@ pub struct NormalizedTransaction {
     pub timestamp: u64,
     /// Optional extra fields for chain-specific or protocol-specific data.
     pub metadata: HashMap<String, serde_json::Value>,
+    /// Agent's SOL staked for reputation weighting (from AgentStake PDA).
+    pub agent_stake: Option<u64>,
+    /// Agent's delegation depth in the hierarchy (from Agent PDA).
+    pub delegation_depth: Option<u8>,
 }
 
 impl NormalizedTransaction {
@@ -109,6 +113,8 @@ impl NormalizedTransaction {
                 .unwrap_or_default()
                 .as_secs(),
             metadata: HashMap::new(),
+            agent_stake: None,
+            delegation_depth: None,
         }
     }
 

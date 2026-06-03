@@ -130,6 +130,57 @@ export class BastionClient {
       .transaction();
   }
 
+  async stakeLamports(signer: Signer, amount: number): Promise<Transaction> {
+    const [agentStake] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("agent_stake"), signer.publicKey.toBuffer()],
+      this.program.programId
+    );
+    return this.program.methods
+      .stakeLamports(new anchor.BN(amount))
+      .accounts({
+        agentStake,
+        authority: signer.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      })
+      .transaction();
+  }
+
+  async requestUnstake(signer: Signer): Promise<Transaction> {
+    const [agentStake] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("agent_stake"), signer.publicKey.toBuffer()],
+      this.program.programId
+    );
+    return this.program.methods
+      .requestUnstake()
+      .accounts({
+        agentStake,
+        authority: signer.publicKey,
+      })
+      .transaction();
+  }
+
+  async claimUnstake(signer: Signer): Promise<Transaction> {
+    const [agentStake] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("agent_stake"), signer.publicKey.toBuffer()],
+      this.program.programId
+    );
+    return this.program.methods
+      .claimUnstake()
+      .accounts({
+        agentStake,
+        authority: signer.publicKey,
+      })
+      .transaction();
+  }
+
+  async fetchAgentStake(authority: PublicKey): Promise<any> {
+    const [agentStake] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from("agent_stake"), authority.toBuffer()],
+      this.program.programId
+    );
+    return this.program.account.agentStake.fetch(agentStake);
+  }
+
   async setPolicy(
     signer: Signer,
     allowedPrograms: PublicKey[],

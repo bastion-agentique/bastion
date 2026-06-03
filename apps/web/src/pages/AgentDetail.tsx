@@ -84,7 +84,13 @@ export default function AgentDetail() {
           </div>
 
           {/* Stats grid */}
-          <div className="grid grid-cols-4 gap-3 mb-4">
+          <div className="grid grid-cols-5 gap-3 mb-4">
+
+            <div className="rounded-lg p-3" style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.15)' }}>
+              <p className="font-sans text-[9px] uppercase tracking-wider text-zinc-500 mb-1">Staked</p>
+              <p className="font-mono text-sm font-bold" style={{ color: '#f59e0b' }}>{((agent as any).staked_lamports ?? 0).toLocaleString()} SOL</p>
+            </div>
+
             <div className="rounded-lg p-3" style={{ background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.15)' }}>
               <p className="font-sans text-[9px] uppercase tracking-wider text-zinc-500 mb-1">Reputation</p>
               <p className="font-mono text-lg font-bold" style={{ color: scorePct > 0.7 ? '#22c55e' : scorePct > 0.4 ? '#f59e0b' : '#ef4444' }}>{agent.reputation_score}</p>

@@ -29,6 +29,14 @@ pub enum PolicyRule {
     },
     /// Restrict which transaction types are allowed.
     TxTypeAllowlist { allowed: Vec<String> },
+    /// Weight transaction limits based on SOL staked. Higher stake = higher limits.
+    /// Effective limit = min(base * (1 + stake/min_stake * multiplier) * decay^depth, base * max_multiplier), floor base * 0.1.
+    StakeWeighted {
+        base_limit: u64,
+        min_stake: u64,
+        stake_multiplier: f64,
+        depth_decay_factor: f64,
+    },
 }
 
 impl PolicyRule {
@@ -40,6 +48,7 @@ impl PolicyRule {
             Self::HITL { .. } => "hitl",
             Self::Reputation { .. } => "reputation",
             Self::TxTypeAllowlist { .. } => "tx_type_allowlist",
+            Self::StakeWeighted { .. } => "stake_weighted",
         }
     }
 }

@@ -1344,6 +1344,23 @@ async fn register_agent_handler(
     }
 }
 
+async fn get_agent_stake(
+    State(state): State<AppState>,
+    Path(did): Path<String>,
+) -> Result<Json<serde_json::Value>, axum::http::StatusCode> {
+    let agent = state
+        .agent_store
+        .get_agent(&did)
+        .ok_or(axum::http::StatusCode::NOT_FOUND)?;
+
+    Ok(Json(serde_json::json!({
+        "did": did,
+        "staked_lamports": agent.staked_lamports,
+        "stake_unlock_at": agent.stake_unlock_at,
+        "authority": agent.authority,
+    })))
+}
+
 async fn get_agent_audit(
     State(state): State<AppState>,
     Path(did): Path<String>,
@@ -1535,6 +1552,7 @@ pub fn build_app(
         .route("/agents", get(get_agents))
         .route("/agents/:did", get(get_agent))
         .route("/agents/:did/audit", get(get_agent_audit))
+        .route("/agents/:did/stake", get(get_agent_stake))
         .route("/logs", get(get_logs))
         .route("/logs/tx/:transaction_id", get(get_logs_by_transaction_id))
         .route("/logs/signature/:signature", get(get_logs_by_signature))

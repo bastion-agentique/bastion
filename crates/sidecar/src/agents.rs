@@ -20,6 +20,10 @@ pub struct TrackedAgent {
     pub reputation_score: u64,
     /// On-chain registration timestamp.
     pub registered_at: i64,
+    /// SOL staked for reputation weighting.
+    pub staked_lamports: u64,
+    /// Earliest timestamp when stake can be claimed (0 if no pending unstake).
+    pub stake_unlock_at: i64,
     /// The agent's own sidecar endpoint URL, if provided.
     pub sidecar_endpoint: Option<String>,
     /// Whether the on-chain Agent PDA has been verified.
@@ -73,6 +77,8 @@ impl AgentStore {
             capability_bitmask,
             reputation_score,
             registered_at,
+            staked_lamports: 0,
+            stake_unlock_at: 0,
             sidecar_endpoint,
             on_chain_verified: true,
         };

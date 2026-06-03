@@ -63,6 +63,7 @@ pub mod bastion_audit {
         agent.name = name;
         agent.capability_bitmask = capability_bitmask;
         agent.reputation_score = 0;
+        agent.delegation_depth = 0;
         agent.registered_at = Clock::get()?.unix_timestamp;
         agent.bump = ctx.bumps.agent;
 
@@ -137,6 +138,104 @@ pub mod bastion_audit {
 
         Ok(())
     }
+
+    pub fn stake_lamports(ctx: Context<StakeLamports>, amount: u64) -> Result<()> {
+        let agent_stake = &mut ctx.accounts.agent_stake;
+
+        // Transfer SOL from authority to agent_stake PDA
+        let ix = anchor_lang::solana_program::system_instruction::transfer(
+            &ctx.accounts.authority.key(),
+            &ctx.accounts.agent_stake.to_account_info().key(),
+            amount,
+        );
+        anchor_lang::solana_program::program::invoke(
+            &ix,
+            &[
+                ctx.accounts.authority.to_account_info(),
+                ctx.accounts.agent_stake.to_account_info(),
+                ctx.accounts.system_program.to_account_info(),
+            ],
+        )?;
+
+        agent_stake.staked_lamports += amount;
+        if agent_stake.stake_started_at == 0 {
+            agent_stake.stake_started_at = Clock::get()?.unix_timestamp;
+        }
+
+        emit!(StakeChanged {
+            authority: ctx.accounts.authority.key(),
+            staked_lamports: agent_stake.staked_lamports,
+        });
+
+        Ok(())
+    }
+
+    pub fn request_unstake(ctx: Context<RequestUnstake>) -> Result<()> {
+        let agent_stake = &mut ctx.accounts.agent_stake;
+        require!(agent_stake.staked_lamports > 0, BastionError::InsufficientStake);
+
+        let now = Clock::get()?.unix_timestamp;
+        require!(
+            now - agent_stake.stake_started_at >= 172800, // 48 hours minimum
+            BastionError::StakeTooRecent
+        );
+
+        agent_stake.unstake_requested_at = now;
+
+        emit!(UnstakeRequested {
+            authority: ctx.accounts.authority.key(),
+            requested_at: now,
+        });
+
+        Ok(())
+    }
+
+    pub fn claim_unstake(ctx: Context<ClaimUnstake>) -> Result<()> {
+        let agent_stake = &mut ctx.accounts.agent_stake;
+        require!(agent_stake.unstake_requested_at > 0, BastionError::NoUnstakeRequested);
+
+        let now = Clock::get()?.unix_timestamp;
+        require!(
+            now - agent_stake.unstake_requested_at >= 604800, // 7-day cooldown
+            BastionError::StakeCooldownNotMet
+        );
+
+        let amount = agent_stake.staked_lamports;
+        agent_stake.staked_lamports = 0;
+        agent_stake.unstake_requested_at = 0;
+
+        // Transfer SOL back to authority
+        **ctx.accounts.authority.try_borrow_mut_lamports()? += amount;
+        **ctx.accounts.agent_stake.to_account_info().try_borrow_mut_lamports()? -= amount;
+
+        emit!(StakeChanged {
+            authority: ctx.accounts.authority.key(),
+            staked_lamports: 0,
+        });
+
+        Ok(())
+    }
+
+    pub fn slash_stake(ctx: Context<SlashStake>, penalty: u64) -> Result<()> {
+        let agent_stake = &mut ctx.accounts.agent_stake;
+        require!(penalty > 0, BastionError::InvalidReputation);
+        require!(agent_stake.staked_lamports >= penalty, BastionError::InsufficientStake);
+
+        agent_stake.staked_lamports -= penalty;
+        agent_stake.penalty_accrued += penalty;
+
+        // Transfer slashed SOL to treasury (payer)
+        **ctx.accounts.treasury.try_borrow_mut_lamports()? += penalty;
+        **ctx.accounts.agent_stake.to_account_info().try_borrow_mut_lamports()? -= penalty;
+
+        emit!(StakeSlashed {
+            authority: agent_stake.authority,
+            penalty,
+            remaining: agent_stake.staked_lamports,
+        });
+
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -187,7 +286,7 @@ pub struct RegisterAgent<'info> {
         seeds = [AGENT_SEED.as_bytes(), signer.key().as_ref()],
         bump,
         payer = signer,
-        space = 8 + 32 + 4 + MAX_NAME_LEN + 8 + 8 + 1
+        space = 8 + 32 + 4 + MAX_NAME_LEN + 8 + 8 + 1 + 1
     )]
     pub agent: Account<'info, Agent>,
     #[account(mut)]
@@ -247,6 +346,64 @@ pub struct EmergencyResume<'info> {
     pub signer: Signer<'info>,
 }
 
+#[derive(Accounts)]
+pub struct StakeLamports<'info> {
+    #[account(
+        init,
+        seeds = ["agent_stake".as_bytes(), authority.key().as_ref()],
+        bump,
+        payer = authority,
+        space = 8 + 32 + 8 + 8 + 8 + 8 + 1
+    )]
+    pub agent_stake: Account<'info, AgentStake>,
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct RequestUnstake<'info> {
+    #[account(
+        mut,
+        seeds = ["agent_stake".as_bytes(), authority.key().as_ref()],
+        bump = agent_stake.bump,
+        constraint = authority.key() == agent_stake.authority @ BastionError::Unauthorized,
+    )]
+    pub agent_stake: Account<'info, AgentStake>,
+    pub authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct ClaimUnstake<'info> {
+    #[account(
+        mut,
+        seeds = ["agent_stake".as_bytes(), authority.key().as_ref()],
+        bump = agent_stake.bump,
+        constraint = authority.key() == agent_stake.authority @ BastionError::Unauthorized,
+    )]
+    pub agent_stake: Account<'info, AgentStake>,
+    #[account(mut)]
+    pub authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct SlashStake<'info> {
+    #[account(
+        mut,
+        seeds = ["agent_stake".as_bytes(), authority.key().as_ref()],
+        bump = agent_stake.bump,
+        constraint = treasury.key() == audit_state.authority @ BastionError::Unauthorized,
+    )]
+    pub agent_stake: Account<'info, AgentStake>,
+    #[account(
+        seeds = [AUDIT_SEED.as_bytes()],
+        bump = audit_state.bump,
+    )]
+    pub audit_state: Account<'info, AuditState>,
+    #[account(mut)]
+    pub treasury: Signer<'info>,
+}
+
 #[account]
 #[derive(Debug)]
 pub struct AuditState {
@@ -279,6 +436,7 @@ pub struct Agent {
     pub name: String,
     pub capability_bitmask: u64,
     pub reputation_score: u64,
+    pub delegation_depth: u8,
     pub registered_at: i64,
     pub bump: u8,
 }
@@ -290,6 +448,17 @@ pub struct Policy {
     pub allowed_programs: Vec<[u8; 32]>,
     pub max_sol_per_tx: u64,
     pub rate_limit_per_minute: u32,
+    pub bump: u8,
+}
+
+#[account]
+#[derive(Debug)]
+pub struct AgentStake {
+    pub authority: Pubkey,
+    pub staked_lamports: u64,
+    pub stake_started_at: i64,
+    pub unstake_requested_at: i64,
+    pub penalty_accrued: u64,
     pub bump: u8,
 }
 
@@ -316,6 +485,25 @@ pub struct ProtocolResumed {
     pub authority: Pubkey,
 }
 
+#[event]
+pub struct StakeChanged {
+    pub authority: Pubkey,
+    pub staked_lamports: u64,
+}
+
+#[event]
+pub struct UnstakeRequested {
+    pub authority: Pubkey,
+    pub requested_at: i64,
+}
+
+#[event]
+pub struct StakeSlashed {
+    pub authority: Pubkey,
+    pub penalty: u64,
+    pub remaining: u64,
+}
+
 #[error_code]
 pub enum BastionError {
     #[msg("Invalid reputation score")]
@@ -328,4 +516,14 @@ pub enum BastionError {
     AlreadyPaused,
     #[msg("Unauthorized")]
     Unauthorized,
+    #[msg("Insufficient stake for delegation")]
+    InsufficientStake,
+    #[msg("Stake is too recent to unstake")]
+    StakeTooRecent,
+    #[msg("Unstake cooldown period not yet met")]
+    StakeCooldownNotMet,
+    #[msg("No unstake request found")]
+    NoUnstakeRequested,
+    #[msg("Maximum delegation depth exceeded")]
+    MaxDelegationDepth,
 }
