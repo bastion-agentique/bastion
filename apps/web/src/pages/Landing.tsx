@@ -21,11 +21,6 @@ const FEATURES = [
 ];
 
 function FeaturesCarousel() {
-  const [active, setActive] = useState(0);
-
-  const prev = () => setActive(a => Math.max(a - 1, 0));
-  const next = () => setActive(a => Math.min(a + 1, FEATURES.length - 1));
-
   return (
     <section id="features" className="max-w-6xl mx-auto px-6 py-32">
       <p className="font-sans text-sm uppercase tracking-widest text-zinc-500 mb-4">Safe. Modular. Connected.</p>
@@ -33,62 +28,23 @@ function FeaturesCarousel() {
         Each feature was built to solve a distinct operational problem. Deploy one or all of them. They work independently and together.
       </p>
 
-      <div className="relative">
-        {/* Arrow: left */}
-        {active > 0 && (
-          <button
-            onClick={prev}
-            className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-opacity"
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
-            aria-label="Previous feature"
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {FEATURES.map((product, i) => (
+          <div
+            key={product.title}
+            className="animate-fade-rise rounded-2xl p-8 transition-all duration-500 hover:scale-[1.02] hover:border-white/15 group cursor-default"
+            style={{
+              background: '#0a0a0a',
+              border: '1px solid rgba(255,255,255,0.06)',
+              animationDelay: `${i * 150}ms`,
+              animationFillMode: 'both',
+            }}
           >
-            ←
-          </button>
-        )}
-
-        {/* Arrow: right */}
-        {active < FEATURES.length - 1 && (
-          <button
-            onClick={next}
-            className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-opacity"
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
-            aria-label="Next feature"
-          >
-            →
-          </button>
-        )}
-
-        {/* Active card */}
-        <div className="flex justify-center">
-          {FEATURES.map((product, i) => (
-            <div
-              key={product.title}
-              className="w-full max-w-md rounded-2xl p-8 transition-all duration-500 ease-in-out"
-              style={{
-                background: '#0a0a0a',
-                border: '1px solid rgba(255,255,255,0.06)',
-                display: active === i ? 'block' : 'none',
-              }}
-            >
-              <span className="font-mono text-xs text-zinc-600 mb-6 block">/0.{i + 1}</span>
-              <h3 className="font-serif text-xl mb-4 tracking-tight" style={{ fontWeight: 400, letterSpacing: '-0.5px' }}>{product.title}</h3>
-              <p className="font-sans text-sm leading-relaxed text-zinc-400">{product.description}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Dots */}
-        <div className="flex gap-2 justify-center mt-6">
-          {FEATURES.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setActive(i)}
-              className="w-2 h-2 rounded-full transition-all duration-300"
-              style={{ background: active === i ? '#fff' : 'rgba(255,255,255,0.15)', transform: active === i ? 'scale(1.3)' : 'scale(1)' }}
-              aria-label={`Feature ${i + 1}`}
-            />
-          ))}
-        </div>
+            <span className="font-mono text-xs text-zinc-600 mb-6 block transition-colors duration-300 group-hover:text-zinc-400">/0.{i + 1}</span>
+            <h3 className="font-serif text-xl mb-4 tracking-tight transition-colors duration-300 group-hover:text-white" style={{ fontWeight: 400, letterSpacing: '-0.5px' }}>{product.title}</h3>
+            <p className="font-sans text-sm leading-relaxed text-zinc-400 transition-colors duration-300 group-hover:text-zinc-300">{product.description}</p>
+          </div>
+        ))}
       </div>
     </section>
   );
