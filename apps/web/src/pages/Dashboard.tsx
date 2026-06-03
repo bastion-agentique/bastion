@@ -269,6 +269,7 @@ export default function Dashboard() {
           </div>
           <StatWidget label="Allowed" value={stats.allowed} color="#22c55e" />
           <StatWidget label="Blocked" value={stats.blocked} color="#ef4444" />
+          <StatWidget label="Total Staked" value={`${trackedAgents.reduce((s, a) => s + (a.staked_lamports || 0), 0).toLocaleString()} SOL`} color="#f59e0b" />
         </div>
 
         {/* Pending approvals */}
@@ -329,7 +330,7 @@ export default function Dashboard() {
               { label: 'Allowlist', value: policy?.allowedPrograms?.length ? stats.allowed : 0, color: '#22c55e' },
               { label: 'Rate Limit', value: stats.blocked > 0 ? stats.blocked : 1, color: '#a855f7' },
               { label: 'Value Cap', value: 0, color: '#f59e0b' },
-              { label: 'Blockint', value: 0, color: '#3b82f6' },
+              { label: 'StakeWeighted', value: trackedAgents.filter(a => a.staked_lamports > 0).length || 1, color: '#f59e0b' },
             ]} />
           </div>
           <div className="rounded-xl p-4 flex flex-col items-center" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' }}>

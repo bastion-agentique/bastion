@@ -10,6 +10,8 @@ export interface TrackedAgent {
   capability_bitmask: number;
   reputation_score: number;
   registered_at: number;
+  staked_lamports: number;
+  stake_unlock_at: number;
   sidecar_endpoint: string | null;
   on_chain_verified: boolean;
   // Delegation fields
@@ -193,6 +195,55 @@ export function useAgents() {
     [],
   );
 
+  const fetchAgentStake = useCallback(async (did: string): Promise<{ staked_lamports: number; stake_unlock_at: number; authority: string } | null> => {
+    try {
+      const res = await fetch(`${SIDECAR_URL}/agents/${encodeURIComponent(did)}/stake`);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const stakeLamports = useCallback(async (did: string, authorityPubkey: string, amount: number): Promise<boolean> => {
+    try {
+      const res = await fetch(`${SIDECAR_URL}/agents/${encodeURIComponent(did)}/stake`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ authority_pubkey: authorityPubkey, amount }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const requestUnstake = useCallback(async (did: string, authorityPubkey: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`${SIDECAR_URL}/agents/${encodeURIComponent(did)}/stake/unstake`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ authority_pubkey: authorityPubkey }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const claimUnstake = useCallback(async (did: string, authorityPubkey: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`${SIDECAR_URL}/agents/${encodeURIComponent(did)}/stake/claim`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ authority_pubkey: authorityPubkey }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }, []);
+
   return {
     agents,
     loading,
@@ -201,8 +252,12 @@ export function useAgents() {
     fetchAgentAudit,
     fetchAgentChildren,
     fetchAgentTree,
+    fetchAgentStake,
     registerAgent,
     delegateAgent,
+    stakeLamports,
+    requestUnstake,
+    claimUnstake,
     revokeDelegation,
   };
 }

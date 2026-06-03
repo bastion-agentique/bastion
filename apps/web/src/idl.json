@@ -76,6 +76,31 @@
         { "name": "signer", "isMut": false, "isSigner": true }
       ],
       "args": []
+    },
+    {
+      "name": "stakeLamports",
+      "accounts": [
+        { "name": "agentStake", "isMut": true, "isSigner": false },
+        { "name": "authority", "isMut": true, "isSigner": true },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [{ "name": "amount", "type": "u64" }]
+    },
+    {
+      "name": "requestUnstake",
+      "accounts": [
+        { "name": "agentStake", "isMut": true, "isSigner": false },
+        { "name": "authority", "isMut": false, "isSigner": true }
+      ],
+      "args": []
+    },
+    {
+      "name": "claimUnstake",
+      "accounts": [
+        { "name": "agentStake", "isMut": true, "isSigner": false },
+        { "name": "authority", "isMut": true, "isSigner": true }
+      ],
+      "args": []
     }
   ],
   "accounts": [

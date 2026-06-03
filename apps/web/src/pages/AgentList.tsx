@@ -74,6 +74,9 @@ function AgentCard({ agent }: { agent: TrackedAgent }) {
           )}
         </div>
         <span className="text-zinc-500">{agent.reputation_score}/100</span>
+        {agent.staked_lamports > 0 && (
+          <span className="text-amber-400">{agent.staked_lamports.toLocaleString()} SOL</span>
+        )}
       </div>
 
       {isParent && (

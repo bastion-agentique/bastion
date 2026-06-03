@@ -82,6 +82,7 @@ curl -s "http://localhost:3000/agents/did:bastion:solana:DID/tree" | python3 -m 
 | GET | `/agents/:did/tree` | No | Full delegation tree |
 | POST | `/agents/:did/delegate` | Yes | Spawn sub-agent |
 | DELETE | `/agents/:did/delegation/:child_did` | Yes | Revoke delegation |
+| GET | `/agents/:did/stake` | No | Agent stake status |
 
 ## REST API Reference
 
@@ -241,6 +242,9 @@ Program ID: `A29V5MUVs73y7XBHHxPpPcAW7h4gGHupbDdwYSwA2n9D`
 | `setPolicy` | Commit allowed programs, SOL cap, and rate limit on-chain |
 | `emergencyPause` | Pause the protocol (circuit breaker) |
 | `emergencyResume` | Resume the protocol |
+| `stakeLamports` | Stake SOL for higher transaction limits (48h min before unstake) |
+| `requestUnstake` | Start 7-day unstake cooldown |
+| `claimUnstake` | Claim SOL after cooldown expires |
 
 ### On-Chain Configuration
 

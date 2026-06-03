@@ -156,6 +156,34 @@ console.log(tree.children.length, 'sub-agents');`,
   (event) => console.log(event.name)
 );`,
   },
+  {
+    method: 'stakeLamports',
+    signature: 'stakeLamports(signer, amount): Promise<Transaction>',
+    description: 'Stake SOL from your wallet into the AgentStake PDA. Higher stake = higher transaction limits via StakeWeighted policy. 48h min before unstaking.',
+    example: `const tx = await client.stakeLamports(wallet, 5000000000); // 5 SOL
+await connection.sendTransaction(tx, [wallet]);`,
+  },
+  {
+    method: 'requestUnstake',
+    signature: 'requestUnstake(signer): Promise<Transaction>',
+    description: 'Request to unstake SOL. Starts a 7-day cooldown. Stake still counts during cooldown.',
+    example: `const tx = await client.requestUnstake(wallet);
+await connection.sendTransaction(tx, [wallet]);`,
+  },
+  {
+    method: 'claimUnstake',
+    signature: 'claimUnstake(signer): Promise<Transaction>',
+    description: 'Claim your unstaked SOL after the 7-day cooldown period expires.',
+    example: `const tx = await client.claimUnstake(wallet);
+await connection.sendTransaction(tx, [wallet]);`,
+  },
+  {
+    method: 'fetchAgentStake',
+    signature: 'fetchAgentStake(authority): Promise<AgentStake>',
+    description: 'Fetch the AgentStake PDA for a given authority, including staked_lamports and unstake status.',
+    example: `const stake = await client.fetchAgentStake(wallet.publicKey);
+console.log(stake.staked_lamports);`,
+  },
 ];
 
 function ApiMethodCard({ method }: { method: ApiMethod }) {
@@ -276,6 +304,7 @@ export default function ApiReference() {
             { method: 'POST', path: '/ingest', desc: 'SIEM event (auth)' },
             { method: 'GET', path: '/did/resolve/:did', desc: 'DID resolution' },
             { method: 'GET', path: '/token-balances', desc: 'SPL token balances' },
+            { method: 'GET', path: '/agents/:did/stake', desc: 'Agent stake status' },
           ].map((e) => (
             <div key={e.path} className="flex items-center gap-3 font-mono text-xs py-1.5 px-3 rounded" style={{ background: 'var(--bg-subtle)' }}>
               <span className="w-10 shrink-0" style={{ color: e.method === 'GET' ? '#22c55e' : '#f59e0b' }}>{e.method}</span>

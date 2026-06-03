@@ -88,7 +88,10 @@ export default function AgentDetail() {
 
             <div className="rounded-lg p-3" style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.15)' }}>
               <p className="font-sans text-[9px] uppercase tracking-wider text-zinc-500 mb-1">Staked</p>
-              <p className="font-mono text-sm font-bold" style={{ color: '#f59e0b' }}>{((agent as any).staked_lamports ?? 0).toLocaleString()} SOL</p>
+              <p className="font-mono text-sm font-bold" style={{ color: '#f59e0b' }}>{(agent.staked_lamports ?? 0).toLocaleString()} SOL</p>
+              {agent.stake_unlock_at > 0 && (
+                <p className="font-mono text-[8px] text-orange-400 mt-0.5">Unlock: {formatDate(agent.stake_unlock_at)}</p>
+              )}
             </div>
 
             <div className="rounded-lg p-3" style={{ background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.15)' }}>
@@ -211,6 +214,40 @@ export default function AgentDetail() {
               )}
             </div>
           )}
+        </div>
+
+        {/* Staking Actions */}
+        <div className="rounded-xl p-4 mb-6" style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.15)' }}>
+          <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-500 mb-3">Staking</p>
+          <div className="flex gap-2">
+            <button
+              className="px-4 py-2 rounded-lg font-mono text-xs font-medium transition-colors hover:opacity-80"
+              style={{ background: '#f59e0b', color: '#000' }}
+            >
+              Stake SOL
+            </button>
+            {agent.staked_lamports > 0 && (
+              <button
+                className="px-4 py-2 rounded-lg font-mono text-xs font-medium transition-colors hover:opacity-80"
+                style={{ background: 'rgba(245,158,11,0.2)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)' }}
+              >
+                Request Unstake
+              </button>
+            )}
+            {agent.stake_unlock_at > 0 && agent.stake_unlock_at * 1000 < Date.now() && (
+              <button
+                className="px-4 py-2 rounded-lg font-mono text-xs font-medium transition-colors hover:opacity-80"
+                style={{ background: '#22c55e', color: '#000' }}
+              >
+                Claim SOL
+              </button>
+            )}
+          </div>
+          <div className="mt-3 space-y-1 font-mono text-[9px] text-zinc-600">
+            <p>Min stake duration: 48 hours</p>
+            <p>Unstake cooldown: 7 days</p>
+            <p>Stake-weighted policy: higher stake = higher transaction limits</p>
+          </div>
         </div>
 
         {/* Audit Timeline */}

@@ -82,6 +82,7 @@ Bastion intercepts transaction requests, simulates them via Helius Simulation AP
 | x402 Payments | Pay-per-call pricing with Solana SOL transfers and free monthly tier |
 | pay.sh Provider | One-command gateway: `pay --sandbox server start bastion-provider.yml` |
 | CORS Support | Browser-native access via SSE with `Access-Control-Allow-Origin: *` |
+| SOL Staking | AgentStake PDA — stake SOL for higher transaction limits via StakeWeighted policy |
 | Emergency Pause | Circuit breaker for protocol |
 
 ## Architecture
@@ -271,6 +272,9 @@ BaSZuLcwjfh75T3TjbVYpTH4qpJt1tNoZ3S6PTkvNhCb (deprecated) | **New:** `A29V5MUVs7
 | register_agent | Register agent on-chain |
 | update_agent_reputation | Update agent reputation |
 | set_policy | Set on-chain policy |
+| stake_lamports | Stake SOL for higher transaction limits |
+| request_unstake | Start 7-day unstake cooldown |
+| claim_unstake | Claim SOL after cooldown expires |
 | emergency_pause | Pause protocol |
 | emergency_resume | Resume protocol |
 
