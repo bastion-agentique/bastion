@@ -5,3 +5,5 @@ crates/solana/programs/bastion-audit/bastion-audit-keypair.json
 *.pen
 node_modules/
 dist/
+.env
+.env

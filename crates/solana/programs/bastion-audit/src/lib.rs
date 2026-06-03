@@ -7,7 +7,7 @@ pub const AGENT_SEED: &str = "bastion_agent";
 
 const MAX_REASONING_LEN: usize = 256;
 const MAX_NAME_LEN: usize = 64;
-const MAX_ALLOWED_PROGRAMS: usize = 50;
+const MAX_ALLOWED_PROGRAMS: usize = 20;
 
 #[program]
 pub mod bastion_audit {
