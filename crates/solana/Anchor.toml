@@ -7,7 +7,7 @@ cluster = "devnet"
 wallet = "~/.config/solana/dev.json"
 
 [programs.devnet]
-bastion_audit = "BKxmG4p8w6ztbHw2mJuEijFi12yxCSiADLJeRf9C7JVX"
+bastion_audit = "A29V5MUVs73y7XBHHxPpPcAW7h4gGHupbDdwYSwA2n9D"
 
 [scripts]
 test = "cargo test --features devnet"

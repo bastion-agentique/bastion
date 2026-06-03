@@ -172,7 +172,7 @@ allowed_programs = [
 
 ## On-Chain Program Integration
 
-Program ID: `BKxmG4p8w6ztbHw2mJuEijFi12yxCSiADLJeRf9C7JVX`
+Program ID: `A29V5MUVs73y7XBHHxPpPcAW7h4gGHupbDdwYSwA2n9D`
 
 ### Instructions
 
