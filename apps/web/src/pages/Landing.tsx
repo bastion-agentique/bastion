@@ -28,7 +28,10 @@ function FeaturesCarousel() {
         Each feature was built to solve a distinct operational problem. Deploy one or all of them. They work independently and together.
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div
+        className="gap-5"
+        style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))' }}
+      >
         {FEATURES.map((product, i) => (
           <div
             key={product.title}
