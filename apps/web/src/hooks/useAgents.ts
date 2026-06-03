@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 
 const SIDECAR_URL = import.meta.env.VITE_SIDECAR_URL || 'http://localhost:3000';
 

@@ -144,6 +144,7 @@
           { "name": "name", "type": "string" },
           { "name": "capabilityBitmask", "type": "u64" },
           { "name": "reputationScore", "type": "u64" },
+          { "name": "delegationDepth", "type": "u8" },
           { "name": "registeredAt", "type": "i64" },
           { "name": "bump", "type": "u8" }
         ]
@@ -158,6 +159,20 @@
           { "name": "allowedPrograms", "type": "array", "itemType": "array", "itemType": "u8", "length": 32 },
           { "name": "maxSolPerTx", "type": "u64" },
           { "name": "rateLimitPerMinute", "type": "u32" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "agentStake",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "authority", "type": "publicKey" },
+          { "name": "stakedLamports", "type": "u64" },
+          { "name": "stakeStartedAt", "type": "i64" },
+          { "name": "unstakeRequestedAt", "type": "i64" },
+          { "name": "penaltyAccrued", "type": "u64" },
           { "name": "bump", "type": "u8" }
         ]
       }
