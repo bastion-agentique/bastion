@@ -32,6 +32,55 @@ cd bastion && cargo build --release
 - **On-Chain Audit**: Anchor program for immutable audit records (v2).
 - **Agent Registry**: On-chain agent identity and reputation (v2).
 - **GrondOSINT Oracle**: Address risk scoring via Grond's agentic OSINT pipeline (Tavily, Shodan, Twitter).
+- **MCP HTTP Server (SSE)**: 15 tools + 3 prompts on port 3001 for Claude, Cursor, browser agents.
+- **x402 Payments**: Pay-per-call with Solana SOL transfers + free monthly tier.
+- **pay.sh Provider**: One-command gateway with automatic payment handling.
+- **CORS Support**: Browser-native SSE connection from any origin.
+
+## MCP Server
+
+Start the MCP HTTP server for browser-native agent access:
+
+```bash
+BASTION_SIDECAR_URL=http://localhost:3000 \
+pnpm --filter @bastion/mcp-server dev:http
+```
+
+Endpoints:
+- `GET /mcp/sse` — SSE connection
+- `POST /mcp/messages` — MCP JSON-RPC messages
+- `GET /mcp/health` — Health check
+- `GET /mcp/pricing` — Tool pricing + free tier info
+
+For stdio transport (Claude Desktop / Cursor / Codex):
+```bash
+pnpm --filter @bastion/mcp-server dev
+```
+
+## Payments (x402)
+
+Paid tools require Solana SOL transfer to treasury before execution:
+
+| Tool | Free/Month | Price (SOL) | Price (USD) |
+|------|-----------|-------------|-------------|
+| `bastion_simulate_transaction` | 100 | 0.001 | $0.10 |
+| `bastion_override_block` | 10 | 0.01 | $1.00 |
+| `bastion_update_policy` | 5 | 0.05 | $5.00 |
+| `bastion_circuit_breaker_toggle` | 3 | 0.1 | $10.00 |
+| All read-only tools | ∞ | Free | Free |
+
+**Flow:** Transfer SOL → `E9PsSz9XWgNR3TmSC57NHC2ZxJzF5NmbrWsDKEe7A7yM`, then retry with `X-Payment: <tx_hash>, X-Payment-Chain: solana` headers.
+
+**pay.sh:** `pay --sandbox server start packages/mcp-server/bastion-provider.yml` — no manual headers needed.
+
+## CORS
+
+Sidecar supports browser-native access with:
+```
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: Content-Type, Authorization, X-Api-Key, X-Payment, X-Payment-Chain, X-Agent-Id
+Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+```
 
 ## Usage for Agents
 

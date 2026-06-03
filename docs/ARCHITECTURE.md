@@ -63,6 +63,12 @@ An Axum HTTP server that exposes the policy evaluator as a REST API. This is the
 4. Returns `FirewallDecision` to the caller
 5. Applies chain-specific enforcement (on-chain for Solana, via oracle for EVM/Midnight)
 
+**CORS:** `CorsLayer` with `Access-Control-Allow-Origin: *`, headers: `Content-Type, Authorization, X-Api-Key, X-Payment, X-Payment-Chain, X-Agent-Id`.
+
+### packages/mcp-server — MCP HTTP Server (SSE)
+
+TypeScript MCP server on port 3001 bridging AI agents to Bastion sidecar. SSE transport (`GET /mcp/sse` + `POST /mcp/messages`). 15 tools + 3 prompts. x402 payment verification for paid tools via Solana RPC polling. pay.sh provider YAML at `bastion-provider.yml`.
+
 ### crates/solana — Anchor On-Chain Program
 
 The Solana-native enforcement layer. Deployed as an Anchor program on Solana devnet. Provides:

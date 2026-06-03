@@ -233,6 +233,62 @@ export default function ApiReference() {
         API Reference
       </h3>
 
+      {/* MCP HTTP Endpoints */}
+      <div className="mb-8">
+        <p className="font-sans text-xs font-medium mb-3" style={{ color: 'var(--accent)' }}>MCP HTTP Server (:3001)</p>
+        <div className="space-y-1">
+          {[
+            { method: 'GET', path: '/mcp/health', desc: 'Health check' },
+            { method: 'GET', path: '/mcp/sse', desc: 'SSE connection' },
+            { method: 'POST', path: '/mcp/messages', desc: 'MCP JSON-RPC messages' },
+            { method: 'GET', path: '/mcp/pricing', desc: 'Tool pricing + free tier' },
+          ].map((e) => (
+            <div key={e.path} className="flex items-center gap-3 font-mono text-xs py-1.5 px-3 rounded" style={{ background: 'var(--bg-subtle)' }}>
+              <span className="w-10 shrink-0" style={{ color: e.method === 'GET' ? '#22c55e' : '#f59e0b' }}>{e.method}</span>
+              <code className="text-zinc-300">{e.path}</code>
+              <span className="ml-auto text-zinc-600">{e.desc}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Sidecar REST Endpoints */}
+      <div className="mb-8">
+        <p className="font-sans text-xs font-medium mb-3" style={{ color: 'var(--accent)' }}>Sidecar REST API (:3000)</p>
+        <div className="space-y-1">
+          {[
+            { method: 'POST', path: '/simulate', desc: 'Validate transaction' },
+            { method: 'POST', path: '/override', desc: 'HITL override' },
+            { method: 'GET', path: '/logs', desc: 'Paginated audit logs' },
+            { method: 'POST', path: '/agents', desc: 'Register agent (auth)' },
+            { method: 'GET', path: '/agents', desc: 'List all agents' },
+            { method: 'GET', path: '/agents/:did', desc: 'Agent detail' },
+            { method: 'GET', path: '/agents/:did/audit', desc: 'Agent audit trail' },
+            { method: 'GET', path: '/agents/:did/children', desc: 'List sub-agents' },
+            { method: 'GET', path: '/agents/:did/tree', desc: 'Delegation tree' },
+            { method: 'POST', path: '/agents/:did/delegate', desc: 'Spawn sub-agent (auth)' },
+            { method: 'GET', path: '/policy', desc: 'Current policy' },
+            { method: 'POST', path: '/policy/full', desc: 'Update policy (auth)' },
+            { method: 'GET', path: '/circuit-breaker/status', desc: 'Breaker status' },
+            { method: 'POST', path: '/circuit-breaker/engage', desc: 'Pause protocol (auth)' },
+            { method: 'GET', path: '/pending', desc: 'Pending approvals' },
+            { method: 'GET', path: '/health', desc: 'Server health' },
+            { method: 'POST', path: '/ingest', desc: 'SIEM event (auth)' },
+            { method: 'GET', path: '/did/resolve/:did', desc: 'DID resolution' },
+            { method: 'GET', path: '/token-balances', desc: 'SPL token balances' },
+          ].map((e) => (
+            <div key={e.path} className="flex items-center gap-3 font-mono text-xs py-1.5 px-3 rounded" style={{ background: 'var(--bg-subtle)' }}>
+              <span className="w-10 shrink-0" style={{ color: e.method === 'GET' ? '#22c55e' : '#f59e0b' }}>{e.method}</span>
+              <code className="text-zinc-300">{e.path}</code>
+              <span className="ml-auto text-zinc-600">{e.desc}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* SDK Methods */}
+      <p className="font-sans text-xs font-medium mb-3" style={{ color: 'var(--accent)' }}>TypeScript SDK (@bastion-agentic-defense/sdk)</p>
+
       <div className="space-y-2">
         {METHODS.map((m) => (
           <ApiMethodCard key={m.method} method={m} />

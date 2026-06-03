@@ -310,6 +310,55 @@ anchor build
 anchor deploy --provider.cluster devnet
 ```
 
+## MCP HTTP Server (SSE)
+
+Start the MCP server for browser-native SSE access:
+
+```bash
+BASTION_SIDECAR_URL=http://localhost:3000 \
+pnpm --filter @bastion/mcp-server dev:http
+```
+
+Endpoints:
+- `GET /mcp/sse` — SSE connection
+- `POST /mcp/messages` — MCP JSON-RPC messages (with `?sessionId=<id>`)
+- `GET /mcp/health` — Health check
+- `GET /mcp/pricing` — Tool pricing + free tier info
+
+**15 tools** (same as stdio MCP): simulate, ingest, get/update policy, audit logs/stats, override, pending, circuit breaker, cases, DID, token balances.
+
+**3 prompts:** `bastion_verify_transaction`, `bastion_security_review`, `bastion_incident_response`.
+
+## x402 Payments
+
+Paid tools require Solana SOL transfer before execution. Free monthly tier resets on the 1st.
+
+| Tool | Free/Month | Price (SOL) |
+|------|-----------|-------------|
+| `bastion_simulate_transaction` | 100 | 0.001 |
+| `bastion_override_block` | 10 | 0.01 |
+| `bastion_update_policy` | 5 | 0.05 |
+| `bastion_circuit_breaker_toggle` | 3 | 0.1 |
+
+Replay protection: used tx hashes tracked in `USED_PAYMENTS` Set.
+
+## pay.sh Integration
+
+```bash
+pay --sandbox server start packages/mcp-server/bastion-provider.yml
+pay --sandbox curl -X POST http://127.0.0.1:1402/v1/simulate -d '{"transaction":"...","intent":"..."}'
+```
+
+`routing.auth` injects `X-Api-Key` after payment verification — server treats as pre-verified.
+
+## CORS
+
+```
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Headers: Content-Type, Authorization, X-Api-Key, X-Payment, X-Payment-Chain, X-Agent-Id
+Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+```
+
 ## Related Skills
 
 - **blockchain-intelligence-playbook** — Broader blockchain investigation methodology

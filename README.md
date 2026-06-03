@@ -78,6 +78,10 @@ Bastion intercepts transaction requests, simulates them via Helius Simulation AP
 | On-Chain Audit | Anchor program for immutable records |
 | Agent Registry | On-chain agent identity + reputation |
 | Agent Delegation | Parent agents spawn sub-agents with delegated authority, capability inheritance, budget limits |
+| MCP HTTP Server | 15 tools + 3 prompts via SSE transport on port 3001 for Claude, Cursor, and browser agents |
+| x402 Payments | Pay-per-call pricing with Solana SOL transfers and free monthly tier |
+| pay.sh Provider | One-command gateway: `pay --sandbox server start bastion-provider.yml` |
+| CORS Support | Browser-native access via SSE with `Access-Control-Allow-Origin: *` |
 | Emergency Pause | Circuit breaker for protocol |
 
 ## Architecture
@@ -87,10 +91,12 @@ Bastion consists of six main components:
 1. **Interceptor (Axum)**: Rust HTTP proxy for transaction validation
 2. **Simulation Core**: Helius API integration for outcome prediction
 3. **Policy Engine**: Static (whitelist), Simulation (balance check), Behavioral (rate limit)
-4. **Agent Registry**: DID-based agent identity with delegation hierarchy (parent → sub-agents)
-5. **GrondOSINT Oracle**: Address risk scoring powered by Grond's agentic OSINT pipeline (Tavily, Shodan, Twitter)
-6. **On-Chain Audit Program**: Anchor program for immutable records
-7. **Dashboard**: React+Vite UI for monitoring, agent fleet visualization, and policy management
+4. **MCP HTTP Server**: SSE transport on port 3001 with 15 security tools for AI agents
+5. **Agent Registry**: DID-based agent identity with delegation hierarchy
+6. **x402 Payment Gateway**: Pay-per-call pricing with Solana SOL transfers + pay.sh integration
+7. **GrondOSINT Oracle**: Address risk scoring via Grond's agentic OSINT pipeline
+8. **On-Chain Audit Program**: Anchor program for immutable records
+9. **Dashboard**: React+Vite UI for monitoring, agent fleet visualization, and policy management
 
 ## Quick Start
 
@@ -123,10 +129,26 @@ cargo run --release
 ### Run the Dashboard
 
 ```bash
-cd dashboard
-npm install
-npm run dev
-# Dashboard opens at http://localhost:3000
+pnpm --filter bastion-dashboard dev
+# Dashboard opens at http://localhost:5173
+```
+
+### Run the MCP Server
+
+```bash
+BASTION_SIDECAR_URL=http://localhost:3000 \
+pnpm --filter @bastion/mcp-server dev:http
+# SSE endpoint: http://localhost:3001/mcp/sse
+# Health: http://localhost:3001/mcp/health
+# Pricing: http://localhost:3001/mcp/pricing
+```
+
+### Run via pay.sh
+
+```bash
+pay --sandbox server start packages/mcp-server/bastion-provider.yml
+# Gateway on http://127.0.0.1:1402
+# pay --sandbox curl http://127.0.0.1:1402/v1/simulate -d '{...}'
 ```
 
 ### Use the SDK
@@ -324,6 +346,8 @@ await client.emergencyPause(wallet);
 | Simulation | Helius API |
 | Database | Sled |
 | On-Chain | Anchor, Solana SDK |
+| MCP Server | TypeScript, @modelcontextprotocol/sdk, SSE |
+| Payments | x402 (Solana), pay.sh |
 | SDK | TypeScript |
 | Dashboard | React, Vite, TailwindCSS |
 

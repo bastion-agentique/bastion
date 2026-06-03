@@ -3,6 +3,8 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { Navbar } from '../../components/Navbar';
 import InstallSection from './InstallSection';
 import QuickStartSection from './QuickStartSection';
+import McpSection from './McpSection';
+import PricingSection from './PricingSection';
 import ChainSupportSection from './ChainSupportSection';
 import PersistentSetup from './PersistentSetup';
 import ApiReference from './ApiReference';
@@ -40,7 +42,7 @@ export default function Integrate() {
             className="animate-fade-rise-delay font-sans mt-6 max-w-xl mx-auto text-base leading-relaxed"
             style={{ color: 'var(--text-muted)' }}
           >
-            Install the SDK, register your agent, set a policy, spawn sub-agents with delegated authority. Every transaction validated before signing. Solana native. Zero trust.
+            Install the SDK, register your agent, set a policy, connect via MCP. Every transaction validated before signing. Solana native. Zero trust.
           </p>
 
           {/* Action buttons */}
@@ -101,6 +103,8 @@ export default function Integrate() {
         <div className="space-y-20 pb-20" id="install">
           <InstallSection />
           <QuickStartSection />
+          <McpSection />
+          <PricingSection />
           <PersistentSetup />
           <ApiReference />
           <ChainSupportSection />

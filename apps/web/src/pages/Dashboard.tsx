@@ -138,6 +138,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [txPending, setTxPending] = useState(false);
   const [sidecarOnline, setSidecarOnline] = useState<boolean | null>(null);
+  const [mcpOnline, setMcpOnline] = useState<boolean | null>(null);
   const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
 
   const [editingPolicy, setEditingPolicy] = useState(false);
@@ -147,6 +148,11 @@ export default function Dashboard() {
     setLoading(true);
     const sh = await sidecar.fetchHealth();
     setSidecarOnline(sh);
+    // MCP server health check
+    try {
+      const mcpRes = await fetch('http://localhost:3001/mcp/health');
+      setMcpOnline(mcpRes.ok);
+    } catch { setMcpOnline(false); }
     if (sh) {
       const [s, l, pol, pend] = await Promise.all([sidecar.fetchStats(), sidecar.fetchLogs(50), sidecar.fetchPolicy(), sidecar.fetchPending()]);
       fetchAgents(); // Refresh agent fleet from sidecar
@@ -244,6 +250,7 @@ export default function Dashboard() {
         <a href="/" className="font-serif text-lg tracking-tight no-underline text-white">Bastion<span className="text-[8px] align-super ml-px">&reg;</span></a>
         <div className="flex items-center gap-3">
           <span className="font-sans text-[10px] text-zinc-500">Sidecar: <span style={{ color: sidecarOnline ? '#22c55e' : '#ef4444', fontWeight: 600 }}>{sidecarOnline === null ? '...' : sidecarOnline ? 'ON' : 'OFF'}</span></span>
+          <span className="font-sans text-[10px] text-zinc-500">MCP: <span style={{ color: mcpOnline ? '#22c55e' : '#ef4444', fontWeight: 600 }}>{mcpOnline === null ? '...' : mcpOnline ? 'ON' : 'OFF'}</span></span>
           <span className="px-2 py-0.5 rounded-full text-[10px] font-sans font-semibold border" style={isPaused ? { background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderColor: 'rgba(239,68,68,0.2)' } : { background: 'rgba(34,197,94,0.1)', color: '#22c55e', borderColor: 'rgba(34,197,94,0.2)' }}>{isPaused ? 'PAUSED' : 'LIVE'}</span>
           <span className="font-sans text-[10px] text-zinc-600">30s</span>
           {chain === 'solana' ? <WalletMultiButton /> : <div className="[&_button]:!rounded-full [&_button]:!text-xs"><ConnectButton showBalance={false} accountStatus="address" chainStatus="none" /></div>}

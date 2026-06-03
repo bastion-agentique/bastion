@@ -5,8 +5,9 @@
     "description": "AI Agent Firewall for Solana — simulates, validates, and audits every transaction before signing."
   },
   "transport": {
-    "type": "http",
-    "endpoint": "http://localhost:3001/mcp"
+    "type": "sse",
+    "endpoint": "http://localhost:3001/mcp/sse",
+    "messages": "http://localhost:3001/mcp/messages"
   },
   "capabilities": {
     "tools": [
@@ -32,12 +33,20 @@
       { "name": "bastion_incident_response", "description": "Guide for responding to a blocked transaction: investigate, override, or pause." }
     ],
     "pricing": {
-      "free_tier": "100 free simulations/month, unlimited read-only calls",
-      "paid_tools": {
-        "bastion_simulate_transaction": "0.001 SOL per call",
-        "bastion_override_block": "0.01 SOL per call",
-        "bastion_update_policy": "0.05 SOL per call",
-        "bastion_circuit_breaker_toggle": "0.1 SOL per call"
+      "treasury": "E9PsSz9XWgNR3TmSC57NHC2ZxJzF5NmbrWsDKEe7A7yM",
+      "x402_header": "X-Payment: <tx_hash>, X-Payment-Chain: solana",
+      "monthly_reset": "Free tier resets on the 1st of each month",
+      "free_tier": {
+        "bastion_simulate_transaction": "100 calls/month",
+        "bastion_override_block": "10 calls/month",
+        "bastion_update_policy": "5 calls/month",
+        "bastion_circuit_breaker_toggle": "3 calls/month"
+      },
+      "paid": {
+        "bastion_simulate_transaction": "0.001 SOL ($0.10)/call",
+        "bastion_override_block": "0.01 SOL ($1.00)/call",
+        "bastion_update_policy": "0.05 SOL ($5.00)/call",
+        "bastion_circuit_breaker_toggle": "0.1 SOL ($10.00)/call"
       }
     }
   }
