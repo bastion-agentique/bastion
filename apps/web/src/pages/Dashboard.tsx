@@ -250,10 +250,10 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      <main className="pt-[72px] px-4 pb-8">
+      <main className="pt-20 px-4 pb-8">
         {/* Row 1: Gauges */}
         <div className="grid grid-cols-5 gap-3 mb-4 max-w-7xl mx-auto">
-          <StatWidget label="Active Agents" value={agentEntities.length} color="#3b82f6" sub="connected" />
+          <StatWidget label="Active Agents" value={trackedAgents.length || agentEntities.length} color="#3b82f6" sub={trackedAgents.length > 0 ? `${trackedAgents.length} registered` : 'from events'} />
           <div className="rounded-xl p-4 flex flex-col items-center justify-center" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' }}>
             <Gauge value={stats.total} max={Math.max(stats.total * 2 || 10, 10)} label="Total Audits" unit="" colorScale={[[30, '#22c55e'], [60, '#f59e0b'], [80, '#ef4444']]} />
           </div>
@@ -300,13 +300,21 @@ export default function Dashboard() {
             ]} />
           </div>
           <div className="rounded-xl p-4 flex flex-col items-center" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-500 mb-2">Severity</p>
-            <DonutChart size={100} segments={[
-              { label: 'Info', value: Math.floor(stats.total * 0.6), color: '#3b82f6' },
-              { label: 'Med', value: Math.floor(stats.total * 0.25), color: '#f59e0b' },
-              { label: 'High', value: Math.floor(stats.total * 0.1), color: '#ef7d44' },
-              { label: 'Critical', value: Math.floor(stats.total * 0.05), color: '#ef4444' },
-            ]} />
+            <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-500 mb-2">Agent Health</p>
+            <DonutChart size={100} segments={
+              trackedAgents.length > 0
+                ? [
+                    { label: 'Healthy', value: trackedAgents.filter(a => a.reputation_score >= 70).length, color: '#22c55e' },
+                    { label: 'At Risk', value: trackedAgents.filter(a => a.reputation_score >= 40 && a.reputation_score < 70).length, color: '#f59e0b' },
+                    { label: 'Critical', value: trackedAgents.filter(a => a.reputation_score < 40).length, color: '#ef4444' },
+                  ]
+                : [
+                    { label: 'Info', value: Math.floor(stats.total * 0.6), color: '#3b82f6' },
+                    { label: 'Med', value: Math.floor(stats.total * 0.25), color: '#f59e0b' },
+                    { label: 'High', value: Math.floor(stats.total * 0.1), color: '#ef7d44' },
+                    { label: 'Critical', value: Math.floor(stats.total * 0.05), color: '#ef4444' },
+                  ]
+            } />
           </div>
           <div className="rounded-xl p-4 flex flex-col items-center" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' }}>
             <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-500 mb-2">Policy Rules</p>
@@ -319,18 +327,24 @@ export default function Dashboard() {
           </div>
           <div className="rounded-xl p-4 flex flex-col items-center" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' }}>
             <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-500 mb-2">Source Chain</p>
-            <DonutChart size={100} segments={[
-              { label: 'Solana', value: stats.total, color: '#9945FF' },
-             ]} />
+            <DonutChart size={100} segments={trackedAgents.length > 0 ? (() => {
+              const sol = trackedAgents.filter(a => a.did.includes(':solana:')).length;
+              const mid = trackedAgents.filter(a => a.did.includes(':midnight:')).length;
+              const seg: {label:string;value:number;color:string}[] = [
+                sol > 0 ? { label: 'Solana', value: sol, color: '#9945FF' } : null,
+                mid > 0 ? { label: 'Midnight', value: mid, color: '#7C3AED' } : null,
+              ].filter(Boolean) as {label:string;value:number;color:string}[];
+              return seg.length > 0 ? seg : [{ label: 'Solana', value: stats.total, color: '#9945FF' }];
+            })() : [{ label: 'Solana', value: stats.total, color: '#9945FF' }]} />
           </div>
         </div>
 
         {/* Registered Agents */}
-        {trackedAgents.length > 0 && (
-          <div className="max-w-7xl mx-auto mb-4 rounded-xl p-4" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <div className="flex items-center justify-between mb-3">
-              <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-500">Registered Agents ({trackedAgents.length})</p>
-            </div>
+        <div className="max-w-7xl mx-auto mb-4 rounded-xl p-4" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex items-center justify-between mb-3">
+            <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-500">Registered Agents ({trackedAgents.length})</p>
+          </div>
+          {trackedAgents.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {trackedAgents.map((agent) => {
                 const scorePct = Math.min(agent.reputation_score / 100, 1);
@@ -351,8 +365,10 @@ export default function Dashboard() {
                 );
               })}
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="font-sans text-xs text-zinc-600">No agents registered yet. Agents self-register via POST /agents with their DID.</p>
+          )}
+        </div>
 
         {/* Row 4: Data Tables */}
         <div className="max-w-7xl mx-auto mb-6">
@@ -365,6 +381,46 @@ export default function Dashboard() {
               </button>
             ))}
           </div>
+
+          {activeTab === 'overview' && (
+            <div className="rounded-xl p-6" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.04)' }}>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-500 mb-2">Architecture</p>
+                  <div className="space-y-2 font-mono text-[10px] text-zinc-400">
+                    <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full shrink-0" style={{background:'#22c55e'}}/> Sidecar API <span className="text-zinc-600">:3000</span></div>
+                    <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full shrink-0" style={{background:'#3b82f6'}}/> Solana On-Chain <span className="text-zinc-600">devnet</span></div>
+                    <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full shrink-0" style={{background:'#a855f7'}}/> Agent Registry <span className="text-zinc-600">{trackedAgents.length} agents</span></div>
+                    <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full shrink-0" style={{background:'#f59e0b'}}/> DID Resolution <span className="text-zinc-600">/did</span></div>
+                  </div>
+                </div>
+                <div>
+                  <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-500 mb-2">Program</p>
+                  <div className="space-y-2 font-mono text-[10px] text-zinc-400">
+                    <div>ID: <span className="text-zinc-500">A29V5MUV...n9D</span></div>
+                    <div>Network: <span className="text-zinc-500">devnet</span></div>
+                    <div>Audit Entries: <span className="text-zinc-500">{stats.total}</span></div>
+                    <div>Refresh: <span className="text-zinc-500">30s</span></div>
+                  </div>
+                </div>
+              </div>
+              {pendingApprovals.length > 0 && (
+                <div className="rounded-lg p-3" style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.15)' }}>
+                  <p className="font-sans text-[10px] text-amber-400 mb-1">Pending Approvals</p>
+                  {pendingApprovals.slice(0, 5).map((pa: any) => (
+                    <div key={pa.block_id} className="flex items-center gap-2 font-mono text-[9px] text-zinc-400">
+                      <span className="text-zinc-600">{pa.block_id?.slice(0, 8)}</span>
+                      <span>{pa.intent?.slice(0, 40)}</span>
+                      <div className="flex gap-1 ml-auto">
+                        <button onClick={() => handleOverride(pa.block_id, 'ALLOW')} className="px-2 py-0.5 rounded text-green-400 hover:bg-green-400/10">Allow</button>
+                        <button onClick={() => handleOverride(pa.block_id, 'REJECT')} className="px-2 py-0.5 rounded text-red-400 hover:bg-red-400/10">Reject</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {activeTab === 'logs' && (
             <div className="rounded-xl overflow-hidden" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.04)' }}>
@@ -408,9 +464,23 @@ export default function Dashboard() {
           )}
 
           {activeTab === 'cases' && (
-            <div className="text-center py-12 text-zinc-500 font-sans text-sm">
-              <p>Case management dashboard coming soon.</p>
-              <p className="text-xs text-zinc-600 mt-1">Promote blocked events to investigation cases.</p>
+            <div className="rounded-xl p-6" style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.04)' }}>
+              <p className="font-sans text-sm text-zinc-300 mb-2">Investigation Cases</p>
+              <p className="font-sans text-xs text-zinc-500 mb-4">Manage investigations linked to agent DIDs and audit events.</p>
+              {trackedAgents.length > 0 ? (
+                <div className="space-y-2 font-mono text-[10px] text-zinc-500">
+                  <p>Agents with investigation capability:</p>
+                  {trackedAgents.map(a => (
+                    <div key={a.did} className="flex items-center gap-2">
+                      <span className="text-zinc-600">{a.did.split(':').pop()?.slice(0, 10)}</span>
+                      <span>{a.name}</span>
+                      <span className="ml-auto text-zinc-600">{a.reputation_score}/100</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="font-sans text-xs text-zinc-600">No agents registered. Register agents via POST /agents to create investigation cases.</p>
+              )}
             </div>
           )}
         </div>
