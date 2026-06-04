@@ -176,7 +176,8 @@ export default function Dashboard() {
     const sh = await sidecar.fetchHealth();
     setSidecarOnline(sh);
     try {
-      const mcpRes = await fetch('http://localhost:3001/mcp/health');
+      const mcpUrl = import.meta.env.VITE_MCP_URL || 'http://localhost:3001';
+      const mcpRes = await fetch(`${mcpUrl}/mcp/health`);
       setMcpOnline(mcpRes.ok);
     } catch { setMcpOnline(false); }
     if (sh) {

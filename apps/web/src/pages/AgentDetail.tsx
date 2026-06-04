@@ -224,6 +224,15 @@ export default function AgentDetail() {
           <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-500 mb-3">Staking</p>
           <div className="flex gap-2">
             <button
+              onClick={async () => {
+                const amt = prompt('Enter SOL amount to stake:');
+                if (amt) {
+                  const lamports = Math.floor(parseFloat(amt) * 1_000_000_000);
+                  if (lamports > 0) {
+                    alert(`Use the SDK to stake: client.stakeLamports(wallet, ${lamports})`);
+                  }
+                }
+              }}
               className="px-4 py-2 rounded-lg font-mono text-xs font-medium transition-colors hover:opacity-80"
               style={{ background: '#f59e0b', color: '#000' }}
             >
@@ -231,6 +240,9 @@ export default function AgentDetail() {
             </button>
             {agent.staked_lamports > 0 && (
               <button
+                onClick={async () => {
+                  alert('Use the SDK: client.requestUnstake(wallet)');
+                }}
                 className="px-4 py-2 rounded-lg font-mono text-xs font-medium transition-colors hover:opacity-80"
                 style={{ background: 'rgba(245,158,11,0.2)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)' }}
               >
@@ -239,6 +251,9 @@ export default function AgentDetail() {
             )}
             {agent.stake_unlock_at > 0 && agent.stake_unlock_at * 1000 < Date.now() && (
               <button
+                onClick={async () => {
+                  alert('Use the SDK: client.claimUnstake(wallet)');
+                }}
                 className="px-4 py-2 rounded-lg font-mono text-xs font-medium transition-colors hover:opacity-80"
                 style={{ background: '#22c55e', color: '#000' }}
               >

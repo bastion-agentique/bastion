@@ -28,6 +28,14 @@ pub struct TrackedAgent {
     pub sidecar_endpoint: Option<String>,
     /// Whether the on-chain Agent PDA has been verified.
     pub on_chain_verified: bool,
+    /// DID of the parent agent (None for root agents).
+    pub parent_did: Option<String>,
+    /// Delegation depth in the hierarchy (0 for root).
+    pub delegation_depth: Option<u8>,
+    /// DIDs of direct children agents.
+    pub child_dids: Vec<String>,
+    /// Whether this agent can spawn sub-agents.
+    pub is_delegator: bool,
 }
 
 /// Request body for agent self-registration.
@@ -81,6 +89,10 @@ impl AgentStore {
             stake_unlock_at: 0,
             sidecar_endpoint,
             on_chain_verified: true,
+            parent_did: None,
+            delegation_depth: Some(0),
+            child_dids: Vec::new(),
+            is_delegator: false,
         };
 
         agents.insert(did.to_string(), agent);

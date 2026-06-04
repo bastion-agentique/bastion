@@ -17,6 +17,7 @@ import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import AgentDetail from './pages/AgentDetail';
 import AgentList from './pages/AgentList';
+import DeployAgent from './pages/DeployAgent';
 import Integrate from './pages/integrate/Integrate';
 import '@solana/wallet-adapter-react-ui/styles.css';
 import '@rainbow-me/rainbowkit/styles.css';
@@ -128,6 +129,7 @@ function AppRoutes() {
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/agents"     element={<AgentList />} />
                     <Route path="/agents/:did" element={<AgentDetail />} />
+                    <Route path="/deploy"  element={<DeployAgent />} />
                     <Route path="*"          element={<Navigate to="/" replace />} />
                   </Routes>
                 </RainbowKitProvider>

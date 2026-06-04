@@ -1,0 +1,28 @@
+# Custom Agent Template
+# Full agent configuration — customize all parameters for your use case.
+name: "Custom Agent"
+description: "Fully customizable agent template. Edit all parameters."
+category: "custom"
+version: "v1"
+
+agent:
+  capability_bitmask: 3  # TRANSFER | SWAP (add more: STAKE=4, GOVERNANCE=8, DEPLOY=16)
+  name: "Custom Agent"
+
+policy:
+  max_sol_per_tx: 1.0
+  rate_limit_per_minute: 10
+  simulation_checks_enabled: true
+  allowed_programs:
+    - "11111111111111111111111111111111"                # System Program
+    - "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"     # Token Program
+    - "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"     # Jupiter v6
+
+staking:
+  recommended_sol: 10
+  note: "Stake SOL to unlock higher transaction limits (up to 10x)"
+
+delegation:
+  max_children: 10
+  max_depth: 2
+  note: "Depth 1 children get 50% stake weight, depth 2 get 25%"

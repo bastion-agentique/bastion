@@ -1,0 +1,24 @@
+# Trading Agent Template
+# High-frequency trading agent with relaxed rate limits and higher staking.
+name: "Trading Agent"
+description: "High-frequency trading agent with relaxed rate limits. Requires higher stake."
+category: "trading"
+version: "v1"
+
+agent:
+  capability_bitmask: 3  # TRANSFER | SWAP
+  name: "Trading Agent"
+
+policy:
+  max_sol_per_tx: 2.0
+  rate_limit_per_minute: 50
+  simulation_checks_enabled: true
+  allowed_programs:
+    - "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"   # Jupiter v6
+    - "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8"   # Raydium
+    - "11111111111111111111111111111111"                # System Program
+    - "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"     # Token Program
+
+staking:
+  recommended_sol: 25
+  note: "Higher stake unlocks higher limits — 25 SOL stake = ~5x limits via StakeWeighted"

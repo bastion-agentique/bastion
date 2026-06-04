@@ -1,0 +1,21 @@
+# Transfer Agent Template
+# Simple transfer-only agent with strict policy and minimal capabilities.
+name: "Transfer Agent"
+description: "Simple transfer agent — send SOL only. Tight policy, minimal risk."
+category: "transfer"
+version: "v1"
+
+agent:
+  capability_bitmask: 1  # TRANSFER only
+  name: "Transfer Agent"
+
+policy:
+  max_sol_per_tx: 0.1
+  rate_limit_per_minute: 5
+  simulation_checks_enabled: true
+  allowed_programs:
+    - "11111111111111111111111111111111"                # System Program
+
+staking:
+  recommended_sol: 1
+  note: "Minimal stake required — low risk, low limits"

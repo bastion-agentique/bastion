@@ -1,0 +1,29 @@
+# DeFi Agent Template
+# Pre-configured Bastion agent for Defi operations.
+name: "DeFi Agent"
+description: "Pre-configured agent for DeFi operations — swap and transfer tokens with policy-gated limits."
+category: "defi"
+version: "v1"
+
+agent:
+  capability_bitmask: 3  # TRANSFER | SWAP
+  name: "DeFi Agent"
+
+policy:
+  max_sol_per_tx: 1.0
+  rate_limit_per_minute: 10
+  simulation_checks_enabled: true
+  allowed_programs:
+    - "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"   # Jupiter v6
+    - "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8"   # Raydium
+    - "11111111111111111111111111111111"                # System Program
+    - "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"     # Token Program
+
+staking:
+  recommended_sol: 5
+  note: "Higher stake = higher transaction limits via StakeWeighted policy"
+
+delegation:
+  max_children: 5
+  max_depth: 2
+  note: "Sub-agents inherit capabilities from parent"
