@@ -1,6 +1,6 @@
 {
   "name": "@bastion-agentic-defense/sdk",
-  "version": "0.2.0",
+  "version": "0.3.2",
   "description": "TypeScript SDK for Bastion AI Agent Firewall. On-chain audit, agent registry, policy engine, and circuit breaker for Solana.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
