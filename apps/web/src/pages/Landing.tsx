@@ -75,7 +75,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'How do I get access?',
-    a: 'Bastion is open source under the Apache 2.0 license. Clone the repository at github.com slash bastion agentic defense slash bastion, deploy the Solana Anchor program, start the sidecar, and integrate the SDK. For enterprise deployments and managed infrastructure, contact admin at daemonprotocol dot com.',
+    a: 'Bastion is open source under the Apache 2.0 license. Clone the repository at github.com/bastion-agentic-defense/bastion, deploy the Solana Anchor program, start the sidecar, and integrate the SDK. For enterprise deployments and managed infrastructure, contact hello@bastionagentique.com.',
   },
 ];
 
@@ -204,7 +204,7 @@ export default function Landing() {
           <p className="font-sans text-base text-zinc-400 mb-8 leading-relaxed">
             Enterprise deployments, technical evaluations, or general inquiries reach us directly.
           </p>
-          <a href="mailto:hello@bastionagentique.com?subject=Bastion%20%E2%80%94%20Enterprise%20Inquiry" className="inline-flex rounded-full bg-white text-black px-10 py-4 text-sm font-medium font-sans hover:bg-zinc-200 transition-colors no-underline">
+          <a href="mailto:hello@bastionagentique.com" className="inline-flex rounded-full bg-white text-black px-10 py-4 text-sm font-medium font-sans hover:bg-zinc-200 transition-colors no-underline">
             Get in Touch
           </a>
         </section>
