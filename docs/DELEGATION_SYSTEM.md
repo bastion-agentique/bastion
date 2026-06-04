@@ -177,10 +177,10 @@ Returns full `DelegationTree` with nested children.
 
 ## SDK Usage
 
-### TypeScript (`@bastion-agentic-defense/sdk`)
+### TypeScript (`@bastion-agentique/sdk`)
 
 ```typescript
-import { BastionClient, AGENT_CAPABILITIES } from "@bastion-agentic-defense/sdk";
+import { BastionClient, AGENT_CAPABILITIES } from "@bastion-agentique/sdk";
 
 const client = new BastionClient({ connection });
 

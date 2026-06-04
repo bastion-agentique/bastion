@@ -27,8 +27,8 @@ description: Bastion agent firewall for Solana transactions
 alwaysApply: true
 ---
 Before signing any Solana transaction, validate it through Bastion.
-Use @bastion-agentic-defense/sdk for agent registration and policy config.
-Import { BastionClient } from "@bastion-agentic-defense/sdk".`,
+Use @bastion-agentique/sdk for agent registration and policy config.
+Import { BastionClient } from "@bastion-agentique/sdk".`,
   },
   {
     name: 'Codex',
@@ -36,9 +36,9 @@ Import { BastionClient } from "@bastion-agentic-defense/sdk".`,
     description: 'Per-repo pointer. Codex fetches on each task.',
     setup: 'Add to AGENTS.md',
     code: `# AGENTS.md
-Use @bastion-agentic-defense/sdk for all Solana transaction security.
+Use @bastion-agentique/sdk for all Solana transaction security.
 Import { BastionClient, AGENT_CAPABILITIES }
-from "@bastion-agentic-defense/sdk".
+from "@bastion-agentique/sdk".
 
 Before signing, pass the transaction through
 Bastion middleware at POST /simulate.

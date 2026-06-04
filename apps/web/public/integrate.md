@@ -6,13 +6,13 @@ AI agent firewall into your application.
 ## Install the SDK
 
 ```bash
-npm install @bastion-agentic-defense/sdk
+npm install @bastion-agentique/sdk
 ```
 
 ## Basic Usage (SDK)
 
 ```typescript
-import { BastionClient } from "@bastion-agentic-defense/sdk";
+import { BastionClient } from "@bastion-agentique/sdk";
 
 const client = new BastionClient({ baseUrl: "http://localhost:3000" });
 
@@ -59,5 +59,5 @@ curl -X POST http://localhost:3000/override \
 
 ## Links
 
-- **NPM**: https://www.npmjs.com/package/@bastion-agentic-defense/sdk
+- **NPM**: https://www.npmjs.com/package/@bastion-agentique/sdk
 - **API Reference**: https://github.com/bastion-agentic-defense/bastion#readme

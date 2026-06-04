@@ -36,11 +36,11 @@ export default function AgentWizard({ chain }: Props) {
   const capabilityBitmask = CAPABILITIES.reduce((mask, c) => capabilities & c.bit ? mask | c.bit : mask, 0);
 
   const installCmd = chain === 'solana'
-    ? 'pnpm add @bastion-agentic-defense/sdk @coral-xyz/anchor @solana/web3.js'
+    ? 'pnpm add @bastion-agentique/sdk @coral-xyz/anchor @solana/web3.js'
     : 'pnpm add viem wagmi';
 
   const registerCode = chain === 'solana'
-    ? `import { BastionClient, AGENT_CAPABILITIES } from "@bastion-agentic-defense/sdk";
+    ? `import { BastionClient, AGENT_CAPABILITIES } from "@bastion-agentique/sdk";
 
 const client = new BastionClient({ connection });
 const tx = await client.registerAgent(

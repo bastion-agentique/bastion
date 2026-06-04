@@ -44,5 +44,5 @@ cargo run --release
 
 - **GitHub**: https://github.com/bastion-agentic-defense/bastion
 - **Docs**: https://github.com/bastion-agentic-defense/bastion#readme
-- **SDK**: https://www.npmjs.com/package/@bastion-agentic-defense/sdk
+- **SDK**: https://www.npmjs.com/package/@bastion-agentique/sdk
 - **Grond OSINT**: https://github.com/daemon-blockint-tech/Grond

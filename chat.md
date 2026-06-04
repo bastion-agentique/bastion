@@ -17,7 +17,7 @@ What is the current state of the project?
 > Repository https://github.com/bastion-agentic-defense/bastion
 > Dashboard https://bastionagenticdefense.netlify.app/dashboard
 > Documentation https://github.com/bastion-agentic-defense/bastion/tree/main/docs
-> NPM SDK https://www.npmjs.com/package/@bastion-agentic-defense/sdk
+> NPM SDK https://www.npmjs.com/package/@bastion-agentique/sdk
 >
 > The current architecture is a Rust monorepo with a chain-agnostic policy engine in crates/core and an Axum HTTP sidecar API in crates/sidecar. EVM contracts live in evm/ via Foundry and include ERC-7579 modular validators and ERC-8004 compliant agent identity registries. The frontend is a React, Vite, and TailwindCSS compliance dashboard in apps/web. A TypeScript SDK is published to NPM from packages/sdk. All CI/CD runs on GitHub Actions.
 ---
@@ -116,7 +116,7 @@ What is the current state of the project?
 > Repository https://github.com/bastion-agentic-defense/bastion
 > Dashboard https://bastionagenticdefense.netlify.app/dashboard
 > Documentation https://github.com/bastion-agentic-defense/bastion/tree/main/docs
-> NPM SDK https://www.npmjs.com/package/@bastion-agentic-defense/sdk
+> NPM SDK https://www.npmjs.com/package/@bastion-agentique/sdk
 >
 > The architecture is a Rust monorepo with a chain-agnostic policy engine in crates/core and an HTTP sidecar API in crates/sidecar. EVM contracts live in evm/ via Foundry and include ERC-7579 modular validators and ERC-8004 agent identity registries. The frontend is a React and TailwindCSS compliance dashboard in apps/web. A TypeScript SDK is published to NPM from packages/sdk. CI/CD runs on GitHub Actions.
 ---

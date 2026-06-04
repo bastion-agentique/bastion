@@ -55,7 +55,7 @@ export default function StakingSection() {
             <span className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>agent-staking.ts</span>
           </div>
           <pre className="p-4 font-mono text-xs overflow-x-auto" style={{ color: 'var(--text-primary)' }}>
-{`import { BastionClient } from "@bastion-agentic-defense/sdk";
+{`import { BastionClient } from "@bastion-agentique/sdk";
 
 const client = new BastionClient({ connection });
 

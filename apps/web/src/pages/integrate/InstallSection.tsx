@@ -1,10 +1,10 @@
 import { useState } from 'react';
 
-const SOLANA_INSTALL = `npm install @bastion-agentic-defense/sdk @solana/web3.js @coral-xyz/anchor`;
+const SOLANA_INSTALL = `npm install @bastion-agentique/sdk @solana/web3.js @coral-xyz/anchor`;
 const SOLANA_DEPS = `# or
-pnpm add @bastion-agentic-defense/sdk @solana/web3.js @coral-xyz/anchor
+pnpm add @bastion-agentique/sdk @solana/web3.js @coral-xyz/anchor
 # or
-yarn add @bastion-agentic-defense/sdk @solana/web3.js @coral-xyz/anchor`;
+yarn add @bastion-agentique/sdk @solana/web3.js @coral-xyz/anchor`;
 
 export default function InstallSection() {
   const [copied, setCopied] = useState(false);
@@ -61,7 +61,7 @@ export default function InstallSection() {
           <span className="font-sans text-xs" style={{ color: 'var(--text-muted)' }}>EVM SDK (Solidity + TypeScript)</span>
         </div>
         <code className="font-mono text-xs" style={{ color: '#6B7280' }}>
-          # npm install @bastion-agentic-defense/sdk-evm viem
+          # npm install @bastion-agentique/sdk-evm viem
         </code>
       </div>
     </section>

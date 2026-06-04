@@ -81,7 +81,7 @@ All notable changes to Bastion will be documented in this file.
 - Policy engine with Solana-native transaction validation
 - Helius simulation integration
 - On-chain audit program (Anchor, Solana devnet)
-- TypeScript SDK (`@bastion-agentic-defense/sdk`)
+- TypeScript SDK (`@bastion-agentique/sdk`)
 - React dashboard with agent fleet visualizer
 - EVM contracts (Solidity, Foundry) — under development
 - Midnight Network ZK contracts (Compact)

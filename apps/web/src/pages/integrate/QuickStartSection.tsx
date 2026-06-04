@@ -5,7 +5,7 @@ import {
   BastionClient,
   AGENT_CAPABILITIES,
   DECISION,
-} from "@bastion-agentic-defense/sdk";
+} from "@bastion-agentique/sdk";
 
 const connection = new Connection(
   "https://api.devnet.solana.com"

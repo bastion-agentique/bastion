@@ -39,7 +39,7 @@ bastion/
 │   │   ├── abi/               ← EVM contract ABIs (JSON, on main branch)
 │   │   └── idl.json           ← Solana Anchor IDL
 │   └── dist/                  ← Built output (Netlify/Vercel publish dir)
-├── packages/sdk/              ← @bastion-agentic-defense/sdk (TypeScript)
+├── packages/sdk/              ← @bastion-agentique/sdk (TypeScript)
 │   └── src/
 │       ├── index.ts           ← BastionClient class
 │       ├── types.ts           ← AuditState, AuditEntry, Agent, Policy types
@@ -201,7 +201,7 @@ Agent Operator (policy config, HITL review)
 
 5. **`apps/web/`** — React dashboard with Solana (wallet-adapter) and EVM (RainbowKit) wallet connections. Shows audit logs, policy settings, stats. Supports chain switching between Solana and Celo.
 
-6. **`packages/sdk/`** — TypeScript SDK (`@bastion-agentic-defense/sdk`) wrapping the Solana Anchor program. Exposes `BastionClient` with typed methods for all on-chain operations.
+6. **`packages/sdk/`** — TypeScript SDK (`@bastion-agentique/sdk`) wrapping the Solana Anchor program. Exposes `BastionClient` with typed methods for all on-chain operations.
 
 ---
 

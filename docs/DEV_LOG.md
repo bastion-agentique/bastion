@@ -84,7 +84,7 @@ Implemented hierarchical agent delegation — parent agents can spawn sub-agents
 ### Test Results
 - `cargo test -p bastion-core -p bastion-sidecar`: 92 tests passed, 0 failed
 - `pnpm --filter bastion-dashboard build`: ✓ built successfully
-- `pnpm --filter @bastion-agentic-defense/sdk build`: $ tsc passed
+- `pnpm --filter @bastion-agentique/sdk build`: $ tsc passed
 - Integration: POST /agents, POST /delegate, GET /agents/:did/children, DELETE /delegations all functional
 
 ### Known Limitations
