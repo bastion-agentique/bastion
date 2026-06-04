@@ -17,7 +17,6 @@ import { getPricingTable } from './pricing.js';
 import { createServer } from 'http';
 import { URL } from 'url';
 
-const API_KEY = process.env.BASTION_API_KEY || '';
 const PORT = parseInt(process.env.BASTION_MCP_PORT || '3001', 10);
 const TREASURY = process.env.BASTION_TREASURY || 'E9PsSz9XWgNR3TmSC57NHC2ZxJzF5NmbrWsDKEe7A7yM';
 const SIDECAR_URL = SIDECAR;
@@ -112,9 +111,9 @@ httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`[bastion-mcp] SSE endpoint: http://localhost:${PORT}/mcp/sse`);
   console.log(`[bastion-mcp] Messages endpoint: http://localhost:${PORT}/mcp/messages`);
   console.log(`[bastion-mcp] Sidecar: ${SIDECAR_URL}`);
-  console.log(`[bastion-mcp] Auth: ${API_KEY ? 'pay.sh X-Api-Key configured' : 'no auth (direct x402 payments only)'}`);
+  console.log(`[bastion-mcp] Auth: x402 (pay.sh pre-verifies, direct calls use X-Payment header)`);
   console.log(`[bastion-mcp] Treasury: ${TREASURY}`);
 });
 
-export { SIDECAR_URL, API_KEY, TREASURY };
+export { SIDECAR_URL, TREASURY };
 

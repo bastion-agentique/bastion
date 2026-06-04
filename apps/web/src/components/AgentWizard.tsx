@@ -61,7 +61,8 @@ const tx = await client.setPolicy(
 
   const simCode = chain === 'solana'
     ? `// Send a base64 transaction through the sidecar
-const response = await fetch("http://localhost:3000/simulate", {
+const SIDECAR_URL = import.meta.env?.VITE_SIDECAR_URL || 'http://localhost:3000';
+const response = await fetch(`${SIDECAR_URL}/simulate`, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
@@ -76,7 +77,7 @@ const result = await response.json();`
     setSimLoading(true);
     setSimResult(null);
     try {
-      const res = await fetch('http://localhost:3000/simulate', {
+      const res = await fetch(`${SIDECAR_URL}/simulate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ transaction: simTx, intent: 'wizard test transaction' }),

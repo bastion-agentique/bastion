@@ -35,8 +35,7 @@ cd bastion && cargo build --release
 - **MCP HTTP Server (SSE)**: 15 tools + 3 prompts on port 3001 for Claude, Cursor, browser agents.
 - **x402 Payments**: Pay-per-call with Solana SOL transfers + free monthly tier.
 - **pay.sh Provider**: One-command gateway with automatic payment handling.
-- **CORS Support**: Browser-native SSE connection from any origin.
-- **SOL Staking**: Stake SOL for higher transaction limits via StakeWeighted policy. 48h min, 7-day cooldown.
+- **Auth: pay.sh + x402.** pay.sh pre-verifies payment before proxying to sidecar. x402 on MCP server handles tool payment. Sidecar REST API is open.
 
 ## Staking (AgentStake PDA)
 
