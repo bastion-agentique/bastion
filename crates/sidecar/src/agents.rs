@@ -128,6 +128,11 @@ impl AgentStore {
         agents.values().find(|a| a.authority == authority).cloned()
     }
 
+    /// Get direct write access to the agents map for delegation updates.
+    pub fn agents_write(&self) -> Result<std::sync::RwLockWriteGuard<'_, HashMap<String, TrackedAgent>>, String> {
+        self.agents.write().map_err(|e| e.to_string())
+    }
+
     /// Build a W3C DID document for a registered agent using live on-chain data.
     pub fn build_did_document(&self, did: &str) -> Option<did::DidResolveResult> {
         let agent = self.get_agent(did)?;

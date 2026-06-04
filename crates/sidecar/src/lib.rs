@@ -1481,6 +1481,20 @@ async fn post_agent_delegate(
         &req.child_did, &parent.authority, "",
         &req.child_name, 0, 100, now, None
     );
+    // Update parent's child_dids and is_delegator
+    if let Ok(mut agents) = state.agent_store.agents_write() {
+        if let Some(mut parent_data) = agents.get(&parent_did).cloned() {
+            parent_data.child_dids.push(req.child_did.clone());
+            parent_data.is_delegator = true;
+            agents.insert(parent_did.clone(), parent_data);
+        }
+        // Set child's delegation fields
+        if let Some(mut child_data) = agents.get(&req.child_did).cloned() {
+            child_data.parent_did = Some(parent_did.clone());
+            child_data.delegation_depth = Some(depth as u8);
+            agents.insert(req.child_did.clone(), child_data);
+        }
+    }
     Ok(Json(serde_json::json!({
         "status": "delegation_created",
         "parent_did": parent_did,
