@@ -66,7 +66,7 @@ export default function Integrate() {
               </a>
             )}
             <a
-              href="https://github.com/bastion-agentic-defense/bastion"
+              href="https://github.com/bastion-agentique/bastion"
               target="_blank"
               rel="noopener noreferrer"
               className="rounded-full px-8 py-3 text-sm font-medium font-sans transition-all duration-150 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"

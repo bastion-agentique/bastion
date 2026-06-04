@@ -75,7 +75,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'How do I get access?',
-    a: 'Bastion is open source under the Apache 2.0 license. Clone the repository at github.com/bastion-agentic-defense/bastion, deploy the Solana Anchor program, start the sidecar, and integrate the SDK. For enterprise deployments and managed infrastructure, contact hello@bastionagentique.com.',
+    a: 'Bastion is open source under the Apache 2.0 license. Clone the repository at github.com/bastion-agentique/bastion, deploy the Solana Anchor program, start the sidecar, and integrate the SDK. For enterprise deployments and managed infrastructure, contact hello@bastionagentique.com.',
   },
 ];
 
@@ -136,7 +136,7 @@ export default function Landing() {
               Integrate your agent
             </Link>
             <a
-              href="https://github.com/bastion-agentic-defense/bastion"
+              href="https://github.com/bastion-agentique/bastion"
               target="_blank"
               rel="noopener noreferrer"
               className="rounded-full border border-zinc-700 text-zinc-300 px-10 py-4 text-base font-medium font-sans hover:border-zinc-500 hover:text-white transition-colors no-underline"
@@ -216,7 +216,7 @@ export default function Landing() {
               <a href="#main-content" className="font-serif text-xl tracking-tight no-underline text-white">Bastion<span className="text-[10px] align-super ml-px">&reg;</span></a>
               <p className="font-sans text-xs text-zinc-600 max-w-xs leading-relaxed">Built on Daemon BlockInt Technologies. The first SIEM where the audit trail itself is the product.</p>
               <div className="flex gap-4">
-                <a href="https://github.com/bastion-agentic-defense/bastion" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white transition-colors text-sm no-underline">GitHub</a>
+                <a href="https://github.com/bastion-agentique/bastion" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white transition-colors text-sm no-underline">GitHub</a>
                 <a href="https://x.com/DaemonProtocol" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white transition-colors text-sm no-underline">X</a>
               </div>
             </div>
