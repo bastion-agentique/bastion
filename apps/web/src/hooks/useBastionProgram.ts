@@ -33,20 +33,6 @@ export function useBastionProgram() {
   const { connection } = useConnection();
   const wallet = useWallet();
 
-  // Read-only program — no wallet needed for fetching public on-chain data
-  const readOnlyProgram = useMemo(() => {
-    try {
-      const noopWallet = {
-        publicKey: PublicKey.default,
-        signTransaction: async (tx: any) => tx,
-        signAllTransactions: async (txs: any[]) => txs,
-      };
-      const provider = new AnchorProvider(connection, noopWallet, AnchorProvider.defaultOptions());
-      return new Program(idl, PROGRAM_ID, provider);
-    } catch { return null; }
-  }, [connection]);
-
-  // Write program — requires wallet for instructions
   const program = useMemo(() => {
     if (!wallet.publicKey || !wallet.signTransaction || !wallet.signAllTransactions) return null;
 
@@ -94,11 +80,11 @@ export function useBastionProgram() {
         programId,
       )[0];
     },
-    [program, readOnlyProgram, getPolicyAddress],
+    [program, getPolicyAddress],
   );
 
   const fetchAgents = useCallback(async (): Promise<any[]> => {
-    const p = program || readOnlyProgram;
+    /* readOnly removed - uses program when wallet connected */
     if (!p) return [];
     try {
       const accounts = await program.account.agent.all();
@@ -116,10 +102,10 @@ export function useBastionProgram() {
     } catch {
       return [];
     }
-  }, [program, readOnlyProgram]);
+  }, [program]);
 
   const fetchStake = useCallback(async (authority: PublicKey): Promise<any | null> => {
-    const p = program || readOnlyProgram;
+    /* readOnly removed - uses program when wallet connected */
     if (!p) return null;
     try {
       const [agentStake] = PublicKey.findProgramAddressSync(
@@ -130,10 +116,10 @@ export function useBastionProgram() {
     } catch {
       return null;
     }
-  }, [program, readOnlyProgram, programId]);
+  }, [program, programId]);
 
   const fetchAllAudits = useCallback(async (limit = 50): Promise<AuditEntryData[]> => {
-    const p = program || readOnlyProgram;
+    /* readOnly removed - uses program when wallet connected */
     if (!p) return [];
     try {
       const stateAddress = getAuditStateAddress();
@@ -164,7 +150,7 @@ export function useBastionProgram() {
     } catch {
       return [];
     }
-  }, [program, readOnlyProgram, getAuditStateAddress, getAuditEntryAddress]);
+  }, [program, getAuditStateAddress, getAuditEntryAddress]);
 
   const emergencyPause = useCallback(async (): Promise<string | null> => {
     if (!program) return null;

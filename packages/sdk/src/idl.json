@@ -83,6 +83,31 @@
         { "name": "signer", "isMut": false, "isSigner": true }
       ],
       "args": []
+    },
+    {
+      "name": "stakeLamports",
+      "accounts": [
+        { "name": "agentStake", "isMut": true, "isSigner": false },
+        { "name": "authority", "isMut": true, "isSigner": true },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [{ "name": "amount", "type": "u64" }]
+    },
+    {
+      "name": "requestUnstake",
+      "accounts": [
+        { "name": "agentStake", "isMut": true, "isSigner": false },
+        { "name": "authority", "isMut": false, "isSigner": true }
+      ],
+      "args": []
+    },
+    {
+      "name": "claimUnstake",
+      "accounts": [
+        { "name": "agentStake", "isMut": true, "isSigner": false },
+        { "name": "authority", "isMut": true, "isSigner": true }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -126,6 +151,7 @@
           { "name": "name", "type": "string" },
           { "name": "capabilityBitmask", "type": "u64" },
           { "name": "reputationScore", "type": "u64" },
+          { "name": "delegationDepth", "type": "u8" },
           { "name": "registeredAt", "type": "i64" },
           { "name": "bump", "type": "u8" }
         ]
@@ -140,6 +166,20 @@
           { "name": "allowedPrograms", "type": { "array": [{ "array": ["u8", 32] }] } },
           { "name": "maxSolPerTx", "type": "u64" },
           { "name": "rateLimitPerMinute", "type": "u32" },
+          { "name": "bump", "type": "u8" }
+        ]
+      }
+    },
+    {
+      "name": "agentStake",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "authority", "type": "publicKey" },
+          { "name": "stakedLamports", "type": "u64" },
+          { "name": "stakeStartedAt", "type": "i64" },
+          { "name": "unstakeRequestedAt", "type": "i64" },
+          { "name": "penaltyAccrued", "type": "u64" },
           { "name": "bump", "type": "u8" }
         ]
       }
@@ -172,6 +212,28 @@
       "fields": [
         { "name": "authority", "type": "publicKey" }
       ]
+    },
+    {
+      "name": "StakeChanged",
+      "fields": [
+        { "name": "authority", "type": "publicKey" },
+        { "name": "stakedLamports", "type": "u64" }
+      ]
+    },
+    {
+      "name": "UnstakeRequested",
+      "fields": [
+        { "name": "authority", "type": "publicKey" },
+        { "name": "requestedAt", "type": "i64" }
+      ]
+    },
+    {
+      "name": "StakeSlashed",
+      "fields": [
+        { "name": "authority", "type": "publicKey" },
+        { "name": "penalty", "type": "u64" },
+        { "name": "remaining", "type": "u64" }
+      ]
     }
   ],
   "errors": [
@@ -179,6 +241,9 @@
     { "code": 101, "name": "NotPaused", "msg": "Protocol is not paused" },
     { "code": 102, "name": "IsPaused", "msg": "Protocol is paused" },
     { "code": 103, "name": "AlreadyPaused", "msg": "Protocol is already paused" },
-    { "code": 104, "name": "Unauthorized", "msg": "Unauthorized" }
+    { "code": 104, "name": "Unauthorized", "msg": "Unauthorized" },
+    { "code": 105, "name": "InsufficientStake", "msg": "Insufficient stake" },
+    { "code": 106, "name": "StakeTooRecent", "msg": "Stake too recent" },
+    { "code": 107, "name": "StakeCooldownNotMet", "msg": "Stake cooldown not met" }
   ]
 }

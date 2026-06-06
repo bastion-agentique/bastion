@@ -1,6 +1,13 @@
 {
   "version": "0.2.0",
   "name": "bastion_audit",
+  "address": "A29V5MUVs73y7XBHHxPpPcAW7h4gGHupbDdwYSwA2n9D",
+  "metadata": {
+    "name": "bastion_audit",
+    "version": "0.2.0",
+    "spec": "0.1.0",
+    "description": "Bastion on-chain audit program"
+  },
   "instructions": [
     {
       "name": "initialize",
@@ -21,9 +28,9 @@
       ],
       "args": [
         { "name": "decision", "type": "u8" },
-        { "name": "simulationResult", "type": "array", "itemType": "u8", "length": 32 },
+        { "name": "simulationResult", "type": { "array": ["u8", 32] } },
         { "name": "reasoning", "type": "string" },
-        { "name": "programId", "type": "option", "itemType": "array", "itemType": "u8", "length": 32 }
+        { "name": "programId", "type": { "option": { "array": ["u8", 32] } } }
       ]
     },
     {
@@ -56,7 +63,7 @@
         { "name": "systemProgram", "isMut": false, "isSigner": false }
       ],
       "args": [
-        { "name": "allowedPrograms", "type": "array", "itemType": "array", "itemType": "u8", "length": 32 },
+        { "name": "allowedPrograms", "type": { "array": [{ "array": ["u8", 32] }] } },
         { "name": "maxSolPerTx", "type": "u64" },
         { "name": "rateLimitPerMinute", "type": "u32" }
       ]
@@ -128,9 +135,9 @@
           { "name": "authority", "type": "publicKey" },
           { "name": "timestamp", "type": "i64" },
           { "name": "decision", "type": "u8" },
-          { "name": "simulationResult", "type": "array", "itemType": "u8", "length": 32 },
+          { "name": "simulationResult", "type": { "array": ["u8", 32] } },
           { "name": "reasoning", "type": "string" },
-          { "name": "programId", "type": "option", "itemType": "array", "itemType": "u8", "length": 32 },
+          { "name": "programId", "type": { "option": { "array": ["u8", 32] } } },
           { "name": "bump", "type": "u8" }
         ]
       }
@@ -156,7 +163,7 @@
         "kind": "struct",
         "fields": [
           { "name": "authority", "type": "publicKey" },
-          { "name": "allowedPrograms", "type": "array", "itemType": "array", "itemType": "u8", "length": 32 },
+          { "name": "allowedPrograms", "type": { "array": [{ "array": ["u8", 32] }] } },
           { "name": "maxSolPerTx", "type": "u64" },
           { "name": "rateLimitPerMinute", "type": "u32" },
           { "name": "bump", "type": "u8" }
@@ -205,6 +212,28 @@
       "fields": [
         { "name": "authority", "type": "publicKey" }
       ]
+    },
+    {
+      "name": "StakeChanged",
+      "fields": [
+        { "name": "authority", "type": "publicKey" },
+        { "name": "stakedLamports", "type": "u64" }
+      ]
+    },
+    {
+      "name": "UnstakeRequested",
+      "fields": [
+        { "name": "authority", "type": "publicKey" },
+        { "name": "requestedAt", "type": "i64" }
+      ]
+    },
+    {
+      "name": "StakeSlashed",
+      "fields": [
+        { "name": "authority", "type": "publicKey" },
+        { "name": "penalty", "type": "u64" },
+        { "name": "remaining", "type": "u64" }
+      ]
     }
   ],
   "errors": [
@@ -212,6 +241,9 @@
     { "code": 101, "name": "NotPaused", "msg": "Protocol is not paused" },
     { "code": 102, "name": "IsPaused", "msg": "Protocol is paused" },
     { "code": 103, "name": "AlreadyPaused", "msg": "Protocol is already paused" },
-    { "code": 104, "name": "Unauthorized", "msg": "Unauthorized" }
+    { "code": 104, "name": "Unauthorized", "msg": "Unauthorized" },
+    { "code": 105, "name": "InsufficientStake", "msg": "Insufficient stake" },
+    { "code": 106, "name": "StakeTooRecent", "msg": "Stake too recent" },
+    { "code": 107, "name": "StakeCooldownNotMet", "msg": "Stake cooldown not met" }
   ]
 }
