@@ -204,25 +204,24 @@ export default function Dashboard() {
   }, [dataSource]); // Only re-evaluate when dataSource changes — loadNetworkData/loadSidecarData are stable via useCallback
 
   useEffect(() => {
-    if (!connected) { navigate('/'); return; }
     loadData();
-    // Network mode: refresh every 2 minutes (60s cache + 1 refresh) to avoid RPC spam
-    // Sidecar mode: refresh every 30 seconds (local, fast)
     const interval = dataSource === 'network' ? 120000 : 30000;
     const iv = setInterval(loadData, interval);
     return () => clearInterval(iv);
-  }, [connected, navigate, loadData, dataSource]);
+  }, [loadData, dataSource]);
 
   const handlePause = useCallback(async () => {
     if (chain !== 'solana') return;
+    if (!connected) { alert('Connect your Solana wallet to manage the circuit breaker.'); return; }
     setTxPending(true);
     const sig = isPaused ? await sol.emergencyResume() : await sol.emergencyPause();
     if (sig) { setIsPaused(!isPaused); setTimeout(loadData, 2000); }
     setTxPending(false);
-  }, [isPaused, sol, loadData, chain]);
+  }, [isPaused, sol, loadData, chain, connected]);
 
   const handleSavePolicy = useCallback(async () => {
     if (chain !== 'solana') return;
+    if (!connected) { alert('Connect your Solana wallet to update the policy.'); return; }
     setTxPending(true);
     const programs = policyForm.allowedProgramsText.split('\n').map((p) => p.trim()).filter((p) => p.length > 0);
     await sidecar.updatePolicy({ max_sol_per_tx: policyForm.maxSolPerTx, max_balance_drain_lamports: null, rate_limit_per_minute: policyForm.rateLimitPerMinute, allowed_programs: programs, blocked_addresses: [], simulation_checks_enabled: true });
