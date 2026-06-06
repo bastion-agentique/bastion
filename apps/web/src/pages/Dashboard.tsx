@@ -363,10 +363,7 @@ export default function Dashboard() {
                     { label: 'Critical', value: trackedAgents.filter(a => a.reputation_score < 40).length, color: '#ef4444' },
                   ]
                 : [
-                    { label: 'Info', value: Math.floor(stats.total * 0.6), color: '#3b82f6' },
-                    { label: 'Med', value: Math.floor(stats.total * 0.25), color: '#f59e0b' },
-                    { label: 'High', value: Math.floor(stats.total * 0.1), color: '#ef7d44' },
-                    { label: 'Critical', value: Math.floor(stats.total * 0.05), color: '#ef4444' },
+                    { label: 'Agents', value: onChainAgents.length || 1, color: '#3b82f6' },
                   ]
             } />
           </div>

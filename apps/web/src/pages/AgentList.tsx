@@ -162,7 +162,7 @@ export default function AgentList() {
           <span className="font-sans text-[10px] text-zinc-500">
             {allAgents().length} agents ({parentCount} parents, {childCount} children)
           </span>
-          {!connected && (
+          {connected && (
             <Link to="/integrate" className="font-sans text-xs text-blue-400 hover:underline">Register New Agent</Link>
           )}
         </div>

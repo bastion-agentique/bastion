@@ -25,8 +25,8 @@ function formatDate(ts: number): string {
 
 export default function AgentDetail() {
   const { did } = useParams<{ did: string }>();
-  const { fetchAgent, fetchAgentAudit } = useAgents();
-  const [agent, setAgent] = useState<TrackedAgent | null>(null);
+  const { fetchAgent, fetchAgentAudit, stakeLamports, requestUnstake, claimUnstake } = useAgents();
+  const [agent, setAgent] = useState<any>(null);
   const [audit, setAudit] = useState<AgentAuditResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -226,10 +226,12 @@ export default function AgentDetail() {
             <button
               onClick={async () => {
                 const amt = prompt('Enter SOL amount to stake:');
-                if (amt) {
+                if (amt && agent) {
                   const lamports = Math.floor(parseFloat(amt) * 1_000_000_000);
                   if (lamports > 0) {
-                    alert(`Use the SDK to stake: client.stakeLamports(wallet, ${lamports})`);
+                    const ok = await stakeLamports(agent.did, agent.authority, lamports);
+                    if (ok) { alert(`${amt} SOL staked successfully!`); window.location.reload(); }
+                    else { alert('Staking failed. Ensure the sidecar is running.'); }
                   }
                 }
               }}
@@ -241,7 +243,11 @@ export default function AgentDetail() {
             {agent.staked_lamports > 0 && (
               <button
                 onClick={async () => {
-                  alert('Use the SDK: client.requestUnstake(wallet)');
+                  if (agent) {
+                    const ok = await requestUnstake(agent.did, agent.authority);
+                    if (ok) { alert('Unstake requested! 7-day cooldown started.'); window.location.reload(); }
+                    else { alert('Unstake request failed.'); }
+                  }
                 }}
                 className="px-4 py-2 rounded-lg font-mono text-xs font-medium transition-colors hover:opacity-80"
                 style={{ background: 'rgba(245,158,11,0.2)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)' }}
@@ -252,7 +258,11 @@ export default function AgentDetail() {
             {agent.stake_unlock_at > 0 && agent.stake_unlock_at * 1000 < Date.now() && (
               <button
                 onClick={async () => {
-                  alert('Use the SDK: client.claimUnstake(wallet)');
+                  if (agent) {
+                    const ok = await claimUnstake(agent.did, agent.authority);
+                    if (ok) { alert('SOL claimed!'); window.location.reload(); }
+                    else { alert('Claim failed.'); }
+                  }
                 }}
                 className="px-4 py-2 rounded-lg font-mono text-xs font-medium transition-colors hover:opacity-80"
                 style={{ background: '#22c55e', color: '#000' }}

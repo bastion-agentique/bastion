@@ -33,6 +33,20 @@ export function useBastionProgram() {
   const { connection } = useConnection();
   const wallet = useWallet();
 
+  // Read-only program — no wallet needed for fetching public on-chain data
+  const readOnlyProgram = useMemo(() => {
+    try {
+      const noopWallet = {
+        publicKey: PublicKey.default,
+        signTransaction: async (tx: any) => tx,
+        signAllTransactions: async (txs: any[]) => txs,
+      };
+      const provider = new AnchorProvider(connection, noopWallet, AnchorProvider.defaultOptions());
+      return new Program(idl, PROGRAM_ID, provider);
+    } catch { return null; }
+  }, [connection]);
+
+  // Write program — requires wallet for instructions
   const program = useMemo(() => {
     if (!wallet.publicKey || !wallet.signTransaction || !wallet.signAllTransactions) return null;
 
@@ -80,91 +94,12 @@ export function useBastionProgram() {
         programId,
       )[0];
     },
-    [programId],
+    [program, readOnlyProgram, getPolicyAddress],
   );
-
-  const fetchStats = useCallback(async (): Promise<StatsData | null> => {
-    if (!program) return null;
-    try {
-      const address = getAuditStateAddress();
-      const account = (await program.account.auditState.fetch(address)) as any;
-      return {
-        total: Number(account.totalAudits),
-        allowed: Number(account.allowedCount),
-        blocked: Number(account.blockedCount),
-      };
-    } catch {
-      return null;
-    }
-  }, [program, getAuditStateAddress]);
-
-  const fetchPaused = useCallback(async (): Promise<boolean | null> => {
-    if (!program) return null;
-    try {
-      const address = getAuditStateAddress();
-      const account = (await program.account.auditState.fetch(address)) as any;
-      return account.paused as boolean;
-    } catch {
-      return null;
-    }
-  }, [program, getAuditStateAddress]);
-
-  const fetchAuditEntries = useCallback(
-    async (limit = 50): Promise<AuditEntryData[]> => {
-      if (!program) return [];
-      try {
-        const stateAddress = getAuditStateAddress();
-        const state = (await program.account.auditState.fetch(stateAddress)) as any;
-        const total = Number(state.totalAudits);
-        if (total === 0) return [];
-
-        const start = Math.max(0, total - limit);
-        const entries: AuditEntryData[] = [];
-
-        for (let i = total - 1; i >= start; i--) {
-          try {
-            const addr = getAuditEntryAddress(i);
-            const entry = (await program.account.auditEntry.fetch(addr)) as any;
-            entries.push({
-              id: i.toString(),
-              timestamp: Number(entry.timestamp),
-              decision: entry.decision === 0 ? 'ALLOWED' : 'BLOCKED',
-              account: entry.authority.toBase58(),
-              intent: (entry.reasoning as string) || 'No description',
-              reason: entry.decision === 0 ? 'Policy passed' : 'Policy violation',
-            });
-          } catch {
-            continue;
-          }
-        }
-
-        return entries;
-      } catch {
-        return [];
-      }
-    },
-    [program, getAuditStateAddress, getAuditEntryAddress],
-  );
-
-  const fetchPolicy = useCallback(async (): Promise<PolicyData | null> => {
-    if (!program) return null;
-    try {
-      const address = getPolicyAddress();
-      const account = (await program.account.policy.fetch(address)) as any;
-      return {
-        maxSolPerTx: Number(account.maxSolPerTx),
-        rateLimit: Number(account.rateLimitPerMinute),
-        allowedPrograms: (account.allowedPrograms as any[]).map(
-          (p: any) => new PublicKey(p).toBase58(),
-        ),
-      };
-    } catch {
-      return null;
-    }
-  }, [program, getPolicyAddress]);
 
   const fetchAgents = useCallback(async (): Promise<any[]> => {
-    if (!program) return [];
+    const p = program || readOnlyProgram;
+    if (!p) return [];
     try {
       const accounts = await program.account.agent.all();
       return accounts.map((a: any) => ({
@@ -181,10 +116,11 @@ export function useBastionProgram() {
     } catch {
       return [];
     }
-  }, [program]);
+  }, [program, readOnlyProgram]);
 
   const fetchStake = useCallback(async (authority: PublicKey): Promise<any | null> => {
-    if (!program) return null;
+    const p = program || readOnlyProgram;
+    if (!p) return null;
     try {
       const [agentStake] = PublicKey.findProgramAddressSync(
         [Buffer.from("agent_stake"), authority.toBuffer()],
@@ -194,10 +130,11 @@ export function useBastionProgram() {
     } catch {
       return null;
     }
-  }, [program, programId]);
+  }, [program, readOnlyProgram, programId]);
 
   const fetchAllAudits = useCallback(async (limit = 50): Promise<AuditEntryData[]> => {
-    if (!program) return [];
+    const p = program || readOnlyProgram;
+    if (!p) return [];
     try {
       const stateAddress = getAuditStateAddress();
       const state = (await program.account.auditState.fetch(stateAddress)) as any;
@@ -227,7 +164,7 @@ export function useBastionProgram() {
     } catch {
       return [];
     }
-  }, [program, getAuditStateAddress, getAuditEntryAddress]);
+  }, [program, readOnlyProgram, getAuditStateAddress, getAuditEntryAddress]);
 
   const emergencyPause = useCallback(async (): Promise<string | null> => {
     if (!program) return null;
