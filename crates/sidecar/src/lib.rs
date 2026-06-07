@@ -86,6 +86,7 @@ struct AppState {
     correlation_engine: Option<Arc<RwLock<bastion_correlation::engine::CorrelationEngine>>>,
     did_cache: Arc<RwLock<HashMap<String, did::DidResolveResult>>>,
     agent_store: Arc<agents::AgentStore>,
+    did_auth_state: auth::DidAuthState,
 }
 
 fn emit_event(tx: &broadcast::Sender<String>, event_type: &str, json_payload: &str) {
@@ -211,6 +212,108 @@ struct ErrorResponse {
 async fn hello() -> &'static str {
     "Hello, world!"
 }
+
+// ── DID Auth Handlers ────────────────────────────────────────
+
+async fn auth_nonce(
+    State(state): State<AppState>,
+    Json(req): Json<auth::AuthNonceRequest>,
+) -> Result<Json<auth::AuthNonceResponse>, (axum::http::StatusCode, Json<serde_json::Value>)> {
+    // Verify the DID exists in the agent store
+    if state.agent_store.get_agent(&req.did).is_none() {
+        return Err((
+            axum::http::StatusCode::NOT_FOUND,
+            Json(
+                serde_json::json!({"error": "Agent not registered. Register via POST /agents first."}),
+            ),
+        ));
+    }
+
+    let nonce = state.did_auth_state.nonce_store.generate(&req.did).await;
+    Ok(Json(auth::AuthNonceResponse {
+        nonce,
+        expires_in_seconds: 60,
+    }))
+}
+
+async fn auth_verify(
+    State(state): State<AppState>,
+    Json(req): Json<auth::AuthVerifyRequest>,
+) -> Result<Json<serde_json::Value>, (axum::http::StatusCode, Json<serde_json::Value>)> {
+    use solana_sdk::pubkey::Pubkey;
+    use solana_sdk::signature::Signature;
+    use std::str::FromStr;
+
+    // 1. Consume the nonce
+    if !state
+        .did_auth_state
+        .nonce_store
+        .consume(&req.did, &req.nonce)
+        .await
+    {
+        return Err((
+            axum::http::StatusCode::UNAUTHORIZED,
+            Json(serde_json::json!({"error": "Invalid or expired nonce"})),
+        ));
+    }
+
+    // 2. Look up agent
+    let agent = state.agent_store.get_agent(&req.did).ok_or((
+        axum::http::StatusCode::NOT_FOUND,
+        Json(serde_json::json!({"error": "Agent not found"})),
+    ))?;
+
+    // 3. Parse pubkey and signature
+    let pubkey = Pubkey::from_str(&agent.authority).map_err(|_| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"error": "Invalid agent authority key"})),
+        )
+    })?;
+
+    let sig_bytes = base64::engine::general_purpose::STANDARD
+        .decode(&req.signature)
+        .map_err(|_| {
+            (
+                axum::http::StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({"error": "Invalid signature encoding"})),
+            )
+        })?;
+
+    let signature = Signature::try_from(sig_bytes.as_slice()).map_err(|_| {
+        (
+            axum::http::StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({"error": "Invalid signature"})),
+        )
+    })?;
+
+    // 4. Verify
+    if !signature.verify(pubkey.as_ref(), req.nonce.as_bytes()) {
+        return Err((
+            axum::http::StatusCode::UNAUTHORIZED,
+            Json(serde_json::json!({"error": "Signature verification failed"})),
+        ));
+    }
+
+    Ok(Json(serde_json::json!({
+        "status": "authenticated",
+        "did": req.did,
+        "authority": agent.authority,
+    })))
+}
+
+async fn generate_did(State(_state): State<AppState>) -> Json<serde_json::Value> {
+    let generated = agents::generate_did_keypair();
+    Json(serde_json::json!({
+        "status": "generated",
+        "did": generated.did,
+        "authority_pubkey": generated.authority_pubkey,
+        "secret_key_base64": generated.secret_key_base64,
+        "note": "Store the secret_key securely — it cannot be retrieved again.",
+    }))
+}
+
+// ── End Auth Handlers ────────────────────────────────────────
 
 async fn update_policy(
     State(state): State<AppState>,
@@ -1234,15 +1337,8 @@ async fn resolve_did_handler(
         }
     }
 
-    // Try AgentStore first (registered agents with verified on-chain data)
-    if let Some(result) = state.agent_store.build_did_document(&full_did) {
-        let mut cache = state.did_cache.write().await;
-        cache.insert(full_did, result.clone());
-        return Ok(Json(result));
-    }
-
-    // Fall back to generic resolver
-    let result = did::resolve_did(&full_did)
+    // Resolve using agent store (registered agents get real docs, unregistered get stubs)
+    let result = did::resolve_did(&full_did, &state.agent_store)
         .await
         .ok_or(axum::http::StatusCode::NOT_FOUND)?;
 
@@ -1298,12 +1394,32 @@ async fn register_agent_handler(
         ));
     }
 
-    let agent_pda = parts[3]; // The last part is the base58-encoded PDA
+    let agent_pda = parts[3];
     let chain = parts[2];
 
-    // For Solana: fetch the Agent PDA to verify it exists
-    // (In production this would do an on-chain RPC call; for MVP we trust the registration)
-    let name = format!("Agent-{}", &agent_pda[..8]);
+    // Verify on-chain PDA exists (if on-chain client is enabled)
+    let (mut capability_bitmask, mut reputation_score) = (0u64, 100u64);
+    if state.on_chain.is_enabled() && chain == "solana" {
+        match state.on_chain.verify_agent_pda(agent_pda).await {
+            Ok((exists, cap, rep)) => {
+                if !exists {
+                    return Err((
+                        axum::http::StatusCode::BAD_REQUEST,
+                        Json(serde_json::json!({
+                            "error": format!("Agent PDA {agent_pda} not found on-chain. Deploy the agent first.")
+                        })),
+                    ));
+                }
+                capability_bitmask = cap;
+                reputation_score = rep;
+            }
+            Err(e) => {
+                eprintln!("[bastion] PDA verification RPC error (proceeding with defaults): {e}");
+            }
+        }
+    }
+
+    let name = format!("Agent-{}", &agent_pda[..8.min(agent_pda.len())]);
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap_or_default()
@@ -1314,8 +1430,8 @@ async fn register_agent_handler(
         &req.authority_pubkey,
         agent_pda,
         &name,
-        0,   // default capability (TRANSFER)
-        100, // default reputation
+        capability_bitmask,
+        reputation_score,
         now,
         req.sidecar_endpoint,
         req.device_type,
@@ -1330,6 +1446,7 @@ async fn register_agent_handler(
                     "did": did,
                     "authority": req.authority_pubkey,
                     "chain": chain,
+                    "on_chain_verified": state.on_chain.is_enabled(),
                     "timestamp": now,
                 })
                 .to_string(),
@@ -1338,6 +1455,7 @@ async fn register_agent_handler(
                 "status": "registered",
                 "did": did,
                 "agent_pda": agent_pda,
+                "on_chain_verified": state.on_chain.is_enabled(),
             })))
         }
         Err(e) => Err((
@@ -1514,18 +1632,16 @@ async fn post_agent_delegate(
         None,
     );
     // Update parent's child_dids and is_delegator
-    if let Ok(mut agents) = state.agent_store.agents_write() {
-        if let Some(mut parent_data) = agents.get(&parent_did).cloned() {
-            parent_data.child_dids.push(req.child_did.clone());
-            parent_data.is_delegator = true;
-            agents.insert(parent_did.clone(), parent_data);
-        }
-        // Set child's delegation fields
-        if let Some(mut child_data) = agents.get(&req.child_did).cloned() {
-            child_data.parent_did = Some(parent_did.clone());
-            child_data.delegation_depth = Some(depth as u8);
-            agents.insert(req.child_did.clone(), child_data);
-        }
+    if let Some(mut parent_data) = state.agent_store.get_agent(&parent_did) {
+        parent_data.child_dids.push(req.child_did.clone());
+        parent_data.is_delegator = true;
+        let _ = state.agent_store.save_agent(&parent_data);
+    }
+    // Set child's delegation fields
+    if let Some(mut child_data) = state.agent_store.get_agent(&req.child_did) {
+        child_data.parent_did = Some(parent_did.clone());
+        child_data.delegation_depth = Some(depth as u8);
+        let _ = state.agent_store.save_agent(&child_data);
     }
     Ok(Json(serde_json::json!({
         "status": "delegation_created",
@@ -1709,6 +1825,7 @@ async fn sse_events_handler(
     )
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn build_app(
     policy: Policy,
     simulator: Arc<dyn Simulate + Send + Sync>,
@@ -1717,6 +1834,7 @@ pub fn build_app(
     grond_oracle: GrondOracle,
     celo_simulator: Option<Arc<CeloSimulator>>,
     alchemy_sim: Option<Arc<crate::simulation::AlchemySimulator>>,
+    agent_store_path: &str,
 ) -> Router {
     let (event_tx, _) = broadcast::channel(256);
 
@@ -1728,6 +1846,26 @@ pub fn build_app(
             if let Err(e) = flush_logger.flush() {
                 eprintln!("[bastion] audit log flush failed: {e}");
             }
+        }
+    });
+
+    // Initialize Sled-backed agent store
+    let agent_store =
+        agents::AgentStore::new(agent_store_path).expect("Failed to initialize agent store (Sled)");
+    let agent_store = Arc::new(agent_store);
+
+    // Initialize DID auth state
+    let nonce_store = auth::NonceStore::new();
+    let did_auth_state = auth::DidAuthState {
+        nonce_store: nonce_store.clone(),
+        agent_store: agent_store.clone(),
+    };
+
+    // Periodic nonce cleanup (every 60 seconds)
+    tokio::spawn(async move {
+        loop {
+            tokio::time::sleep(Duration::from_secs(60)).await;
+            nonce_store.cleanup().await;
         }
     });
 
@@ -1745,7 +1883,8 @@ pub fn build_app(
         case_store: Arc::new(RwLock::new(cases::CaseStore::new())),
         correlation_engine: None,
         did_cache: Arc::new(RwLock::new(HashMap::new())),
-        agent_store: Arc::new(agents::AgentStore::new()),
+        agent_store,
+        did_auth_state: did_auth_state.clone(),
     };
 
     async fn markdown_middleware(req: AxumRequest<Body>, next: Next) -> impl IntoResponse {
@@ -1785,11 +1924,15 @@ pub fn build_app(
         .route("/cases/:id", axum::routing::patch(patch_case))
         .route("/cases/:id/evidence", post(post_case_evidence))
         .route("/agents", post(register_agent_handler))
-        .route_layer(middleware::from_fn(auth::require_api_key))
+        .route_layer(middleware::from_fn(auth::require_did_auth))
+        .route_layer(axum::extract::Extension(did_auth_state.clone()))
         // === Unprotected routes ===
         .route("/", get(hello))
         .route("/health", get(health))
         .route("/events", get(events_handler))
+        .route("/auth/nonce", post(auth_nonce))
+        .route("/auth/verify", post(auth_verify))
+        .route("/did/generate", post(generate_did))
         .route("/api/v2/evaluate", post(evaluate_v2))
         .route("/api/v2/simulate-evm", post(simulate_evm_handler))
         .route("/simulate", post(simulate))
@@ -1832,6 +1975,9 @@ pub fn build_app(
                     "content-type".parse().unwrap(),
                     "authorization".parse().unwrap(),
                     "x-api-key".parse().unwrap(),
+                    "x-did".parse().unwrap(),
+                    "x-did-nonce".parse().unwrap(),
+                    "x-did-signature".parse().unwrap(),
                     "x-payment".parse().unwrap(),
                     "x-payment-chain".parse().unwrap(),
                 ]),

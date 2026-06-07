@@ -134,6 +134,7 @@ fn test_app_with_result_and_policy(
     let simulator: Arc<dyn Simulate + Send + Sync> = Arc::new(MockSimulator {
         result: simulation_result,
     });
+    let agent_store_path = tmp_dir.path().join("agents.sled");
 
     (
         build_app(
@@ -144,6 +145,7 @@ fn test_app_with_result_and_policy(
             GrondOracle::disabled(),
             None,
             None,
+            agent_store_path.to_str().expect("agent store path"),
         ),
         tmp_dir,
     )

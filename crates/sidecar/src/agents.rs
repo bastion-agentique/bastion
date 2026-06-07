@@ -1,63 +1,41 @@
 use crate::did;
+use base64::Engine as _;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
+use solana_sdk::signature::{Keypair, Signer};
 
 /// A tracked agent registered with the sidecar.
-///
-/// Extended for robot/IoT fleet support: physical device identity fields
-/// (device_type, firmware_version, last_known_location) enable the firewall
-/// to track and enforce policies on autonomous robots with DID-based identity.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrackedAgent {
     // ── Core Identity ──
-    /// The W3C DID identifier, e.g. "did:bastion:solana:{pda_base58}"
     pub did: String,
-    /// Base58-encoded Solana pubkey of the agent authority.
     pub authority: String,
-    /// Base58-encoded Agent PDA.
     pub agent_pda: String,
-    /// Human-readable agent name.
     pub name: String,
 
     // ── Capabilities & Reputation ──
-    /// On-chain capability bitmask.
     pub capability_bitmask: u64,
-    /// On-chain reputation score.
     pub reputation_score: u64,
 
     // ── On-chain metadata ──
-    /// On-chain registration timestamp.
     pub registered_at: i64,
-    /// SOL staked for reputation weighting.
     pub staked_lamports: u64,
-    /// Earliest timestamp when stake can be claimed (0 if no pending unstake).
     pub stake_unlock_at: i64,
 
     // ── Delegation ──
-    /// DID of the parent agent (None for root agents).
     pub parent_did: Option<String>,
-    /// Delegation depth in the hierarchy (0 for root).
     pub delegation_depth: Option<u8>,
-    /// DIDs of direct children agents.
     pub child_dids: Vec<String>,
-    /// Whether this agent can spawn sub-agents.
     pub is_delegator: bool,
 
     // ── Connectivity ──
-    /// The agent's own sidecar endpoint URL, if provided.
     pub sidecar_endpoint: Option<String>,
-    /// Whether the on-chain Agent PDA has been verified.
     pub on_chain_verified: bool,
 
     // ── Physical / Robot Identity ──
-    /// Physical device type (e.g. "drone", "rover", "industrial_arm", "agv", "none" for pure-software agents).
     #[serde(default)]
     pub device_type: Option<String>,
-    /// Firmware or software version (e.g. "v1.4.2", "commit-sha").
     #[serde(default)]
     pub firmware_version: Option<String>,
-    /// Last known GPS coordinates as [latitude, longitude], or None if unknown.
     #[serde(default)]
     pub last_known_location: Option<(f64, f64)>,
 }
@@ -68,13 +46,10 @@ pub struct RegisterAgentRequest {
     pub did: String,
     pub authority_pubkey: String,
     pub sidecar_endpoint: Option<String>,
-    /// Physical device type for robot agents (e.g. "drone", "rover", "agv").
     #[serde(default)]
     pub device_type: Option<String>,
-    /// Firmware or software version string.
     #[serde(default)]
     pub firmware_version: Option<String>,
-    /// Last known GPS location [lat, lon].
     #[serde(default)]
     pub last_known_location: Option<(f64, f64)>,
 }
@@ -82,29 +57,48 @@ pub struct RegisterAgentRequest {
 /// Request body for robot telemetry updates.
 #[derive(Debug, Deserialize)]
 pub struct TelemetryUpdateRequest {
-    /// Last known GPS coordinates [lat, lon].
     pub location: Option<(f64, f64)>,
-    /// Current firmware version.
     pub firmware_version: Option<String>,
-    /// Current battery level 0-100.
     pub battery_level: Option<u8>,
 }
 
-/// In-memory registry of Bastion agents, keyed by DID.
-#[derive(Clone, Default)]
+/// Response when generating a new DID keypair.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GeneratedDID {
+    pub did: String,
+    pub authority_pubkey: String,
+    /// Base64-encoded Ed25519 secret key. Shown once — agent must store it.
+    pub secret_key_base64: String,
+}
+
+/// Generate a new Ed25519 keypair and return a `did:bastion:solana:{pubkey}` identifier.
+pub fn generate_did_keypair() -> GeneratedDID {
+    let keypair = Keypair::new();
+    let pubkey = keypair.pubkey().to_string();
+    let did = format!("did:bastion:solana:{pubkey}");
+    let secret_bytes = keypair.to_bytes();
+    let secret_key_base64 = base64::engine::general_purpose::STANDARD.encode(secret_bytes);
+
+    GeneratedDID {
+        did,
+        authority_pubkey: pubkey,
+        secret_key_base64,
+    }
+}
+
+/// Sled-backed persistent registry of Bastion agents, keyed by DID.
+#[derive(Clone)]
 pub struct AgentStore {
-    agents: Arc<RwLock<HashMap<String, TrackedAgent>>>,
+    db: sled::Db,
 }
 
 impl AgentStore {
-    pub fn new() -> Self {
-        Self {
-            agents: Arc::new(RwLock::new(HashMap::new())),
-        }
+    pub fn new(db_path: &str) -> Result<Self, String> {
+        let db = sled::open(db_path).map_err(|e| format!("Failed to open agent store: {e}"))?;
+        Ok(Self { db })
     }
 
-    /// Register a new agent. Caller should verify the Agent PDA exists on-chain
-    /// before calling this. Returns the DID on success.
+    /// Register a new agent. Persists to Sled. Returns the DID on success.
     #[allow(clippy::too_many_arguments)]
     pub fn register_agent(
         &self,
@@ -120,8 +114,7 @@ impl AgentStore {
         firmware_version: Option<String>,
         last_known_location: Option<(f64, f64)>,
     ) -> Result<String, String> {
-        let mut agents = self.agents.write().map_err(|e| e.to_string())?;
-        if agents.contains_key(did) {
+        if self.db.contains_key(did).map_err(|e| e.to_string())? {
             return Err(format!("Agent with DID {did} already registered"));
         }
 
@@ -146,47 +139,74 @@ impl AgentStore {
             last_known_location,
         };
 
-        agents.insert(did.to_string(), agent);
+        let json = serde_json::to_vec(&agent).map_err(|e| e.to_string())?;
+        self.db
+            .insert(did.as_bytes(), json)
+            .map_err(|e| e.to_string())?;
+        self.db.flush().map_err(|e| e.to_string())?;
         Ok(did.to_string())
     }
 
-    /// Update an existing agent's reputation and capabilities from on-chain data.
+    /// Update an existing agent's reputation.
     pub fn update_agent(&self, did: &str, reputation_score: u64) -> Result<(), String> {
-        let mut agents = self.agents.write().map_err(|e| e.to_string())?;
-        if let Some(agent) = agents.get_mut(did) {
-            agent.reputation_score = reputation_score;
-            Ok(())
-        } else {
-            Err(format!("Agent {did} not found"))
-        }
+        let mut agent = self
+            .get_agent(did)
+            .ok_or(format!("Agent {did} not found"))?;
+        agent.reputation_score = reputation_score;
+        let json = serde_json::to_vec(&agent).map_err(|e| e.to_string())?;
+        self.db
+            .insert(did.as_bytes(), json)
+            .map_err(|e| e.to_string())?;
+        self.db.flush().map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    /// Save a full agent record (for delegation updates, etc.).
+    pub fn save_agent(&self, agent: &TrackedAgent) -> Result<(), String> {
+        let json = serde_json::to_vec(agent).map_err(|e| e.to_string())?;
+        self.db
+            .insert(agent.did.as_bytes(), json)
+            .map_err(|e| e.to_string())?;
+        self.db.flush().map_err(|e| e.to_string())?;
+        Ok(())
     }
 
     /// List all tracked agents.
     pub fn list_agents(&self) -> Result<Vec<TrackedAgent>, String> {
-        let agents = self.agents.read().map_err(|e| e.to_string())?;
-        Ok(agents.values().cloned().collect())
+        self.db
+            .iter()
+            .filter_map(|r| {
+                let (_, val) = r.ok()?;
+                let agent: TrackedAgent = serde_json::from_slice(&val).ok()?;
+                Some(agent)
+            })
+            .collect::<Vec<_>>()
+            .pipe(Ok)
     }
 
     /// Get a single agent by DID.
     pub fn get_agent(&self, did: &str) -> Option<TrackedAgent> {
-        let agents = self.agents.read().ok()?;
-        agents.get(did).cloned()
+        let val = self.db.get(did.as_bytes()).ok()??;
+        serde_json::from_slice(&val).ok()
     }
 
     /// Look up agent by authority pubkey.
     pub fn find_by_authority(&self, authority: &str) -> Option<TrackedAgent> {
-        let agents = self.agents.read().ok()?;
-        agents.values().find(|a| a.authority == authority).cloned()
+        self.db
+            .iter()
+            .filter_map(|r| {
+                let (_, val) = r.ok()?;
+                let agent: TrackedAgent = serde_json::from_slice(&val).ok()?;
+                if agent.authority == authority {
+                    Some(agent)
+                } else {
+                    None
+                }
+            })
+            .next()
     }
 
-    /// Get direct write access to the agents map for delegation updates.
-    pub fn agents_write(
-        &self,
-    ) -> Result<std::sync::RwLockWriteGuard<'_, HashMap<String, TrackedAgent>>, String> {
-        self.agents.write().map_err(|e| e.to_string())
-    }
-
-    /// Build a W3C DID document for a registered agent using live on-chain data.
+    /// Build a W3C DID document for a registered agent.
     pub fn build_did_document(&self, did: &str) -> Option<did::DidResolveResult> {
         let agent = self.get_agent(did)?;
         let doc = did::build_did_document(
@@ -207,5 +227,21 @@ impl AgentStore {
                     .to_string(),
             },
         })
+    }
+}
+
+/// Tiny helper trait to turn iterator collect into Result.
+trait Pipe<T> {
+    fn pipe<F, R>(self, f: F) -> R
+    where
+        F: FnOnce(T) -> R;
+}
+
+impl<T> Pipe<T> for T {
+    fn pipe<F, R>(self, f: F) -> R
+    where
+        F: FnOnce(T) -> R,
+    {
+        f(self)
     }
 }

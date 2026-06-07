@@ -64,6 +64,63 @@ impl OnChainClient {
         self.enabled
     }
 
+    /// Verify that an Agent PDA exists on-chain by fetching its account data.
+    /// Returns (exists, capability_bitmask, reputation_score) or an error.
+    pub async fn verify_agent_pda(
+        &self,
+        agent_pda_base58: &str,
+    ) -> Result<(bool, u64, u64), String> {
+        let pubkey =
+            Pubkey::from_str(agent_pda_base58).map_err(|e| format!("Invalid PDA pubkey: {e}"))?;
+
+        let body = serde_json::json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "getAccountInfo",
+            "params": [
+                pubkey.to_string(),
+                { "encoding": "base64" }
+            ]
+        });
+
+        let resp: RpcResponse<GetAccountInfoResult> = self
+            .http
+            .post(&self.rpc_url)
+            .json(&body)
+            .send()
+            .await
+            .map_err(|e| format!("RPC request failed: {e}"))?
+            .json()
+            .await
+            .map_err(|e| format!("RPC parse failed: {e}"))?;
+
+        match resp.result.and_then(|r| r.value) {
+            Some(account_info) => {
+                if let Ok(bytes) =
+                    base64::engine::general_purpose::STANDARD.decode(&account_info.data[0])
+                {
+                    // Anchor account: 8-byte discriminator + data
+                    // Agent account layout (approx): discriminator(8) + authority(32) + ...
+                    // For now, just verify the account exists and has data
+                    let capability_bitmask = if bytes.len() >= 49 {
+                        u64::from_le_bytes(bytes[41..49].try_into().unwrap_or([0; 8]))
+                    } else {
+                        0
+                    };
+                    let reputation_score = if bytes.len() >= 57 {
+                        u64::from_le_bytes(bytes[49..57].try_into().unwrap_or([0; 8]))
+                    } else {
+                        100 // default
+                    };
+                    Ok((true, capability_bitmask, reputation_score))
+                } else {
+                    Ok((true, 0, 100))
+                }
+            }
+            None => Ok((false, 0, 0)),
+        }
+    }
+
     fn find_audit_state_address(&self) -> Pubkey {
         Pubkey::find_program_address(&[AUDIT_SEED], &self.program_id).0
     }

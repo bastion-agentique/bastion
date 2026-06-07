@@ -6,6 +6,6 @@ crates/solana/programs/bastion-audit/bastion-audit-keypair.json
 node_modules/
 dist/
 .env
-.env
 audit_logs/
+agent_store/
 .vercel

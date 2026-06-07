@@ -77,6 +77,9 @@ async fn main() {
         }
     };
 
+    let agent_store_path =
+        env::var("BASTION_AGENT_STORE_PATH").unwrap_or_else(|_| "agent_store".to_string());
+
     let app = build_app(
         policy,
         simulator,
@@ -85,6 +88,7 @@ async fn main() {
         grond_oracle,
         celo_sim,
         alchemy_sim,
+        &agent_store_path,
     );
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")

@@ -172,6 +172,7 @@ fn build_test_app(
     let db = tmp.path().join("audit.sled");
     let logger = Arc::new(AuditLogger::new(db.to_str().unwrap()).expect("logger"));
     let sim: Arc<dyn Simulate + Send + Sync> = Arc::new(simulator);
+    let agent_store_path = tmp.path().join("agents.sled");
     let policy = Policy {
         max_sol_per_tx: None,
         max_balance_drain_lamports: max_drain,
@@ -192,6 +193,7 @@ fn build_test_app(
             GrondOracle::disabled(),
             None,
             None,
+            agent_store_path.to_str().unwrap(),
         ),
         tmp,
     )
