@@ -1,6 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { useWalletModal } from '@solana/wallet-adapter-react-ui';
+import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 
 const NAV_LINKS = [
@@ -8,7 +6,6 @@ const NAV_LINKS = [
   { label: 'Documentation', href: 'https://github.com/bastion-agentique/bastion', external: true },
   { label: 'SDK',           href: '/integrate' },
   { label: 'GitHub',        href: 'https://github.com/bastion-agentique', external: true },
-  { label: 'Audit',         href: '/dashboard' },
 ];
 
 function SunIcon() {
@@ -35,46 +32,6 @@ function MoonIcon() {
   );
 }
 
-function SolanaBadge() {
-  return (
-    <div
-      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium font-sans"
-      style={{ background: 'var(--bg-subtle)', color: '#9945FF', border: '1px solid var(--border)' }}
-    >
-      <span style={{ fontSize: '1.1em' }}>◎</span>
-      <span className="hidden sm:inline">Solana</span>
-    </div>
-  );
-}
-
-function WalletButton() {
-  const { connected } = useWallet();
-  const { setVisible } = useWalletModal();
-  const navigate = useNavigate();
-
-  if (connected) {
-    return (
-      <button
-        onClick={() => navigate('/dashboard')}
-        className="rounded-full px-6 py-2.5 text-sm font-medium font-sans transition-transform duration-150 hover:scale-[1.03] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
-        style={{ background: 'var(--text-primary)', color: 'var(--bg)' }}
-      >
-        Dashboard
-      </button>
-    );
-  }
-
-  return (
-    <button
-      onClick={() => setVisible(true)}
-      className="rounded-full px-6 py-2.5 text-sm font-medium font-sans transition-transform duration-150 hover:scale-[1.03] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
-      style={{ background: 'var(--text-primary)', color: 'var(--bg)' }}
-    >
-      Connect Wallet
-    </button>
-  );
-}
-
 export function Navbar() {
   const { theme, toggle } = useTheme();
   const isDark = theme === 'dark';
@@ -96,15 +53,13 @@ export function Navbar() {
       <ul className="hidden md:flex items-center gap-8 list-none m-0 p-0">
         {NAV_LINKS.map((link, i) => {
           const isFirst = i === 0;
-          const linkProps = link.external
-            ? { href: link.href, target: '_blank', rel: 'noopener noreferrer' }
-            : {};
-
           return (
             <li key={link.label}>
               {link.external ? (
                 <a
-                  {...linkProps}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-sm transition-colors duration-150 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded"
                   style={{ color: isFirst ? 'var(--text-primary)' : 'var(--text-muted)', textDecoration: 'none' }}
                 >
@@ -134,8 +89,13 @@ export function Navbar() {
           {isDark ? <SunIcon /> : <MoonIcon />}
         </button>
 
-        <SolanaBadge />
-        <WalletButton />
+        <Link
+          to="/integrate"
+          className="rounded-full px-6 py-2.5 text-sm font-medium font-sans transition-transform duration-150 hover:scale-[1.03] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
+          style={{ background: 'var(--text-primary)', color: 'var(--bg)', textDecoration: 'none' }}
+        >
+          Get Started
+        </Link>
       </div>
     </nav>
   );

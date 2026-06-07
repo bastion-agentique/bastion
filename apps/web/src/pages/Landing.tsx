@@ -1,9 +1,5 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { useWalletModal } from '@solana/wallet-adapter-react-ui';
-import { useAccount } from 'wagmi';
-import { useChain } from '../context/ChainContext';
-import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { useState } from 'react';
 import { TechCarousel } from '../components/TechCarousel';
 
 const FEATURES = [
@@ -81,23 +77,7 @@ const FAQ_ITEMS = [
 ];
 
 export default function Landing() {
-  const { chain } = useChain();
-  const { connected: solConnected } = useWallet();
-  const { setVisible } = useWalletModal();
-  const { isConnected: evmConnected } = useAccount();
-  const navigate = useNavigate();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-
-  const connected = chain === 'solana' ? solConnected : evmConnected;
-
-  useEffect(() => {
-    if (connected) navigate('/dashboard');
-  }, [connected, navigate]);
-
-  function handleCTA() {
-    if (connected) navigate('/dashboard');
-    else setVisible(true);
-  }
 
   return (
     <div className="min-h-screen w-full bg-black text-white font-sans overflow-x-hidden">
@@ -112,9 +92,9 @@ export default function Landing() {
           <a href="#faq" className="text-sm text-zinc-400 hover:text-white transition-colors no-underline">FAQ</a>
           <a href="#contact" className="text-sm text-zinc-400 hover:text-white transition-colors no-underline">Contact</a>
         </div>
-        <button onClick={handleCTA} className="rounded-full bg-white text-black px-6 py-2.5 text-sm font-medium hover:bg-zinc-200 transition-colors">
-          {connected ? 'Dashboard' : 'Connect Wallet'}
-        </button>
+        <Link to="/integrate" className="rounded-full bg-white text-black px-6 py-2.5 text-sm font-medium hover:bg-zinc-200 transition-colors no-underline">
+          Get Started
+        </Link>
       </nav>
 
       <main id="main-content" className="pt-[85px]">
