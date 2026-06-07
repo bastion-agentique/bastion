@@ -366,12 +366,15 @@ impl OnChainClient {
                 .await
                 .map_err(|e| anyhow!("Failed to parse status: {e}"))?;
 
-            if let Some(result) = resp.result
-                && let Some(Some(status)) = result.value.first()
-                && (status.confirmation_status == "confirmed"
-                    || status.confirmation_status == "finalized")
-            {
-                return Ok(());
+            #[allow(clippy::collapsible_if)]
+            if let Some(result) = resp.result {
+                if let Some(Some(status)) = result.value.first() {
+                    if status.confirmation_status == "confirmed"
+                        || status.confirmation_status == "finalized"
+                    {
+                        return Ok(());
+                    }
+                }
             }
 
             tokio::time::sleep(std::time::Duration::from_millis(500)).await;

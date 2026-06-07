@@ -313,16 +313,17 @@ impl<O: RiskOracle> PolicyEvaluator<O> {
         lat_max: f64,
         lon_max: f64,
     ) -> FirewallDecision {
-        if let Some((lat, lon)) = tx.location
-            && (lat < lat_min || lat > lat_max || lon < lon_min || lon > lon_max)
-        {
-            return FirewallDecision::Block {
-                reason: format!(
-                    "Geofence violation: location ({}, {}) outside bounds ({}, {}) - ({}, {})",
-                    lat, lon, lat_min, lon_min, lat_max, lon_max
-                ),
-                policy_id: None,
-            };
+        #[allow(clippy::collapsible_if)]
+        if let Some((lat, lon)) = tx.location {
+            if lat < lat_min || lat > lat_max || lon < lon_min || lon > lon_max {
+                return FirewallDecision::Block {
+                    reason: format!(
+                        "Geofence violation: location ({}, {}) outside bounds ({}, {}) - ({}, {})",
+                        lat, lon, lat_min, lon_min, lat_max, lon_max
+                    ),
+                    policy_id: None,
+                };
+            }
         }
         FirewallDecision::Pass
     }
@@ -332,16 +333,17 @@ impl<O: RiskOracle> PolicyEvaluator<O> {
         tx: &NormalizedTransaction,
         max_speed_mps: f64,
     ) -> FirewallDecision {
-        if let Some(speed) = tx.metadata.get("speed_mps").and_then(|v| v.as_f64())
-            && speed > max_speed_mps
-        {
-            return FirewallDecision::Block {
-                reason: format!(
-                    "Speed limit exceeded: {:.1} m/s > {:.1} m/s",
-                    speed, max_speed_mps
-                ),
-                policy_id: None,
-            };
+        #[allow(clippy::collapsible_if)]
+        if let Some(speed) = tx.metadata.get("speed_mps").and_then(|v| v.as_f64()) {
+            if speed > max_speed_mps {
+                return FirewallDecision::Block {
+                    reason: format!(
+                        "Speed limit exceeded: {:.1} m/s > {:.1} m/s",
+                        speed, max_speed_mps
+                    ),
+                    policy_id: None,
+                };
+            }
         }
         FirewallDecision::Pass
     }

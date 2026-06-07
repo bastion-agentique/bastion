@@ -53,12 +53,12 @@ impl NonceStore {
     /// Consume and validate a nonce for a DID. Returns true if valid (one-time use).
     pub async fn consume(&self, did: &str, nonce: &str) -> bool {
         let mut nonces = self.nonces.write().await;
-        if let Some(entry) = nonces.get(did)
-            && entry.nonce == nonce
-            && Instant::now() < entry.expires_at
-        {
-            nonces.remove(did);
-            return true;
+        #[allow(clippy::collapsible_if)]
+        if let Some(entry) = nonces.get(did) {
+            if entry.nonce == nonce && Instant::now() < entry.expires_at {
+                nonces.remove(did);
+                return true;
+            }
         }
         false
     }
@@ -120,10 +120,11 @@ pub async fn require_did_auth(req: Request<Body>, next: Next) -> Response {
 
     if let (Some(did), Some(nonce), Some(sig_b64)) = (did, nonce, signature) {
         // DID-based auth: verify signature
-        if let Some(auth_state) = req.extensions().get::<DidAuthState>().cloned()
-            && verify_did_signature(did, nonce, sig_b64, &auth_state).await
-        {
-            return next.run(req).await;
+        #[allow(clippy::collapsible_if)]
+        if let Some(auth_state) = req.extensions().get::<DidAuthState>().cloned() {
+            if verify_did_signature(did, nonce, sig_b64, &auth_state).await {
+                return next.run(req).await;
+            }
         }
 
         return (

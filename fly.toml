@@ -1,0 +1,48 @@
+# fly.toml app configuration file generated for bastion-agentique-delicate-glow-1106 on 2026-06-08T00:42:25+08:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'bastion-agentique-delicate-glow-1106'
+primary_region = 'sin'
+
+[experimental]
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[env]
+  BASTION_AGENT_STORE_PATH = '/data/bastion/agent_store'
+  HELIUS_RPC_URL = 'https://devnet.helius-rpc.com/'
+  SOLANA_RPC_URL = 'https://api.devnet.solana.com'
+
+[[mounts]]
+  source = 'bastion_data'
+  destination = '/data/bastion'
+
+[[services]]
+  protocol = 'tcp'
+  internal_port = 3000
+
+  [[services.ports]]
+    port = 80
+    handlers = ['http']
+
+  [[services.ports]]
+    port = 443
+    handlers = ['tls', 'http']
+
+[checks]
+  [checks.health]
+    port = 3000
+    type = 'http'
+    interval = '10s'
+    timeout = '2s'
+    method = 'GET'
+    path = '/health'
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 1024
