@@ -7,11 +7,8 @@ const TECH_ITEMS: CarouselItem[] = [
   { id: 2, title: "Arcium MPC" },
   { id: 3, title: "Helius RPC" },
   { id: 4, title: "Anchor Framework" },
-  { id: 5, title: "Foundry EVM" },
-  { id: 6, title: "Rust Sidecar" },
-  { id: 7, title: "React Dashboard" },
-  { id: 8, title: "TypeScript SDK" },
-  { id: 9, title: "Daemon BlockInt" },
+  { id: 5, title: "Rust Sidecar" },
+  { id: 6, title: "Daemon BlockInt" },
 ];
 
 export function TechCarousel() {

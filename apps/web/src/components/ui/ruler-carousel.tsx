@@ -64,8 +64,10 @@ const RulerLines = ({
 
 export function RulerCarousel({
   originalItems,
+  autoScrollInterval = 3000,
 }: {
   originalItems: CarouselItem[];
+  autoScrollInterval?: number;
 }) {
   const infiniteItems = createInfiniteItems(originalItems);
   const itemsPerSet = originalItems.length;
@@ -145,6 +147,14 @@ export function RulerCarousel({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isResetting]);
+
+  useEffect(() => {
+    if (isResetting || !autoScrollInterval) return;
+    const id = setInterval(() => {
+      setActiveIndex((prev) => prev + 1);
+    }, autoScrollInterval);
+    return () => clearInterval(id);
+  }, [isResetting, autoScrollInterval]);
 
   const targetX =
     -((activeIndex % itemsPerSet) - centerIdx) * 500;
