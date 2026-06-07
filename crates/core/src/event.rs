@@ -114,3 +114,72 @@ impl SecurityEvent {
         self
     }
 }
+
+/// Physical telemetry event from a robot or IoT device.
+///
+/// Extends the `SecurityEvent` model with device-specific fields:
+/// battery level, firmware version, sensor readings, and GPS coordinates.
+/// Ingested via `POST /ingest` with `source: "robot-telemetry"` and
+/// `classification: "physical"`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PhysicalTelemetryEvent {
+    /// Agent DID for the physical device.
+    pub agent_did: String,
+
+    /// Battery level 0-100 (percentage).
+    pub battery_level: Option<u8>,
+
+    /// Current firmware version string.
+    pub firmware_version: Option<String>,
+
+    /// Last known GPS coordinates [latitude, longitude].
+    pub location: Option<(f64, f64)>,
+
+    /// Sensor data as key-value pairs (e.g. {"temperature": 42.5, "imu_roll": 12.3}).
+    #[serde(default)]
+    pub sensor_data: Option<serde_json::Value>,
+
+    /// Timestamp of the telemetry reading.
+    pub timestamp: u64,
+}
+
+impl PhysicalTelemetryEvent {
+    /// Convert to a `SecurityEvent` for ingestion into the audit trail.
+    pub fn to_security_event(&self) -> SecurityEvent {
+        let mut payload = serde_json::Map::new();
+        if let Some((lat, lon)) = &self.location {
+            payload.insert("latitude".into(), serde_json::Value::Number(
+                serde_json::Number::from_f64(*lat).unwrap_or(serde_json::Number::from(0))
+            ));
+            payload.insert("longitude".into(), serde_json::Value::Number(
+                serde_json::Number::from_f64(*lon).unwrap_or(serde_json::Number::from(0))
+            ));
+        }
+        if let Some(battery) = self.battery_level {
+            payload.insert("battery_level".into(), serde_json::Value::Number(
+                serde_json::Number::from(battery)
+            ));
+        }
+        if let Some(fw) = &self.firmware_version {
+            payload.insert("firmware_version".into(), serde_json::Value::String(fw.clone()));
+        }
+        if let Some(sensors) = &self.sensor_data {
+            payload.insert("sensor_data".into(), sensors.clone());
+        }
+
+        SecurityEvent {
+            id: uuid::Uuid::new_v4().to_string(),
+            timestamp: self.timestamp,
+            source: "robot-telemetry".to_string(),
+            classification: "physical".to_string(),
+            description: Some(format!("Telemetry from robot agent {}", self.agent_did)),
+            principal: Some(self.agent_did.clone()),
+            target: None,
+            payload: serde_json::Value::Object(payload),
+            value: self.battery_level.map(|b| b as u64),
+            success: Some(true),
+            severity: if self.battery_level.unwrap_or(100) < 20 { "high".to_string() } else { "info".to_string() },
+            chain: None,
+        }
+    }
+}

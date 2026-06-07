@@ -1318,6 +1318,9 @@ async fn register_agent_handler(
         100,    // default reputation
         now,
         req.sidecar_endpoint,
+        req.device_type,
+        req.firmware_version,
+        req.last_known_location,
     ) {
         Ok(did) => {
             crate::emit_event(
@@ -1479,7 +1482,7 @@ async fn post_agent_delegate(
     let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs() as i64;
     let _ = state.agent_store.register_agent(
         &req.child_did, &parent.authority, "",
-        &req.child_name, 0, 100, now, None
+        &req.child_name, 0, 100, now, None, None, None, None
     );
     // Update parent's child_dids and is_delegator
     if let Ok(mut agents) = state.agent_store.agents_write() {
@@ -1552,6 +1555,63 @@ async fn get_agent_audit(
         "offset": offset,
         "limit": limit,
         "entries": entries,
+    })))
+}
+
+// ── Robot Telemetry Handler ──
+
+#[derive(serde::Deserialize)]
+struct TelemetryRequest {
+    location: Option<(f64, f64)>,
+    firmware_version: Option<String>,
+    battery_level: Option<u8>,
+}
+
+async fn post_robot_telemetry(
+    State(state): State<AppState>,
+    Path(did): Path<String>,
+    Json(req): Json<TelemetryRequest>,
+) -> Result<Json<serde_json::Value>, (axum::http::StatusCode, Json<serde_json::Value>)> {
+    let _agent = state.agent_store.get_agent(&did)
+        .ok_or((axum::http::StatusCode::NOT_FOUND, Json(serde_json::json!({"error":"Agent not found"}))))?;
+
+    // Ingest robot telemetry as a SecurityEvent
+    let telemetry = bastion_core::event::PhysicalTelemetryEvent {
+        agent_did: did.clone(),
+        battery_level: req.battery_level,
+        firmware_version: req.firmware_version,
+        location: req.location,
+        sensor_data: None,
+        timestamp: std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs(),
+    };
+
+    // Convert to SecurityEvent and ingest
+    let event = telemetry.to_security_event();
+    let event_id = event.id.clone();
+    {
+        let logger = state.logger.clone();
+        let entry = crate::audit::AuditEntry {
+            timestamp: event.timestamp,
+            transaction_id: Some(event.id.clone()),
+            transaction_signature: None,
+            decision: crate::audit::Decision::Allowed,
+            simulation_result: None,
+            intent: Some(format!("[robot-telemetry] {} {}", event.source, event.description.unwrap_or_default())),
+            result: crate::audit::AuditResult::Allowed,
+            reasoning: format!("Telemetry from robot agent {}", did),
+            simulation_logs: vec![],
+            transaction_details: None,
+        };
+        let _ = logger.log(entry);
+    }
+
+    Ok(Json(serde_json::json!({
+        "event_id": event_id,
+        "ingested": true,
+        "did": did,
     })))
 }
 
@@ -1730,6 +1790,7 @@ pub fn build_app(
         .route("/pending", get(get_pending))
         .route("/did/resolve/:did", get(resolve_did_handler))
         .route("/token-balances", get(get_token_balances))
+        .route("/robots/:did/telemetry", post(post_robot_telemetry))
         .nest_service("/dashboard", ServeDir::new("static"))
         .layer(
             CorsLayer::new()

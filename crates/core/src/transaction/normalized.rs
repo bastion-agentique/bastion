@@ -52,18 +52,60 @@ pub enum Chain {
 }
 
 /// Transaction type classification.
+///
+/// Extended with physical action types for robot/IoT agent support.
+/// Transfer/swap are financial operations; the new variants represent
+/// physical-world actions that robots and autonomous systems execute.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum TxType {
+    // ── Financial (existing) ──
     Transfer,
     Payment,
     Governance,
     Custom,
+
+    // ── Physical / Robot (new) ──
+    /// Direct actuator control: open/close valves, move motors, trigger relays.
+    Actuate,
+    /// Read sensor data: temperature, IMU, GPS, battery, camera.
+    SensorRead,
+    /// Physical navigation: move to coordinates, return to base, dock.
+    Navigate,
+    /// Robot charging: initiate charge, report energy level, emergency stop.
+    Charge,
+    /// Firmware update: push signed firmware bundle to device.
+    FirmwareUpdate,
+}
+
+impl TxType {
+    /// Returns true if this type represents a physical-world action
+    /// (as opposed to a financial transaction).
+    pub fn is_physical(&self) -> bool {
+        matches!(self, Self::Actuate | Self::SensorRead | Self::Navigate | Self::Charge | Self::FirmwareUpdate)
+    }
+
+    /// Human-readable label for the type.
+    pub fn label(&self) -> &'static str {
+        match self {
+            Self::Transfer => "transfer",
+            Self::Payment => "payment",
+            Self::Governance => "governance",
+            Self::Custom => "custom",
+            Self::Actuate => "actuate",
+            Self::SensorRead => "sensor_read",
+            Self::Navigate => "navigate",
+            Self::Charge => "charge",
+            Self::FirmwareUpdate => "firmware_update",
+        }
+    }
 }
 
 /// A transaction normalized to a chain-agnostic representation.
 ///
 /// Every chain-specific adapter converts its native transaction format
 /// into this struct before policy evaluation.
+///
+/// Extended with `location` and `device_type` for robot/IoT agents.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NormalizedTransaction {
     /// The agent executing this transaction.
@@ -88,6 +130,12 @@ pub struct NormalizedTransaction {
     pub agent_stake: Option<u64>,
     /// Agent's delegation depth in the hierarchy (from Agent PDA).
     pub delegation_depth: Option<u8>,
+
+    // ── Physical / Robot Agent Fields ──
+    /// Last known GPS coordinates [latitude, longitude]. None for non-physical agents.
+    pub location: Option<(f64, f64)>,
+    /// Physical device type (e.g. "drone", "rover", "industrial_arm").
+    pub device_type: Option<String>,
 }
 
 impl NormalizedTransaction {
@@ -115,6 +163,8 @@ impl NormalizedTransaction {
             metadata: HashMap::new(),
             agent_stake: None,
             delegation_depth: None,
+            location: None,
+            device_type: None,
         }
     }
 

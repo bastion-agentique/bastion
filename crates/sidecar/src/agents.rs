@@ -4,8 +4,13 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
 /// A tracked agent registered with the sidecar.
+///
+/// Extended for robot/IoT fleet support: physical device identity fields
+/// (device_type, firmware_version, last_known_location) enable the firewall
+/// to track and enforce policies on autonomous robots with DID-based identity.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TrackedAgent {
+    // ── Core Identity ──
     /// The W3C DID identifier, e.g. "did:bastion:solana:{pda_base58}"
     pub did: String,
     /// Base58-encoded Solana pubkey of the agent authority.
@@ -14,20 +19,22 @@ pub struct TrackedAgent {
     pub agent_pda: String,
     /// Human-readable agent name.
     pub name: String,
+
+    // ── Capabilities & Reputation ──
     /// On-chain capability bitmask.
     pub capability_bitmask: u64,
     /// On-chain reputation score.
     pub reputation_score: u64,
+
+    // ── On-chain metadata ──
     /// On-chain registration timestamp.
     pub registered_at: i64,
     /// SOL staked for reputation weighting.
     pub staked_lamports: u64,
     /// Earliest timestamp when stake can be claimed (0 if no pending unstake).
     pub stake_unlock_at: i64,
-    /// The agent's own sidecar endpoint URL, if provided.
-    pub sidecar_endpoint: Option<String>,
-    /// Whether the on-chain Agent PDA has been verified.
-    pub on_chain_verified: bool,
+
+    // ── Delegation ──
     /// DID of the parent agent (None for root agents).
     pub parent_did: Option<String>,
     /// Delegation depth in the hierarchy (0 for root).
@@ -36,6 +43,23 @@ pub struct TrackedAgent {
     pub child_dids: Vec<String>,
     /// Whether this agent can spawn sub-agents.
     pub is_delegator: bool,
+
+    // ── Connectivity ──
+    /// The agent's own sidecar endpoint URL, if provided.
+    pub sidecar_endpoint: Option<String>,
+    /// Whether the on-chain Agent PDA has been verified.
+    pub on_chain_verified: bool,
+
+    // ── Physical / Robot Identity ──
+    /// Physical device type (e.g. "drone", "rover", "industrial_arm", "agv", "none" for pure-software agents).
+    #[serde(default)]
+    pub device_type: Option<String>,
+    /// Firmware or software version (e.g. "v1.4.2", "commit-sha").
+    #[serde(default)]
+    pub firmware_version: Option<String>,
+    /// Last known GPS coordinates as [latitude, longitude], or None if unknown.
+    #[serde(default)]
+    pub last_known_location: Option<(f64, f64)>,
 }
 
 /// Request body for agent self-registration.
@@ -44,6 +68,26 @@ pub struct RegisterAgentRequest {
     pub did: String,
     pub authority_pubkey: String,
     pub sidecar_endpoint: Option<String>,
+    /// Physical device type for robot agents (e.g. "drone", "rover", "agv").
+    #[serde(default)]
+    pub device_type: Option<String>,
+    /// Firmware or software version string.
+    #[serde(default)]
+    pub firmware_version: Option<String>,
+    /// Last known GPS location [lat, lon].
+    #[serde(default)]
+    pub last_known_location: Option<(f64, f64)>,
+}
+
+/// Request body for robot telemetry updates.
+#[derive(Debug, Deserialize)]
+pub struct TelemetryUpdateRequest {
+    /// Last known GPS coordinates [lat, lon].
+    pub location: Option<(f64, f64)>,
+    /// Current firmware version.
+    pub firmware_version: Option<String>,
+    /// Current battery level 0-100.
+    pub battery_level: Option<u8>,
 }
 
 /// In-memory registry of Bastion agents, keyed by DID.
@@ -71,6 +115,9 @@ impl AgentStore {
         reputation_score: u64,
         registered_at: i64,
         sidecar_endpoint: Option<String>,
+        device_type: Option<String>,
+        firmware_version: Option<String>,
+        last_known_location: Option<(f64, f64)>,
     ) -> Result<String, String> {
         let mut agents = self.agents.write().map_err(|e| e.to_string())?;
         if agents.contains_key(did) {
@@ -93,6 +140,9 @@ impl AgentStore {
             delegation_depth: Some(0),
             child_dids: Vec::new(),
             is_delegator: false,
+            device_type,
+            firmware_version,
+            last_known_location,
         };
 
         agents.insert(did.to_string(), agent);

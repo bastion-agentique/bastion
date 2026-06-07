@@ -37,6 +37,35 @@ pub enum PolicyRule {
         stake_multiplier: f64,
         depth_decay_factor: f64,
     },
+
+    // ── Robot / Physical Agent Policy Rules ──
+
+    /// Restrict agent to operate within a geographic boundary.
+    /// lat_min/lon_min/lat_max/lon_max define a bounding box (degrees).
+    Geofence {
+        lat_min: f64,
+        lon_min: f64,
+        lat_max: f64,
+        lon_max: f64,
+    },
+
+    /// Limit the physical speed of a robot's navigation action (meters/second).
+    SpeedLimit {
+        max_speed_mps: f64,
+    },
+
+    /// Cap the energy budget per session or per time window.
+    EnergyBudget {
+        /// Maximum energy in Joules per 24h window.
+        max_joules_24h: u64,
+    },
+
+    /// Restrict operating hours (UTC).
+    /// min_hour and max_hour are 0-23 UTC.
+    OperatingHours {
+        min_hour: u8,
+        max_hour: u8,
+    },
 }
 
 impl PolicyRule {
@@ -49,6 +78,10 @@ impl PolicyRule {
             Self::Reputation { .. } => "reputation",
             Self::TxTypeAllowlist { .. } => "tx_type_allowlist",
             Self::StakeWeighted { .. } => "stake_weighted",
+            Self::Geofence { .. } => "geofence",
+            Self::SpeedLimit { .. } => "speed_limit",
+            Self::EnergyBudget { .. } => "energy_budget",
+            Self::OperatingHours { .. } => "operating_hours",
         }
     }
 }

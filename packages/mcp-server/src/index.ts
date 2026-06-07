@@ -249,6 +249,45 @@ server.tool(
 );
 
 // ═══════════════════════════════════════════════
+//  ROBOT / PHYSICAL AGENT TOOLS
+// ═══════════════════════════════════════════════
+
+server.tool(
+  "bastion_register_robot",
+  "Register a physical robot (drone, rover, AGV) as a Bastion agent. Creates a DID with device-type metadata, firmware version, and GPS location.",
+  {
+    did: z.string().describe("The DID identifier (e.g. did:bastion:solana:{pda})"),
+    authority_pubkey: z.string().describe("Solana public key of the robot's authority wallet"),
+    device_type: z.enum(["drone","rover","industrial_arm","agv","marine","custom"]).optional().describe("Physical device type"),
+    firmware_version: z.string().optional().describe("Current firmware version (e.g. v1.4.2)"),
+    location: z.tuple([z.number(), z.number()]).optional().describe("GPS coordinates as [latitude, longitude]"),
+  },
+  async ({ did, authority_pubkey, device_type, firmware_version, location }) => ({
+    content: [{ type: "text", text: JSON.stringify(await sidecar("/agents", {
+      method: "POST",
+      body: JSON.stringify({ did, authority_pubkey, device_type, firmware_version, last_known_location: location }),
+    }), null, 2) }],
+  }),
+);
+
+server.tool(
+  "bastion_robot_telemetry",
+  "Submit telemetry data from a physical robot (battery, GPS, firmware). Creates an audit event in the SIEM trail.",
+  {
+    did: z.string().describe("The agent DID to report telemetry for"),
+    battery_level: z.number().min(0).max(100).optional().describe("Battery level 0-100"),
+    location: z.tuple([z.number(), z.number()]).optional().describe("GPS coordinates [lat, lon]"),
+    firmware_version: z.string().optional().describe("Current firmware version"),
+  },
+  async ({ did, battery_level, location, firmware_version }) => ({
+    content: [{ type: "text", text: JSON.stringify(await sidecar(`/robots/${encodeURIComponent(did)}/telemetry`, {
+      method: "POST",
+      body: JSON.stringify({ battery_level, location, firmware_version }),
+    }), null, 2) }],
+  }),
+);
+
+// ═══════════════════════════════════════════════
 //  PROMPTS
 // ═══════════════════════════════════════════════
 
