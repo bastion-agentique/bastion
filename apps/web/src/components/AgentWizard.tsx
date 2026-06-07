@@ -60,20 +60,23 @@ const tx = await client.setPolicy(
     : '';
 
   const simCode = chain === 'solana'
-    ? `// Send a base64 transaction through the sidecar
-const SIDECAR_URL = import.meta.env?.VITE_SIDECAR_URL || 'http://localhost:3000';
-const response = await fetch(`${SIDECAR_URL}/simulate`, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    transaction: "${simTx || 'BASE64_TX_HERE'}",
-    intent: "test transaction from Bastion agent wizard"
-  })
-});
-const result = await response.json();`
+    ? [
+        '// Send a base64 transaction through the sidecar',
+        "const SIDECAR_URL = import.meta.env?.VITE_SIDECAR_URL || 'http://localhost:3000';",
+        'const response = await fetch(SIDECAR_URL + "/simulate", {',
+        '  method: "POST",',
+        '  headers: { "Content-Type": "application/json" },',
+        '  body: JSON.stringify({',
+        `    transaction: "${simTx || 'BASE64_TX_HERE'}",`,
+        '    intent: "test transaction from Bastion agent wizard"',
+        '  })',
+        '});',
+        'const result = await response.json();',
+      ].join('\n')
     : '';
 
   async function handleSimulate() {
+    const SIDECAR_URL = (import.meta as { env?: { VITE_SIDECAR_URL?: string } }).env?.VITE_SIDECAR_URL ?? 'http://localhost:3000';
     setSimLoading(true);
     setSimResult(null);
     try {
