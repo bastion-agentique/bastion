@@ -2,7 +2,7 @@ use crate::decision::FirewallDecision;
 use crate::policy::set::PolicySet;
 use crate::policy::types::PolicyRule;
 use crate::risk::RiskOracle;
-use crate::transaction::{Address, NormalizedTransaction, TxType};
+use crate::transaction::{Address, NormalizedTransaction};
 
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -95,15 +95,25 @@ impl<O: RiskOracle> PolicyEvaluator<O> {
             } => self.check_reputation(tx, *minimum_score).await,
 
             PolicyRule::TxTypeAllowlist { allowed } => self.check_tx_type(tx, allowed),
-            PolicyRule::StakeWeighted { base_limit, min_stake, stake_multiplier, depth_decay_factor } => {
-                self.check_stake_weighted(tx, *base_limit, *min_stake, *stake_multiplier, *depth_decay_factor)
-            }
-            PolicyRule::Geofence { lat_min, lon_min, lat_max, lon_max } => {
-                self.check_geofence(tx, *lat_min, *lon_min, *lat_max, *lon_max)
-            }
-            PolicyRule::SpeedLimit { max_speed_mps } => {
-                self.check_speed_limit(tx, *max_speed_mps)
-            }
+            PolicyRule::StakeWeighted {
+                base_limit,
+                min_stake,
+                stake_multiplier,
+                depth_decay_factor,
+            } => self.check_stake_weighted(
+                tx,
+                *base_limit,
+                *min_stake,
+                *stake_multiplier,
+                *depth_decay_factor,
+            ),
+            PolicyRule::Geofence {
+                lat_min,
+                lon_min,
+                lat_max,
+                lon_max,
+            } => self.check_geofence(tx, *lat_min, *lon_min, *lat_max, *lon_max),
+            PolicyRule::SpeedLimit { max_speed_mps } => self.check_speed_limit(tx, *max_speed_mps),
             PolicyRule::EnergyBudget { max_joules_24h } => {
                 self.check_energy_budget(tx, *max_joules_24h)
             }
@@ -283,7 +293,11 @@ impl<O: RiskOracle> PolicyEvaluator<O> {
             return FirewallDecision::Block {
                 reason: format!(
                     "Amount {} exceeds stake-weighted limit {} (stake: {}, depth: {}, base: {})",
-                    tx.amount, effective_limit, staked, tx.delegation_depth.unwrap_or(0), base_limit
+                    tx.amount,
+                    effective_limit,
+                    staked,
+                    tx.delegation_depth.unwrap_or(0),
+                    base_limit
                 ),
                 policy_id: None,
             };
@@ -299,12 +313,62 @@ impl<O: RiskOracle> PolicyEvaluator<O> {
         lat_max: f64,
         lon_max: f64,
     ) -> FirewallDecision {
-        if let Some((lat, lon)) = tx.location {
-            if lat < lat_min || lat > lat_max || lon < lon_min || lon > lon_max {
+        if let Some((lat, lon)) = tx.location
+            && (lat < lat_min || lat > lat_max || lon < lon_min || lon > lon_max)
+        {
+            return FirewallDecision::Block {
+                reason: format!(
+                    "Geofence violation: location ({}, {}) outside bounds ({}, {}) - ({}, {})",
+                    lat, lon, lat_min, lon_min, lat_max, lon_max
+                ),
+                policy_id: None,
+            };
+        }
+        FirewallDecision::Pass
+    }
+
+    fn check_speed_limit(
+        &self,
+        tx: &NormalizedTransaction,
+        max_speed_mps: f64,
+    ) -> FirewallDecision {
+        if let Some(speed) = tx.metadata.get("speed_mps").and_then(|v| v.as_f64())
+            && speed > max_speed_mps
+        {
+            return FirewallDecision::Block {
+                reason: format!(
+                    "Speed limit exceeded: {:.1} m/s > {:.1} m/s",
+                    speed, max_speed_mps
+                ),
+                policy_id: None,
+            };
+        }
+        FirewallDecision::Pass
+    }
+
+    fn check_energy_budget(
+        &self,
+        tx: &NormalizedTransaction,
+        max_joules_24h: u64,
+    ) -> FirewallDecision {
+        if let Some(joules) = tx.metadata.get("energy_joules").and_then(|v| v.as_u64()) {
+            // Track energy against 24h budget (simplified — uses same rate_state volume bucket)
+            let mut state = self.rate_state.lock().unwrap();
+            let now = Instant::now();
+            let window = Duration::from_secs(86400);
+            let entry = state
+                .volume_24h
+                .entry("_energy".to_string())
+                .or_insert((0, now));
+            if now.duration_since(entry.1) >= window {
+                *entry = (0, now);
+            }
+            entry.0 += joules;
+            if entry.0 > max_joules_24h {
                 return FirewallDecision::Block {
                     reason: format!(
-                        "Geofence violation: location ({}, {}) outside bounds ({}, {}) - ({}, {})",
-                        lat, lon, lat_min, lon_min, lat_max, lon_max
+                        "Energy budget exceeded: {}J > {}J in 24h",
+                        entry.0, max_joules_24h
                     ),
                     policy_id: None,
                 };
@@ -313,44 +377,18 @@ impl<O: RiskOracle> PolicyEvaluator<O> {
         FirewallDecision::Pass
     }
 
-    fn check_speed_limit(&self, tx: &NormalizedTransaction, max_speed_mps: f64) -> FirewallDecision {
-        if let Some(speed) = tx.metadata.get("speed_mps").and_then(|v| v.as_f64()) {
-            if speed > max_speed_mps {
-                return FirewallDecision::Block {
-                    reason: format!("Speed limit exceeded: {:.1} m/s > {:.1} m/s", speed, max_speed_mps),
-                    policy_id: None,
-                };
-            }
-        }
-        FirewallDecision::Pass
-    }
-
-    fn check_energy_budget(&self, tx: &NormalizedTransaction, max_joules_24h: u64) -> FirewallDecision {
-        if let Some(joules) = tx.metadata.get("energy_joules").and_then(|v| v.as_u64()) {
-            // Track energy against 24h budget (simplified — uses same rate_state volume bucket)
-            let mut state = self.rate_state.lock().unwrap();
-            let now = Instant::now();
-            let window = Duration::from_secs(86400);
-            let entry = state.volume_24h.entry("_energy".to_string()).or_insert((0, now));
-            if now.duration_since(entry.1) >= window {
-                *entry = (0, now);
-            }
-            entry.0 += joules;
-            if entry.0 > max_joules_24h {
-                return FirewallDecision::Block {
-                    reason: format!("Energy budget exceeded: {}J > {}J in 24h", entry.0, max_joules_24h),
-                    policy_id: None,
-                };
-            }
-        }
-        FirewallDecision::Pass
-    }
-
-    fn check_operating_hours(&self, tx: &NormalizedTransaction, min_hour: u8, max_hour: u8) -> FirewallDecision {
+    fn check_operating_hours(
+        &self,
+        _tx: &NormalizedTransaction,
+        min_hour: u8,
+        max_hour: u8,
+    ) -> FirewallDecision {
         let current_hour = (std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
-            .as_secs() / 3600) % 24;
+            .as_secs()
+            / 3600)
+            % 24;
         let current_hour = current_hour as u8;
 
         if current_hour < min_hour || current_hour > max_hour {
@@ -390,7 +428,7 @@ impl<O: RiskOracle> Default for PolicyEvaluator<O> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::transaction::{Chain, NormalizedTransaction};
+    use crate::transaction::{Chain, NormalizedTransaction, TxType};
 
     /// A no-op oracle for testing.
     struct NoopOracle;

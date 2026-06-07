@@ -148,20 +148,30 @@ impl PhysicalTelemetryEvent {
     pub fn to_security_event(&self) -> SecurityEvent {
         let mut payload = serde_json::Map::new();
         if let Some((lat, lon)) = &self.location {
-            payload.insert("latitude".into(), serde_json::Value::Number(
-                serde_json::Number::from_f64(*lat).unwrap_or(serde_json::Number::from(0))
-            ));
-            payload.insert("longitude".into(), serde_json::Value::Number(
-                serde_json::Number::from_f64(*lon).unwrap_or(serde_json::Number::from(0))
-            ));
+            payload.insert(
+                "latitude".into(),
+                serde_json::Value::Number(
+                    serde_json::Number::from_f64(*lat).unwrap_or(serde_json::Number::from(0)),
+                ),
+            );
+            payload.insert(
+                "longitude".into(),
+                serde_json::Value::Number(
+                    serde_json::Number::from_f64(*lon).unwrap_or(serde_json::Number::from(0)),
+                ),
+            );
         }
         if let Some(battery) = self.battery_level {
-            payload.insert("battery_level".into(), serde_json::Value::Number(
-                serde_json::Number::from(battery)
-            ));
+            payload.insert(
+                "battery_level".into(),
+                serde_json::Value::Number(serde_json::Number::from(battery)),
+            );
         }
         if let Some(fw) = &self.firmware_version {
-            payload.insert("firmware_version".into(), serde_json::Value::String(fw.clone()));
+            payload.insert(
+                "firmware_version".into(),
+                serde_json::Value::String(fw.clone()),
+            );
         }
         if let Some(sensors) = &self.sensor_data {
             payload.insert("sensor_data".into(), sensors.clone());
@@ -178,7 +188,11 @@ impl PhysicalTelemetryEvent {
             payload: serde_json::Value::Object(payload),
             value: self.battery_level.map(|b| b as u64),
             success: Some(true),
-            severity: if self.battery_level.unwrap_or(100) < 20 { "high".to_string() } else { "info".to_string() },
+            severity: if self.battery_level.unwrap_or(100) < 20 {
+                "high".to_string()
+            } else {
+                "info".to_string()
+            },
             chain: None,
         }
     }

@@ -39,7 +39,6 @@ pub enum PolicyRule {
     },
 
     // ── Robot / Physical Agent Policy Rules ──
-
     /// Restrict agent to operate within a geographic boundary.
     /// lat_min/lon_min/lat_max/lon_max define a bounding box (degrees).
     Geofence {
@@ -50,9 +49,7 @@ pub enum PolicyRule {
     },
 
     /// Limit the physical speed of a robot's navigation action (meters/second).
-    SpeedLimit {
-        max_speed_mps: f64,
-    },
+    SpeedLimit { max_speed_mps: f64 },
 
     /// Cap the energy budget per session or per time window.
     EnergyBudget {
@@ -62,10 +59,7 @@ pub enum PolicyRule {
 
     /// Restrict operating hours (UTC).
     /// min_hour and max_hour are 0-23 UTC.
-    OperatingHours {
-        min_hour: u8,
-        max_hour: u8,
-    },
+    OperatingHours { min_hour: u8, max_hour: u8 },
 }
 
 impl PolicyRule {

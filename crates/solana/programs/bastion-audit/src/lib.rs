@@ -173,7 +173,10 @@ pub mod bastion_audit {
 
     pub fn request_unstake(ctx: Context<RequestUnstake>) -> Result<()> {
         let agent_stake = &mut ctx.accounts.agent_stake;
-        require!(agent_stake.staked_lamports > 0, BastionError::InsufficientStake);
+        require!(
+            agent_stake.staked_lamports > 0,
+            BastionError::InsufficientStake
+        );
 
         let now = Clock::get()?.unix_timestamp;
         require!(
@@ -193,7 +196,10 @@ pub mod bastion_audit {
 
     pub fn claim_unstake(ctx: Context<ClaimUnstake>) -> Result<()> {
         let agent_stake = &mut ctx.accounts.agent_stake;
-        require!(agent_stake.unstake_requested_at > 0, BastionError::NoUnstakeRequested);
+        require!(
+            agent_stake.unstake_requested_at > 0,
+            BastionError::NoUnstakeRequested
+        );
 
         let now = Clock::get()?.unix_timestamp;
         require!(
@@ -207,7 +213,11 @@ pub mod bastion_audit {
 
         // Transfer SOL back to authority
         **ctx.accounts.authority.try_borrow_mut_lamports()? += amount;
-        **ctx.accounts.agent_stake.to_account_info().try_borrow_mut_lamports()? -= amount;
+        **ctx
+            .accounts
+            .agent_stake
+            .to_account_info()
+            .try_borrow_mut_lamports()? -= amount;
 
         emit!(StakeChanged {
             authority: ctx.accounts.authority.key(),
@@ -219,7 +229,10 @@ pub mod bastion_audit {
 
     pub fn slash_stake(ctx: Context<SlashStake>, penalty: u64) -> Result<()> {
         require!(penalty > 0, BastionError::InvalidReputation);
-        require!(ctx.accounts.agent_stake.staked_lamports >= penalty, BastionError::InsufficientStake);
+        require!(
+            ctx.accounts.agent_stake.staked_lamports >= penalty,
+            BastionError::InsufficientStake
+        );
 
         let agent_stake = &mut ctx.accounts.agent_stake;
         agent_stake.staked_lamports -= penalty;
@@ -231,7 +244,11 @@ pub mod bastion_audit {
 
         // Transfer slashed SOL to treasury
         **ctx.accounts.treasury.try_borrow_mut_lamports()? += penalty;
-        **ctx.accounts.agent_stake.to_account_info().try_borrow_mut_lamports()? -= penalty;
+        **ctx
+            .accounts
+            .agent_stake
+            .to_account_info()
+            .try_borrow_mut_lamports()? -= penalty;
 
         emit!(StakeSlashed {
             authority,

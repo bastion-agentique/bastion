@@ -81,7 +81,10 @@ impl TxType {
     /// Returns true if this type represents a physical-world action
     /// (as opposed to a financial transaction).
     pub fn is_physical(&self) -> bool {
-        matches!(self, Self::Actuate | Self::SensorRead | Self::Navigate | Self::Charge | Self::FirmwareUpdate)
+        matches!(
+            self,
+            Self::Actuate | Self::SensorRead | Self::Navigate | Self::Charge | Self::FirmwareUpdate
+        )
     }
 
     /// Human-readable label for the type.

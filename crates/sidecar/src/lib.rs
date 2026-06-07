@@ -1,7 +1,7 @@
 use axum::{
     Json, Router,
     body::Body,
-    extract::{Path, Query, State, Request as AxumRequest},
+    extract::{Path, Query, Request as AxumRequest, State},
     http::StatusCode,
     middleware::{self, Next},
     response::{
@@ -1266,9 +1266,7 @@ struct AgentAuditQuery {
     offset: Option<usize>,
 }
 
-async fn get_agents(
-    State(state): State<AppState>,
-) -> Json<AgentListResponse> {
+async fn get_agents(State(state): State<AppState>) -> Json<AgentListResponse> {
     let agents = state.agent_store.list_agents().unwrap_or_default();
     let total = agents.len();
     Json(AgentListResponse { agents, total })
@@ -1294,7 +1292,9 @@ async fn register_agent_handler(
     if parts.len() < 4 || parts[0] != "did" || parts[1] != "bastion" {
         return Err((
             axum::http::StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({"error": "Invalid DID format. Expected did:bastion:solana:{pda_base58}"})),
+            Json(
+                serde_json::json!({"error": "Invalid DID format. Expected did:bastion:solana:{pda_base58}"}),
+            ),
         ));
     }
 
@@ -1314,8 +1314,8 @@ async fn register_agent_handler(
         &req.authority_pubkey,
         agent_pda,
         &name,
-        0,      // default capability (TRANSFER)
-        100,    // default reputation
+        0,   // default capability (TRANSFER)
+        100, // default reputation
         now,
         req.sidecar_endpoint,
         req.device_type,
@@ -1366,7 +1366,8 @@ async fn get_agent_stake(
 
 #[derive(serde::Deserialize)]
 struct StakeRequest {
-    authority_pubkey: String,
+    #[serde(default)]
+    _authority_pubkey: Option<String>,
     #[serde(default)]
     amount: Option<u64>,
 }
@@ -1376,11 +1377,16 @@ async fn post_agent_stake(
     Path(did): Path<String>,
     Json(req): Json<StakeRequest>,
 ) -> Result<Json<serde_json::Value>, (axum::http::StatusCode, Json<serde_json::Value>)> {
-    let agent = state.agent_store.get_agent(&did)
-        .ok_or((axum::http::StatusCode::NOT_FOUND, Json(serde_json::json!({"error":"Agent not found"}))))?;
+    let _agent = state.agent_store.get_agent(&did).ok_or((
+        axum::http::StatusCode::NOT_FOUND,
+        Json(serde_json::json!({"error":"Agent not found"})),
+    ))?;
     let amount = req.amount.unwrap_or(0);
     if amount == 0 {
-        return Err((axum::http::StatusCode::BAD_REQUEST, Json(serde_json::json!({"error":"amount required"}))));
+        return Err((
+            axum::http::StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({"error":"amount required"})),
+        ));
     }
     // For MVP: update in-memory store. Production: submit StakeLamports transaction via program_client
     // agent.store.staked_lamports += amount handled by on-chain tx; sidecar mirrors after
@@ -1395,10 +1401,12 @@ async fn post_agent_stake(
 async fn post_agent_unstake(
     State(state): State<AppState>,
     Path(did): Path<String>,
-    Json(req): Json<StakeRequest>,
+    Json(_req): Json<StakeRequest>,
 ) -> Result<Json<serde_json::Value>, (axum::http::StatusCode, Json<serde_json::Value>)> {
-    let agent = state.agent_store.get_agent(&did)
-        .ok_or((axum::http::StatusCode::NOT_FOUND, Json(serde_json::json!({"error":"Agent not found"}))))?;
+    let _agent = state.agent_store.get_agent(&did).ok_or((
+        axum::http::StatusCode::NOT_FOUND,
+        Json(serde_json::json!({"error":"Agent not found"})),
+    ))?;
     Ok(Json(serde_json::json!({
         "status": "unstake_requested",
         "did": did,
@@ -1407,9 +1415,9 @@ async fn post_agent_unstake(
 }
 
 async fn post_agent_claim(
-    State(state): State<AppState>,
+    _state: State<AppState>,
     Path(did): Path<String>,
-    Json(req): Json<StakeRequest>,
+    Json(_req): Json<StakeRequest>,
 ) -> Result<Json<serde_json::Value>, (axum::http::StatusCode, Json<serde_json::Value>)> {
     Ok(Json(serde_json::json!({
         "status": "claim_submitted",
@@ -1422,7 +1430,10 @@ async fn get_agent_children(
     State(state): State<AppState>,
     Path(did): Path<String>,
 ) -> Json<serde_json::Value> {
-    let children: Vec<_> = state.agent_store.list_agents().unwrap_or_default()
+    let children: Vec<_> = state
+        .agent_store
+        .list_agents()
+        .unwrap_or_default()
         .into_iter()
         .filter(|a| a.parent_did.as_deref() == Some(&did))
         .collect();
@@ -1441,7 +1452,8 @@ async fn get_agent_tree(
     let agents = state.agent_store.list_agents().unwrap_or_default();
     fn build_tree(did: &str, agents: &[crate::agents::TrackedAgent]) -> serde_json::Value {
         let agent = agents.iter().find(|a| a.did == did);
-        let children: Vec<_> = agents.iter()
+        let children: Vec<_> = agents
+            .iter()
             .filter(|a| a.parent_did.as_deref() == Some(did))
             .map(|c| build_tree(&c.did, agents))
             .collect();
@@ -1461,11 +1473,11 @@ struct DelegateRequest {
     child_did: String,
     child_name: String,
     #[serde(default)]
-    delegated_capabilities: Vec<String>,
+    _delegated_capabilities: Vec<String>,
     #[serde(default)]
-    delegation_budget_sol: Option<u64>,
+    _delegation_budget_sol: Option<u64>,
     #[serde(default)]
-    delegation_expires_at: Option<i64>,
+    _delegation_expires_at: Option<i64>,
 }
 
 async fn post_agent_delegate(
@@ -1473,16 +1485,33 @@ async fn post_agent_delegate(
     Path(parent_did): Path<String>,
     Json(req): Json<DelegateRequest>,
 ) -> Result<Json<serde_json::Value>, (axum::http::StatusCode, Json<serde_json::Value>)> {
-    let parent = state.agent_store.get_agent(&parent_did)
-        .ok_or((axum::http::StatusCode::NOT_FOUND, Json(serde_json::json!({"error":"Parent agent not found"}))))?;
+    let parent = state.agent_store.get_agent(&parent_did).ok_or((
+        axum::http::StatusCode::NOT_FOUND,
+        Json(serde_json::json!({"error":"Parent agent not found"})),
+    ))?;
     let depth = parent.delegation_depth.unwrap_or(0) + 1;
     if depth > 2 {
-        return Err((axum::http::StatusCode::BAD_REQUEST, Json(serde_json::json!({"error":"Max delegation depth exceeded (max 3 levels)"}))));
+        return Err((
+            axum::http::StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({"error":"Max delegation depth exceeded (max 3 levels)"})),
+        ));
     }
-    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_secs() as i64;
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs() as i64;
     let _ = state.agent_store.register_agent(
-        &req.child_did, &parent.authority, "",
-        &req.child_name, 0, 100, now, None, None, None, None
+        &req.child_did,
+        &parent.authority,
+        "",
+        &req.child_name,
+        0,
+        100,
+        now,
+        None,
+        None,
+        None,
+        None,
     );
     // Update parent's child_dids and is_delegator
     if let Ok(mut agents) = state.agent_store.agents_write() {
@@ -1507,7 +1536,7 @@ async fn post_agent_delegate(
 }
 
 async fn delete_agent_delegation(
-    State(state): State<AppState>,
+    _state: State<AppState>,
     Path((parent_did, child_did)): Path<(String, String)>,
 ) -> Result<Json<serde_json::Value>, (axum::http::StatusCode, Json<serde_json::Value>)> {
     // For MVP: remove child from AgentStore
@@ -1535,13 +1564,7 @@ async fn get_agent_audit(
     // Fetch audit entries filtered by the agent's authority
     let entries = state
         .logger
-        .get_logs_filtered(
-            Some(&agent.authority),
-            None,
-            None,
-            offset,
-            limit,
-        )
+        .get_logs_filtered(Some(&agent.authority), None, None, offset, limit)
         .unwrap_or_default();
 
     let total = state
@@ -1572,8 +1595,10 @@ async fn post_robot_telemetry(
     Path(did): Path<String>,
     Json(req): Json<TelemetryRequest>,
 ) -> Result<Json<serde_json::Value>, (axum::http::StatusCode, Json<serde_json::Value>)> {
-    let _agent = state.agent_store.get_agent(&did)
-        .ok_or((axum::http::StatusCode::NOT_FOUND, Json(serde_json::json!({"error":"Agent not found"}))))?;
+    let _agent = state.agent_store.get_agent(&did).ok_or((
+        axum::http::StatusCode::NOT_FOUND,
+        Json(serde_json::json!({"error":"Agent not found"})),
+    ))?;
 
     // Ingest robot telemetry as a SecurityEvent
     let telemetry = bastion_core::event::PhysicalTelemetryEvent {
@@ -1599,7 +1624,11 @@ async fn post_robot_telemetry(
             transaction_signature: None,
             decision: crate::audit::Decision::Allowed,
             simulation_result: None,
-            intent: Some(format!("[robot-telemetry] {} {}", event.source, event.description.unwrap_or_default())),
+            intent: Some(format!(
+                "[robot-telemetry] {} {}",
+                event.source,
+                event.description.unwrap_or_default()
+            )),
             result: crate::audit::AuditResult::Allowed,
             reasoning: format!("Telemetry from robot agent {}", did),
             simulation_logs: vec![],
@@ -1774,7 +1803,10 @@ pub fn build_app(
         .route("/agents/:did/children", get(get_agent_children))
         .route("/agents/:did/tree", get(get_agent_tree))
         .route("/agents/:did/delegate", post(post_agent_delegate))
-        .route("/agents/:did/delegation/:child_did", axum::routing::delete(delete_agent_delegation))
+        .route(
+            "/agents/:did/delegation/:child_did",
+            axum::routing::delete(delete_agent_delegation),
+        )
         .route("/logs", get(get_logs))
         .route("/logs/tx/:transaction_id", get(get_logs_by_transaction_id))
         .route("/logs/signature/:signature", get(get_logs_by_signature))

@@ -1,7 +1,7 @@
 use axum::{
     body::Body,
     extract::Request,
-    http::{header, StatusCode},
+    http::{StatusCode, header},
     response::Response,
 };
 
@@ -31,9 +31,8 @@ pub fn negotiate_markdown(req: &Request<Body>) -> Option<Response> {
 
     let mut response = Response::new(Body::from(content));
     *response.status_mut() = StatusCode::OK;
-    response.headers_mut().insert(
-        header::CONTENT_TYPE,
-        "text/markdown".parse().unwrap(),
-    );
+    response
+        .headers_mut()
+        .insert(header::CONTENT_TYPE, "text/markdown".parse().unwrap());
     Some(response)
 }

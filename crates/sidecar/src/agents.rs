@@ -105,6 +105,7 @@ impl AgentStore {
 
     /// Register a new agent. Caller should verify the Agent PDA exists on-chain
     /// before calling this. Returns the DID on success.
+    #[allow(clippy::too_many_arguments)]
     pub fn register_agent(
         &self,
         did: &str,
@@ -179,7 +180,9 @@ impl AgentStore {
     }
 
     /// Get direct write access to the agents map for delegation updates.
-    pub fn agents_write(&self) -> Result<std::sync::RwLockWriteGuard<'_, HashMap<String, TrackedAgent>>, String> {
+    pub fn agents_write(
+        &self,
+    ) -> Result<std::sync::RwLockWriteGuard<'_, HashMap<String, TrackedAgent>>, String> {
         self.agents.write().map_err(|e| e.to_string())
     }
 
