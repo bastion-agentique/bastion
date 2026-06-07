@@ -18,15 +18,18 @@ RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/
 
 COPY --from=builder /bastion-sidecar /usr/local/bin/bastion-sidecar
 COPY config.toml /etc/bastion/config.toml
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 ENV HELIUS_API_KEY=""
 ENV BASTION_ON_CHAIN=""
 ENV SOLANA_RPC_URL="https://api.devnet.solana.com"
 ENV BASTION_KEYPAIR_PATH=""
+ENV BASTION_AGENT_STORE_PATH="/data/bastion/agent_store"
 
 EXPOSE 3000
 
 VOLUME ["/data/bastion/audit_logs", "/data/bastion/keys"]
 
 WORKDIR /data/bastion
-CMD ["bastion-sidecar"]
+CMD ["/entrypoint.sh"]
