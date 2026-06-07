@@ -1,7 +1,11 @@
 target/
 programs/bastion-audit/target/
-*.json
-!programs/bastion-audit/bastion-audit-keypair.json
-!.agents/
-!.env
+node_modules/
+dist/
 *.pen
+.env
+.git
+.github
+.vercel
+agent_store/
+audit_logs/
