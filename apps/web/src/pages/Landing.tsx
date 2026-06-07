@@ -227,7 +227,7 @@ export default function Landing() {
               </div>
               <div className="flex gap-4">
                 <a href="https://github.com/bastion-agentique/bastion" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white transition-colors text-sm no-underline">GitHub</a>
-                <a href="https://x.com/DaemonProtocol" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white transition-colors text-sm no-underline">X</a>
+                <a href="https://x.com/BastionAgntque" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white transition-colors text-sm no-underline">X</a>
               </div>
             </div>
             <div>
