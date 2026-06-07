@@ -4,6 +4,7 @@ import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { useAccount } from 'wagmi';
 import { useChain } from '../context/ChainContext';
 import { useState, useEffect } from 'react';
+import { TechCarousel } from '../components/TechCarousel';
 
 const FEATURES = [
   {
@@ -161,6 +162,9 @@ export default function Landing() {
             The first SIEM where the audit trail<br />itself is the product.
           </p>
         </section>
+
+        {/* ── Tech Carousel ── */}
+        <TechCarousel />
 
         {/* ── Features ── */}
         <FeaturesCarousel />
