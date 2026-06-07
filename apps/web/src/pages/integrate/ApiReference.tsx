@@ -285,6 +285,9 @@ export default function ApiReference() {
         <p className="font-sans text-xs font-medium mb-3" style={{ color: 'var(--accent)' }}>Sidecar REST API (:3000)</p>
         <div className="space-y-1">
           {[
+            { method: 'POST', path: '/did/generate', desc: 'Generate Ed25519 keypair + DID' },
+            { method: 'POST', path: '/auth/nonce', desc: 'Get challenge nonce for DID auth' },
+            { method: 'POST', path: '/auth/verify', desc: 'Verify DID signature' },
             { method: 'POST', path: '/simulate', desc: 'Validate transaction' },
             { method: 'POST', path: '/override', desc: 'HITL override' },
             { method: 'GET', path: '/logs', desc: 'Paginated audit logs' },
@@ -295,18 +298,29 @@ export default function ApiReference() {
             { method: 'GET', path: '/agents/:did/children', desc: 'List sub-agents' },
             { method: 'GET', path: '/agents/:did/tree', desc: 'Delegation tree' },
             { method: 'POST', path: '/agents/:did/delegate', desc: 'Spawn sub-agent (auth)' },
+            { method: 'POST', path: '/agents/:did/stake', desc: 'Stake SOL (auth)' },
+            { method: 'POST', path: '/agents/:did/stake/unstake', desc: 'Request unstake (auth)' },
+            { method: 'POST', path: '/agents/:did/stake/claim', desc: 'Claim unstaked SOL (auth)' },
             { method: 'GET', path: '/policy', desc: 'Current policy' },
             { method: 'POST', path: '/policy/full', desc: 'Update policy (auth)' },
             { method: 'GET', path: '/circuit-breaker/status', desc: 'Breaker status' },
             { method: 'POST', path: '/circuit-breaker/engage', desc: 'Pause protocol (auth)' },
+            { method: 'POST', path: '/circuit-breaker/disengage', desc: 'Resume protocol (auth)' },
             { method: 'GET', path: '/pending', desc: 'Pending approvals' },
             { method: 'GET', path: '/health', desc: 'Server health' },
             { method: 'POST', path: '/ingest', desc: 'SIEM event (auth)' },
             { method: 'GET', path: '/did/resolve/:did', desc: 'DID resolution' },
             { method: 'GET', path: '/token-balances', desc: 'SPL token balances' },
-            { method: 'GET', path: '/agents/:did/stake', desc: 'Agent stake status' },
+            { method: 'POST', path: '/robots/:did/telemetry', desc: 'Robot telemetry' },
+            { method: 'POST', path: '/cases', desc: 'Create case (auth)' },
+            { method: 'GET', path: '/cases', desc: 'List cases (auth)' },
+            { method: 'PATCH', path: '/cases/:id', desc: 'Update case (auth)' },
+            { method: 'POST', path: '/cases/:id/evidence', desc: 'Add evidence (auth)' },
+            { method: 'POST', path: '/api/v2/evaluate', desc: 'Evaluate transaction (v2)' },
+            { method: 'POST', path: '/api/v2/simulate-evm', desc: 'Simulate EVM tx' },
+            { method: 'GET', path: '/events', desc: 'SSE event stream' },
           ].map((e) => (
-            <div key={e.path} className="flex items-center gap-3 font-mono text-xs py-1.5 px-3 rounded" style={{ background: 'var(--bg-subtle)' }}>
+            <div key={e.path + e.method} className="flex items-center gap-3 font-mono text-xs py-1.5 px-3 rounded" style={{ background: 'var(--bg-subtle)' }}>
               <span className="w-10 shrink-0" style={{ color: e.method === 'GET' ? '#22c55e' : '#f59e0b' }}>{e.method}</span>
               <code className="text-zinc-300">{e.path}</code>
               <span className="ml-auto text-zinc-600">{e.desc}</span>

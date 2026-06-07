@@ -1,60 +1,60 @@
 import { useState } from 'react';
 
-const CODE = `import { Connection, Keypair } from "@solana/web3.js";
-import {
-  BastionClient,
-  AGENT_CAPABILITIES,
-  DECISION,
-} from "@bastion-agentique/sdk";
+const CODE = `// ── Step 1: Generate a DID keypair ──────────────────
+const res = await fetch("http://localhost:3000/did/generate", {
+  method: "POST",
+});
+const { did, authority_pubkey, secret_key_base64 } = await res.json();
+// did: "did:bastion:solana:AbCd..."
+// Store secret_key_base64 securely — shown once
 
-const connection = new Connection(
-  "https://api.devnet.solana.com"
-);
-const client = new BastionClient({ connection });
-const wallet = Keypair.generate();
+// ── Step 2: Register your agent ─────────────────────
+await fetch("http://localhost:3000/agents", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    did,
+    authority_pubkey,
+    sidecar_endpoint: "http://localhost:3000",
+  }),
+});
 
-// 1. Initialize audit state
-const initTx = await client.initialize(wallet);
-await connection.sendTransaction(initTx, [wallet]);
+// ── Step 3: Authenticate (challenge-response) ───────
+const nonceRes = await fetch("http://localhost:3000/auth/nonce", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ did }),
+});
+const { nonce } = await nonceRes.json();
 
-// 2. Register your agent
-const registerTx = await client.registerAgent(
-  wallet,
-  "MyTradingBot",
-  AGENT_CAPABILITIES.TRANSFER | AGENT_CAPABILITIES.SWAP
-);
-await connection.sendTransaction(registerTx, [wallet]);
+// Sign the nonce with your Ed25519 authority key
+const signature = signNonce(secret_key_base64, nonce);
 
-// 3. Set security policy
-const jupiter = new PublicKey(
-  "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"
-);
-const policyTx = await client.setPolicy(
-  wallet,
-  [jupiter],
-  1,  // max 1 SOL per tx
-  10  // rate limit: 10 tx/min
-);
-await connection.sendTransaction(policyTx, [wallet]);
+// ── Step 4: Make authenticated requests ─────────────
+const policyRes = await fetch("http://localhost:3000/policy/full", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-DID": did,
+    "X-DID-Nonce": nonce,
+    "X-DID-Signature": signature,
+  },
+  body: JSON.stringify({
+    max_sol_per_tx: 1_000_000_000, // 1 SOL
+    allowed_programs: [
+      "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+    ],
+  }),
+});
 
-// 4. Circuit breaker
-const pauseTx = await client.emergencyPause(wallet);
-await connection.sendTransaction(pauseTx, [wallet]);
-
-// 5. Spawn sub-agent with delegated authority
-const subWallet = Keypair.generate();
-const subTx = await client.delegateAgent(
-  wallet,         // parent signer
-  subWallet,
-  "SubAgent-ETH",
-  AGENT_CAPABILITIES.TRANSFER,  // restricted capabilities
-  Math.floor(Date.now() / 1000) + 86400  // expires in 24h
-);
-await connection.sendTransaction(subTx, [wallet, subWallet]);
-
-// 6. Fetch delegation tree
-const tree = await client.fetchAgentTree(wallet.publicKey);
-console.log(tree.children);`;
+// ── Step 5: Simulate a transaction ──────────────────
+const simRes = await fetch("http://localhost:3000/simulate", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ transaction: txBase64 }),
+});
+const result = await simRes.json();
+console.log(result.decision); // "Pass" | "Block" | "PendingHITL"`;
 
 export default function QuickStartSection() {
   const [copied, setCopied] = useState(false);
@@ -69,11 +69,15 @@ export default function QuickStartSection() {
     <section className="max-w-3xl mx-auto" aria-labelledby="quickstart-heading">
       <h3
         id="quickstart-heading"
-        className="font-sans text-sm uppercase tracking-wider mb-4"
+        className="font-sans text-xs uppercase tracking-wider mb-4"
         style={{ color: 'var(--text-muted)' }}
       >
-        Step 2: Quick Start
+        Step 2: Quick Start — DID Auth Flow
       </h3>
+
+      <p className="font-sans text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
+        The sidecar uses DID-based challenge-response authentication. Generate a keypair, register your agent, then sign nonces to access protected endpoints.
+      </p>
 
       <div
         className="rounded-xl overflow-hidden"

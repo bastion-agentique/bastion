@@ -76,7 +76,7 @@ export default function Integrate() {
             </a>
           </div>
 
-          {/* EVM Coming Soon */}
+          {/* EVM Status */}
           <div
             className="animate-fade-rise-delay-2 mt-10 mx-auto max-w-sm rounded-xl p-5 opacity-60"
             style={{ background: 'var(--bg-subtle)', border: '1px dashed var(--border)' }}
@@ -90,12 +90,12 @@ export default function Integrate() {
                 className="font-mono text-[9px] px-2 py-0.5 rounded-full ml-auto"
                 style={{ background: 'rgba(107,114,128,0.15)', color: '#6B7280', border: '1px solid rgba(107,114,128,0.25)' }}
               >
-                Coming Soon
+                In Development
               </span>
             </div>
             <p className="font-sans text-xs" style={{ color: 'var(--text-muted)' }}>
-              Solidity contracts are in active development. Solana is our primary deployment target.
-              EVM support (ERC-7579 validator, EIP-712 audit trail) expected Q3 2026.
+              Solidity contracts in active development. Solana is our primary deployment target.
+              EVM support (ERC-7579 validator, EIP-712 audit trail) coming soon.
             </p>
           </div>
         </section>
