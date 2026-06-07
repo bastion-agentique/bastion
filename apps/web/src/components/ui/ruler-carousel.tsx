@@ -76,6 +76,18 @@ export function RulerCarousel({
   const [activeIndex, setActiveIndex] = useState(itemsPerSet + centerIdx);
   const [isResetting, setIsResetting] = useState(false);
   const previousIndexRef = useRef(itemsPerSet + centerIdx);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const [viewportWidth, setViewportWidth] = useState(0);
+
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (el) setViewportWidth(el.offsetWidth);
+    const handleResize = () => {
+      if (viewportRef.current) setViewportWidth(viewportRef.current.offsetWidth);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleItemClick = (newIndex: number) => {
     if (isResetting) return;
@@ -156,8 +168,10 @@ export function RulerCarousel({
     return () => clearInterval(id);
   }, [isResetting, autoScrollInterval]);
 
-  const targetX =
-    -((activeIndex % itemsPerSet) - centerIdx) * 500;
+  const step = 500;
+  const targetX = viewportWidth
+    ? viewportWidth / 2 - ((activeIndex % itemsPerSet) * step + 200)
+    : -((activeIndex % itemsPerSet) - centerIdx) * step;
 
   const currentPage = (activeIndex % itemsPerSet) + 1;
   const totalPages = itemsPerSet;
@@ -168,7 +182,7 @@ export function RulerCarousel({
         <div className="flex items-center justify-center">
           <RulerLines top />
         </div>
-        <div className="flex items-center justify-center w-full h-full relative overflow-hidden">
+        <div ref={viewportRef} className="flex items-center justify-center w-full h-full relative overflow-hidden">
           <motion.div
             className="flex items-center gap-[100px]"
             animate={{
