@@ -77,3 +77,82 @@ export const DECISION = {
 } as const;
 
 export type Decision = typeof DECISION[keyof typeof DECISION];
+
+// ── Sidecar HTTP types ──────────────────────────────────────────────────────
+
+export interface SidecarConfig {
+  /** Base URL of the sidecar, e.g. "http://localhost:3000" */
+  baseUrl: string;
+  /** Optional API key sent as X-API-Key header */
+  apiKey?: string;
+}
+
+export interface SimulateRequest {
+  /** Base64-encoded serialized Solana transaction */
+  transaction: string;
+  intent?: string;
+}
+
+export interface SimulateResponse {
+  units_consumed?: number;
+  balance_changes?: Record<string, number>;
+  logs?: string[];
+  error?: string;
+  simulation_hash?: number[];
+}
+
+export interface SimulateBlockedResponse {
+  error: string;
+  block_id?: string;
+}
+
+export interface SidecarAuditEntry {
+  timestamp: number;
+  transaction_id?: string;
+  transaction_signature?: string;
+  decision: string;
+  result: "allowed" | "blocked" | "pending";
+  reasoning: string;
+  intent?: string;
+  simulation_logs?: string[];
+}
+
+export interface LogsQuery {
+  limit?: number;
+  offset?: number;
+  transaction_id?: string;
+  signature?: string;
+  result?: "allowed" | "blocked" | "pending";
+}
+
+export interface LogsResponse {
+  total: number;
+  offset: number;
+  limit: number;
+  entries: SidecarAuditEntry[];
+}
+
+export interface SidecarPolicy {
+  max_sol_per_tx?: number;
+  max_balance_drain_lamports?: number;
+  rate_limit_per_minute?: number;
+  allowed_programs: string[];
+  blocked_addresses: string[];
+  simulation_checks_enabled: boolean;
+}
+
+export interface HealthResponse {
+  status: string;
+  uptime_seconds: number;
+  db_healthy: boolean;
+  db_size_bytes: number;
+}
+
+export interface OverrideRequest {
+  block_id: string;
+  action: "ALLOW" | "REJECT";
+}
+
+export interface CircuitBreakerStatus {
+  engaged: boolean;
+}

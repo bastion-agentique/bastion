@@ -1,19 +1,33 @@
 version: "3.9"
 
+# One-command local dev:
+#   cp .env.example .env   # fill in HELIUS_API_KEY
+#   docker compose up
+
 services:
   bastion:
     build: .
     ports:
       - "3000:3000"
+    env_file:
+      - path: .env
+        required: false
     environment:
-      - HELIUS_API_KEY=${HELIUS_API_KEY:?HELIUS_API_KEY is required}
+      - HELIUS_API_KEY=${HELIUS_API_KEY:?Set HELIUS_API_KEY in .env or environment}
+      - BASTION_API_KEY=${BASTION_API_KEY:-}
       - BASTION_ON_CHAIN=${BASTION_ON_CHAIN:-}
       - SOLANA_RPC_URL=${SOLANA_RPC_URL:-https://api.devnet.solana.com}
       - BASTION_KEYPAIR_PATH=${BASTION_KEYPAIR_PATH:-}
+      - GROND_API_URL=${GROND_API_URL:-}
+      - CELO_RPC_URL=${CELO_RPC_URL:-}
     volumes:
       - bastion_audit_logs:/data/bastion/audit_logs
-      - ./crates/solana/programs/bastion-audit/bastion-audit-keypair.json:/data/bastion/keys/bastion-audit-keypair.json:ro
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 volumes:
   bastion_audit_logs:
