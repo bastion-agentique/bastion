@@ -538,7 +538,7 @@ export default function Dashboard() {
 
         {/* Footer */}
         <footer className="max-w-7xl mx-auto pt-6 border-t border-white/[0.06] text-center">
-          <p className="font-sans text-[10px] text-zinc-600">Built on Daemon BlockInt Technologies. Bastion v0.3.0. Apache 2.0. Auto-refresh: 30s.</p>
+          <p className="font-sans text-[10px] text-zinc-600">Built on Daemon BlockInt Technologies. Bastion v0.3.0. Apache 2.0. Auto-refresh: 30s. Powered by <span className="text-purple-500">Solana</span> + <span className="text-emerald-400">Arcium</span>.</p>
         </footer>
       </main>
     </div>

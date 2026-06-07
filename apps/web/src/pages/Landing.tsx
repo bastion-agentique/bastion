@@ -215,6 +215,12 @@ export default function Landing() {
             <div className="flex flex-col gap-6">
               <a href="#main-content" className="font-serif text-xl tracking-tight no-underline text-white">Bastion<span className="text-[10px] align-super ml-px">&reg;</span></a>
               <p className="font-sans text-xs text-zinc-600 max-w-xs leading-relaxed">Built on Daemon BlockInt Technologies. The first SIEM where the audit trail itself is the product.</p>
+              <div className="flex items-center gap-3">
+                <span className="font-sans text-[10px] text-zinc-600">Powered by</span>
+                <span className="font-mono text-[10px] text-purple-500">◎ Solana</span>
+                <span className="font-sans text-[10px] text-zinc-700">+</span>
+                <span className="font-mono text-[10px] text-emerald-400">Arcium</span>
+              </div>
               <div className="flex gap-4">
                 <a href="https://github.com/bastion-agentique/bastion" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white transition-colors text-sm no-underline">GitHub</a>
                 <a href="https://x.com/DaemonProtocol" target="_blank" rel="noopener noreferrer" className="text-zinc-500 hover:text-white transition-colors text-sm no-underline">X</a>
