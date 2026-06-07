@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/li
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY crates/ crates/
+COPY apps/web/public/ apps/web/public/
 
 RUN cargo build --release -p bastion-sidecar && \
     cp target/release/bastion-sidecar /bastion-sidecar

@@ -335,18 +335,19 @@ impl SimulationCheck for FlashLoanPatternCheck {
             }
         }
         for account in inflows.keys() {
-            if let Some(inflow) = inflows.get(account)
-                && let Some(outflow) = outflows.get(account)
-                && *inflow >= 1_000_000_000_000
-                && *outflow >= 1_000_000_000_000
-            {
-                let ratio = *outflow as f64 / *inflow as f64;
-                if (0.95..=1.05).contains(&ratio) {
-                    return Err(format!(
-                        "Blockint: flash-loan pattern detected on account {} \
-                         (in={}, out={}, ratio={})",
-                        account, inflow, outflow, ratio
-                    ));
+            #[allow(clippy::collapsible_if)]
+            if let Some(inflow) = inflows.get(account) {
+                if let Some(outflow) = outflows.get(account) {
+                    if *inflow >= 1_000_000_000_000 && *outflow >= 1_000_000_000_000 {
+                        let ratio = *outflow as f64 / *inflow as f64;
+                        if (0.95..=1.05).contains(&ratio) {
+                            return Err(format!(
+                                "Blockint: flash-loan pattern detected on account {} \
+                                 (in={}, out={}, ratio={})",
+                                account, inflow, outflow, ratio
+                            ));
+                        }
+                    }
                 }
             }
         }
