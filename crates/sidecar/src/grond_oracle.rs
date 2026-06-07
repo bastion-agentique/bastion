@@ -51,10 +51,11 @@ impl RiskOracle for GrondOracle {
 
         {
             let cache = self.cache.lock().unwrap();
-            if let Some((ts, score)) = cache.get(&addr_str)
-                && ts.elapsed() < CACHE_TTL
-            {
-                return Ok(*score);
+            #[allow(clippy::collapsible_if)]
+            if let Some((ts, score)) = cache.get(&addr_str) {
+                if ts.elapsed() < CACHE_TTL {
+                    return Ok(*score);
+                }
             }
         }
 

@@ -176,22 +176,25 @@ impl AuditLogger {
             let entry: AuditEntry = serde_json::from_slice(&value)
                 .map_err(|e| anyhow!("Failed to deserialize audit entry: {}", e))?;
 
-            if let Some(transaction_id) = transaction_id
-                && entry.transaction_id.as_deref() != Some(transaction_id)
-            {
-                continue;
+            #[allow(clippy::collapsible_if)]
+            if let Some(transaction_id) = transaction_id {
+                if entry.transaction_id.as_deref() != Some(transaction_id) {
+                    continue;
+                }
             }
 
-            if let Some(signature) = signature
-                && entry.transaction_signature.as_deref() != Some(signature)
-            {
-                continue;
+            #[allow(clippy::collapsible_if)]
+            if let Some(signature) = signature {
+                if entry.transaction_signature.as_deref() != Some(signature) {
+                    continue;
+                }
             }
 
-            if let Some(result) = result
-                && entry.result != result
-            {
-                continue;
+            #[allow(clippy::collapsible_if)]
+            if let Some(result) = result {
+                if entry.result != result {
+                    continue;
+                }
             }
 
             logs.push(entry);
@@ -262,20 +265,23 @@ impl AuditLogger {
             let entry: AuditEntry = serde_json::from_slice(&value)
                 .map_err(|e| anyhow!("Failed to deserialize audit entry: {}", e))?;
 
-            if let Some(tid) = transaction_id
-                && entry.transaction_id.as_deref() != Some(tid)
-            {
-                continue;
+            #[allow(clippy::collapsible_if)]
+            if let Some(tid) = transaction_id {
+                if entry.transaction_id.as_deref() != Some(tid) {
+                    continue;
+                }
             }
-            if let Some(sig) = signature
-                && entry.transaction_signature.as_deref() != Some(sig)
-            {
-                continue;
+            #[allow(clippy::collapsible_if)]
+            if let Some(sig) = signature {
+                if entry.transaction_signature.as_deref() != Some(sig) {
+                    continue;
+                }
             }
-            if let Some(r) = result
-                && entry.result != r
-            {
-                continue;
+            #[allow(clippy::collapsible_if)]
+            if let Some(r) = result {
+                if entry.result != r {
+                    continue;
+                }
             }
             count += 1;
         }
