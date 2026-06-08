@@ -2022,7 +2022,7 @@ pub fn build_app(
         .route("/token-balances", get(get_token_balances))
         .route("/robots/:did/telemetry", post(post_robot_telemetry))
         // === MCP reverse proxy (Node.js backend on :3001) ===
-        .route("/mcp", any(proxy_mcp))
+        .route("/mcp/*path", any(proxy_mcp))
         .route("/sse", any(proxy_mcp))
         .route("/messages", any(proxy_mcp))
         .nest_service("/dashboard", ServeDir::new("static"))
