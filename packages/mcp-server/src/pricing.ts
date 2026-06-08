@@ -3,7 +3,7 @@
  * Exposes GET /mcp/pricing for agents to discover tool costs.
  */
 
-import { TOOL_PRICES, getFreeLimit } from './credits';
+import { TOOL_PRICES, getFreeLimit } from './credits.js';
 
 export interface PricingEntry {
   tool: string;
