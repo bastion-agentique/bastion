@@ -149,7 +149,8 @@ pub async fn resolve_did(
                     service: vec![ServiceEndpoint {
                         id: format!("{did}#midnight-disclosure"),
                         kind: "MidnightSelectiveDisclosure".to_string(),
-                        service_endpoint: "https://bastion-agentique.fly.dev/midnight/disclose".to_string(),
+                        service_endpoint: "https://bastion-agentique.fly.dev/midnight/disclose"
+                            .to_string(),
                     }],
                 },
                 metadata: DidResolutionMetadata {
