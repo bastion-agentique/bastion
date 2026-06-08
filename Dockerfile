@@ -23,13 +23,14 @@ RUN corepack enable && corepack prepare pnpm@9 --activate && \
     pnpm --filter @bastion/mcp-server build
 
 # Runtime stage
-FROM debian:bookworm-slim
+FROM node:20-slim
 
 RUN apt-get update && apt-get install -y ca-certificates curl && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=rust-builder /bastion-sidecar /usr/local/bin/bastion-sidecar
 COPY --from=mcp-builder /app/packages/mcp-server/dist /opt/bastion-mcp/dist
+COPY --from=mcp-builder /app/packages/mcp-server/node_modules /opt/bastion-mcp/node_modules
 COPY --from=mcp-builder /app/packages/mcp-server/package.json /opt/bastion-mcp/package.json
 COPY config.toml /etc/bastion/config.toml
 COPY entrypoint.sh /entrypoint.sh
