@@ -18,7 +18,7 @@ WORKDIR /app
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY packages/mcp-server/ packages/mcp-server/
 
-RUN corepack enable && corepack prepare pnpm@latest --activate && \
+RUN corepack enable && corepack prepare pnpm@9 --activate && \
     pnpm install --frozen-lockfile && \
     pnpm --filter @bastion/mcp-server build
 
