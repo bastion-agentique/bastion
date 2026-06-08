@@ -19,20 +19,6 @@ primary_region = 'sin'
   auto_stop_machines = true
   auto_start_machines = true
 
-[[services]]
-  internal_port = 3001
-  protocol = 'tcp'
-  auto_stop_machines = true
-  auto_start_machines = true
-
-  [[services.ports]]
-    handlers = ['tls', 'http']
-    port = 443
-
-  [[services.ports]]
-    port = 80
-    handlers = ['http']
-
 [checks]
   [checks.health]
     port = 3000
