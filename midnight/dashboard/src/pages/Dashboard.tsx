@@ -3,7 +3,7 @@ import { useTheme } from '../context/ThemeContext';
 import { Navbar } from '../components/Navbar';
 import { formatTimestamp, truncate } from '../lib/utils';
 
-const MIDDLEWARE_URL = import.meta.env.VITE_MIDDLEWARE_URL ?? 'http://localhost:3000';
+const MIDDLEWARE_URL = import.meta.env.VITE_MIDDLEWARE_URL ?? 'https://bastion-agentique.fly.dev/';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types

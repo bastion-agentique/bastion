@@ -2,7 +2,7 @@
 
 ## Purpose
 
-A private repository inside `bastion-agentic-defense` org hosting Bastion's monetized API layer:
+A private repository inside `bastion-agentique` org hosting Bastion's monetized API layer:
 - **MCP (Model Context Protocol) tools** — expose Bastion's security services to AI agents
 - **x402 payment middleware** — HTTP 402 Payment Required with on-chain settlement
 - **API routes** — rate-limited, authenticated endpoints behind x402 paywall

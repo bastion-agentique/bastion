@@ -1,7 +1,7 @@
 ---
 name: bastion
 description: "High-performance Rust firewall for AI Agents. Intercepts, simulates, and validates transactions before signing."
-homepage: "https://github.com/bastion-agentic-defense/bastion"
+homepage: "https://github.com/bastion-agentique/bastion"
 metadata: {
   "category": "security",
   "emoji": "🛡️",
@@ -19,7 +19,7 @@ Bastion is an autonomous security middleware that sits between an Agent's Brain 
 
 ```bash
 # Clone and build
-git clone https://github.com/bastion-agentic-defense/bastion.git
+git clone https://github.com/bastion-agentique/bastion.git
 cd bastion && cargo build --release
 ```
 
@@ -42,7 +42,7 @@ cd bastion && cargo build --release
 Start the MCP HTTP server for browser-native agent access:
 
 ```bash
-BASTION_SIDECAR_URL=http://localhost:3000 \
+BASTION_SIDECAR_URL=https://bastion-agentique.fly.dev/ \
 pnpm --filter @bastion/mcp-server dev:http
 ```
 
@@ -126,9 +126,9 @@ solana-keygen new --outfile ~/.config/solana/bastion-agent.json
 ### Step 2: Register with the sidecar
 
 ```bash
-# Default host: localhost:3000 (running Bastion instance)
+# Default host: bastion-agentique.fly.dev/ (running Bastion instance)
 # Auth: only needed if BASTION_API_KEY is set. Check with an unauthenticated request first.
-curl -s -X POST http://localhost:3000/agents \
+curl -s -X POST https://bastion-agentique.fly.dev/agents \
   -H "Content-Type: application/json" \
   -d '{
     "did": "did:bastion:solana:YOUR_AGENT_PDA_BASE58",
@@ -139,7 +139,7 @@ curl -s -X POST http://localhost:3000/agents \
 
 **If BASTION_API_KEY is set** (you get a 401 response), add the header:
 ```bash
-curl -s -X POST http://localhost:3000/agents \
+curl -s -X POST https://bastion-agentique.fly.dev/agents \
   -H "Content-Type: application/json" \
   -H "X-Api-Key: YOUR_API_KEY" \
   -d '...'
@@ -149,17 +149,17 @@ curl -s -X POST http://localhost:3000/agents \
 
 ```bash
 # List all agents (no auth required)
-curl -s http://localhost:3000/agents | python3 -m json.tool
+curl -s https://bastion-agentique.fly.dev/agents | python3 -m json.tool
 
 # Get your agent by DID
-curl -s http://localhost:3000/agents/did:bastion:solana:YOUR_DID | python3 -m json.tool
+curl -s https://bastion-agentique.fly.dev/agents/did:bastion:solana:YOUR_DID | python3 -m json.tool
 ```
 
 ### Step 4: Spawn sub-agents (delegation)
 
 ```bash
 # Parent spawns a sub-agent with restricted capabilities
-curl -s -X POST "http://localhost:3000/agents/did:bastion:solana:PARENT_DID/delegate" \
+curl -s -X POST "https://bastion-agentique.fly.dev/agents/did:bastion:solana:PARENT_DID/delegate" \
   -H "Content-Type: application/json" \
   -d '{
     "child_did": "did:bastion:solana:CHILD_DID",
@@ -172,7 +172,7 @@ curl -s -X POST "http://localhost:3000/agents/did:bastion:solana:PARENT_DID/dele
 ### Step 5: See your delegation tree
 
 ```bash
-curl -s "http://localhost:3000/agents/did:bastion:solana:PARENT_DID/tree" | python3 -m json.tool
+curl -s "https://bastion-agentique.fly.dev/agents/did:bastion:solana:PARENT_DID/tree" | python3 -m json.tool
 ```
 
 ### Auth Notes

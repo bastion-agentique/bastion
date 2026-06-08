@@ -62,7 +62,7 @@ const tx = await client.setPolicy(
   const simCode = chain === 'solana'
     ? [
         '// Send a base64 transaction through the sidecar',
-        "const SIDECAR_URL = import.meta.env?.VITE_SIDECAR_URL || 'http://localhost:3000';",
+        "const SIDECAR_URL = import.meta.env?.VITE_SIDECAR_URL || 'https://bastion-agentique.fly.dev';",
         'const response = await fetch(SIDECAR_URL + "/simulate", {',
         '  method: "POST",',
         '  headers: { "Content-Type": "application/json" },',
@@ -76,7 +76,7 @@ const tx = await client.setPolicy(
     : '';
 
   async function handleSimulate() {
-    const SIDECAR_URL = (import.meta as { env?: { VITE_SIDECAR_URL?: string } }).env?.VITE_SIDECAR_URL ?? 'http://localhost:3000';
+    const SIDECAR_URL = (import.meta as { env?: { VITE_SIDECAR_URL?: string } }).env?.VITE_SIDECAR_URL ?? 'https://bastion-agentique.fly.dev/';
     setSimLoading(true);
     setSimResult(null);
     try {

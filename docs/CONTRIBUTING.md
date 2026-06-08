@@ -13,7 +13,7 @@
 
 ```bash
 # Clone
-git clone https://github.com/bastion-agentic-defense/bastion.git
+git clone https://github.com/bastion-agentique/bastion.git
 cd bastion
 
 # Install JS dependencies

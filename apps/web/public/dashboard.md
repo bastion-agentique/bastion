@@ -27,4 +27,4 @@ AI agent firewall.
 
 - **Home**: /
 - **Integrate**: /integrate
-- **GitHub**: https://github.com/bastion-agentic-defense/bastion
+- **GitHub**: https://github.com/bastion-agentique/bastion

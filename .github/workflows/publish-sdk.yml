@@ -27,9 +27,9 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm --filter @bastion-agentic-defense/sdk build
+      - run: pnpm --filter @bastion-agentique/sdk build
 
       - name: Publish to npm
-        run: pnpm --filter @bastion-agentic-defense/sdk publish --no-git-checks --provenance
+        run: pnpm --filter @bastion-agentique/sdk publish --no-git-checks --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

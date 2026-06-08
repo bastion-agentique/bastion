@@ -13,7 +13,7 @@ solana-keygen new --outfile ~/.config/solana/bastion-agent.json
 
 3. **Register with the sidecar**:
 ```bash
-curl -s -X POST http://localhost:3000/agents \
+curl -s -X POST https://bastion-agentique.fly.dev//agents \
   -H "Content-Type: application/json" \
   -H "X-Api-Key: YOUR_BASTION_API_KEY" \
   -d '{
@@ -67,7 +67,7 @@ No tokens are used. Authentication is header-based:
 Parent agents can spawn sub-agents with delegated authority:
 
 ```bash
-curl -s -X POST "http://localhost:3000/agents/did:bastion:solana:PARENT_DID/delegate" \
+curl -s -X POST "https://bastion-agentique.fly.dev//agents/did:bastion:solana:PARENT_DID/delegate" \
   -H "Content-Type: application/json" \
   -H "X-Api-Key: YOUR_BASTION_API_KEY" \
   -d '{

@@ -80,7 +80,7 @@ pub fn build_did_document(
             ServiceEndpoint {
                 id: format!("{did_id}#sidecar"),
                 kind: "BastionSidecarAPI".to_string(),
-                service_endpoint: "http://localhost:3000".to_string(),
+                service_endpoint: "https://bastion-agentique.fly.dev/".to_string(),
             },
             ServiceEndpoint {
                 id: format!("{did_id}#agent-metadata"),
@@ -149,7 +149,7 @@ pub async fn resolve_did(
                     service: vec![ServiceEndpoint {
                         id: format!("{did}#midnight-disclosure"),
                         kind: "MidnightSelectiveDisclosure".to_string(),
-                        service_endpoint: "http://localhost:3000/midnight/disclose".to_string(),
+                        service_endpoint: "https://bastion-agentique.fly.dev/midnight/disclose".to_string(),
                     }],
                 },
                 metadata: DidResolutionMetadata {

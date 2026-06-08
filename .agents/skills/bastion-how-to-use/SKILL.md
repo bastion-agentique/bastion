@@ -16,7 +16,7 @@ Agent → Bastion REST API → Policy Engine → Helius Simulation → On-chain 
          ↑───────────────────────────────────────────────────────────────┘ (async)
 ```
 
-Bastion runs as a local HTTP server (default `http://localhost:3000`). Agents send transaction payloads to `/simulate` and receive a decision (ALLOW, BLOCK, or PENDING_APPROVAL).
+Bastion runs as a local HTTP server (default `https://bastion-agentique.fly.dev/`). Agents send transaction payloads to `/simulate` and receive a decision (ALLOW, BLOCK, or PENDING_APPROVAL).
 
 ## Quick Start: Agent Integration Flow
 
@@ -35,7 +35,7 @@ Bastion runs as a local HTTP server (default `http://localhost:3000`). Agents se
 ### Register (first time)
 
 ```bash
-curl -s -X POST http://localhost:3000/agents \
+curl -s -X POST https://bastion-agentique.fly.dev//agents \
   -H "Content-Type: application/json" \
   -d '{
     "did": "did:bastion:solana:YOUR_AGENT_PDA_BASE58",
@@ -49,13 +49,13 @@ curl -s -X POST http://localhost:3000/agents \
 ### Verify
 
 ```bash
-curl -s http://localhost:3000/agents | python3 -m json.tool
+curl -s https://bastion-agentique.fly.dev//agents | python3 -m json.tool
 ```
 
 ### Spawn sub-agent (delegation)
 
 ```bash
-curl -s -X POST "http://localhost:3000/agents/did:bastion:solana:PARENT_DID/delegate" \
+curl -s -X POST "https://bastion-agentique.fly.dev//agents/did:bastion:solana:PARENT_DID/delegate" \
   -H "Content-Type: application/json" \
   -d '{
     "child_did": "did:bastion:solana:CHILD_DID",
@@ -67,7 +67,7 @@ curl -s -X POST "http://localhost:3000/agents/did:bastion:solana:PARENT_DID/dele
 ### See your delegation tree
 
 ```bash
-curl -s "http://localhost:3000/agents/did:bastion:solana:DID/tree" | python3 -m json.tool
+curl -s "https://bastion-agentique.fly.dev//agents/did:bastion:solana:DID/tree" | python3 -m json.tool
 ```
 
 ### Agent Registry API
@@ -319,7 +319,7 @@ anchor deploy --provider.cluster devnet
 Start the MCP server for browser-native SSE access:
 
 ```bash
-BASTION_SIDECAR_URL=http://localhost:3000 \
+BASTION_SIDECAR_URL=https://bastion-agentique.fly.dev/ \
 pnpm --filter @bastion/mcp-server dev:http
 ```
 

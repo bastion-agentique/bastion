@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Bastion Devnet Demo — exercises the transaction firewall
-# Requires: bastion-sidecar running on localhost:3000
+# Requires: bastion-sidecar running on bastion-agentique.fly.dev/
 # Usage:   cargo run -p bastion-sidecar & sleep 2 && bash docs/demo.sh
 set -euo pipefail
 
-BASE="${BASTION_URL:-http://localhost:3000}"
+BASE="${BASTION_URL:-https://bastion-agentique.fly.dev/}"
 DIV="========================================"
 section() { echo -e "\n$DIV\n  $1\n$DIV\n"; }
 

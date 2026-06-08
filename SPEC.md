@@ -41,7 +41,7 @@ It intercepts every transaction request, **Simulates** it, and checks it against
     *   On-chain policy PDA for immutable rules.
 
 2.  **The Interceptor (Rust Proxy)**
-    *   A local server (localhost:3000) that looks like a standard Solana RPC.
+    *   A local server (bastion-agentique.fly.dev/) that looks like a standard Solana RPC.
     *   The Agent sends transactions here instead of mainnet.
 
 3.  **Simulation Core (The Truth)**

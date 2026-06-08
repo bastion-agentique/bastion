@@ -7,31 +7,31 @@
 
 An agent needs 3 things to integrate:
 1. A Solana keypair (any valid keypair works)
-2. A running Bastion sidecar (default: `http://localhost:3000`)
+2. A running Bastion sidecar (default: `https://bastion-agentique.fly.dev/`)
 3. Self-registration via REST API
 
 ```bash
 # 1. Register yourself as an agent
 PUBKEY=$(solana address)
-curl -s -X POST http://localhost:3000/agents \
+curl -s -X POST https://bastion-agentique.fly.dev/agents \
   -H "Content-Type: application/json" \
   -d "{\"did\":\"did:bastion:solana:${PUBKEY}\",\"authority_pubkey\":\"${PUBKEY}\",\"sidecar_endpoint\":null}"
 
 # 2. Verify registration
-curl -s http://localhost:3000/agents | python3 -m json.tool
+curl -s https://bastion-agentique.fly.dev/agents | python3 -m json.tool
 
 # 3. Spawn a sub-agent (if you have delegation rights)
-curl -s -X POST "http://localhost:3000/agents/did:bastion:solana:YOUR_DID/delegate" \
+curl -s -X POST "https://bastion-agentique.fly.dev/agents/did:bastion:solana:YOUR_DID/delegate" \
   -H "Content-Type: application/json" \
   -d '{"child_did":"did:bastion:solana:child-did","child_name":"SubAgent"}'
 
 # 4. Simulate a transaction before signing
-curl -s -X POST http://localhost:3000/simulate \
+curl -s -X POST https://bastion-agentique.fly.dev/simulate \
   -H "Content-Type: application/json" \
   -d '{"transaction":"<base64_tx>","intent":"swap 0.1 SOL for USDC on Jupiter"}'
 
 # 5. Check your audit trail
-curl -s http://localhost:3000/logs?limit=10 | python3 -m json.tool
+curl -s https://bastion-agentique.fly.dev/logs?limit=10 | python3 -m json.tool
 ```
 
 ---
@@ -42,7 +42,7 @@ curl -s http://localhost:3000/logs?limit=10 | python3 -m json.tool
 
 | Component | Value |
 |-----------|-------|
-| Sidecar port | `localhost:3000` (Axum, Rust) |
+| Sidecar port | `bastion-agentique.fly.dev/` (Axum, Rust) |
 | MCP port | `localhost:3001` (SSE transport) |
 | Solana devnet | `https://api.devnet.solana.com` |
 | Program ID | `A29V5MUVs73y7XBHHxPpPcAW7h4gGHupbDdwYSwA2n9D` |
@@ -181,7 +181,7 @@ await connection.sendTransaction(tx, [wallet]);
 const did = client.getAgentDID(wallet.publicKey);
 
 // Self-register with sidecar
-await fetch("http://localhost:3000/agents", {
+await fetch("https://bastion-agentique.fly.dev/agents", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({

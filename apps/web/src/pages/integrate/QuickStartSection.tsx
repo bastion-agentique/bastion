@@ -1,7 +1,9 @@
 import { useState } from 'react';
 
+const SIDECAR = "https://bastion-agentique.fly.dev";
+
 const CODE = `// ── Step 1: Generate a DID keypair ──────────────────
-const res = await fetch("http://localhost:3000/did/generate", {
+const res = await fetch("${SIDECAR}/did/generate", {
   method: "POST",
 });
 const { did, authority_pubkey, secret_key_base64 } = await res.json();
@@ -9,18 +11,18 @@ const { did, authority_pubkey, secret_key_base64 } = await res.json();
 // Store secret_key_base64 securely — shown once
 
 // ── Step 2: Register your agent ─────────────────────
-await fetch("http://localhost:3000/agents", {
+await fetch("${SIDECAR}/agents", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
     did,
     authority_pubkey,
-    sidecar_endpoint: "http://localhost:3000",
+    sidecar_endpoint: "${SIDECAR}",
   }),
 });
 
 // ── Step 3: Authenticate (challenge-response) ───────
-const nonceRes = await fetch("http://localhost:3000/auth/nonce", {
+const nonceRes = await fetch("${SIDECAR}/auth/nonce", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ did }),
@@ -31,7 +33,7 @@ const { nonce } = await nonceRes.json();
 const signature = signNonce(secret_key_base64, nonce);
 
 // ── Step 4: Make authenticated requests ─────────────
-const policyRes = await fetch("http://localhost:3000/policy/full", {
+const policyRes = await fetch("${SIDECAR}/policy/full", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -48,7 +50,7 @@ const policyRes = await fetch("http://localhost:3000/policy/full", {
 });
 
 // ── Step 5: Simulate a transaction ──────────────────
-const simRes = await fetch("http://localhost:3000/simulate", {
+const simRes = await fetch("${SIDECAR}/simulate", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ transaction: txBase64 }),

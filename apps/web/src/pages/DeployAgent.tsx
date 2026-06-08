@@ -69,7 +69,7 @@ export default function DeployAgent() {
       // Register agent on Solana
       const capsNum = tpl.id === 'defi' ? 3 : tpl.id === 'transfer' ? 1 : 3;
       // Use SDK via POST /agents to sidecar for registration
-      const res = await fetch(`${import.meta.env.VITE_SIDECAR_URL || 'http://localhost:3000'}/agents`, {
+      const res = await fetch(`${import.meta.env.VITE_SIDECAR_URL || 'https://bastion-agentique.fly.dev/'}/agents`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

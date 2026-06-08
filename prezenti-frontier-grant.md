@@ -13,7 +13,7 @@
 ---
 
 ## Website
-**https://github.com/bastion-agentic-defense/bastion**
+**https://github.com/bastion-agentique/bastion**
 
 ---
 
@@ -43,7 +43,7 @@ Contract: `evm/src/BastionERC8004Registry.sol` | Tests: 22/22 passing in `evm/te
 ---
 
 ## Is your project fully open source
-**Yes.** MIT licensed. Full source at https://github.com/bastion-agentic-defense/bastion . Includes the Rust middleware, Anchor/Solana on-chain program, Solidity/EVM contracts, TypeScript SDK, and React dashboard.
+**Yes.** MIT licensed. Full source at https://github.com/bastion-agentique/bastion . Includes the Rust middleware, Anchor/Solana on-chain program, Solidity/EVM contracts, TypeScript SDK, and React dashboard.
 
 ---
 

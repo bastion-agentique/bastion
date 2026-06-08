@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
-const SIDECAR_URL = import.meta.env.VITE_SIDECAR_URL || 'http://localhost:3000';
+const SIDECAR_URL = import.meta.env.VITE_SIDECAR_URL || 'https://bastion-agentique.fly.dev/';
 
 interface AuditLogEntry {
   id: number;

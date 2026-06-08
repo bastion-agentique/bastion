@@ -192,7 +192,7 @@ await client.registerAgent(
 );
 
 // 2. Self-register to sidecar
-await fetch("http://localhost:3000/agents", {
+await fetch("https://bastion-agentique.fly.dev//agents", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",

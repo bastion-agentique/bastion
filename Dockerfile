@@ -22,9 +22,7 @@ COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 ENV HELIUS_API_KEY=""
-ENV BASTION_ON_CHAIN=""
 ENV SOLANA_RPC_URL="https://api.devnet.solana.com"
-ENV BASTION_KEYPAIR_PATH=""
 ENV BASTION_AGENT_STORE_PATH="/data/bastion/agent_store"
 
 EXPOSE 3000

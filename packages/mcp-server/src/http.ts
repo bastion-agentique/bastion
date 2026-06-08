@@ -4,7 +4,7 @@
  * direct browser requests (x402 payment required for paid tools).
  * 
  * Usage:
- *   BASTION_SIDECAR_URL=http://localhost:3000 \
+ *   BASTION_SIDECAR_URL=https://bastion-agentique.fly.dev/ \
  *   BASTION_API_KEY=your-key \
  *   SOLANA_RPC_URL=https://api.devnet.solana.com \
  *   tsx src/http.ts

@@ -9,3 +9,5 @@ dist/
 audit_logs/
 agent_store/
 .vercel
+
+.env.local

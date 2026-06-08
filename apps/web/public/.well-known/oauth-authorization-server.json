@@ -16,6 +16,6 @@
     "bastion:agents:read",
     "bastion:agents:write"
   ],
-  "service_documentation": "https://github.com/bastion-agentic-defense/bastion",
+  "service_documentation": "https://github.com/bastion-agentique/bastion",
   "ui_locales_supported": ["en"]
 }

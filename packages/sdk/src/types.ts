@@ -81,7 +81,7 @@ export type Decision = typeof DECISION[keyof typeof DECISION];
 // ── Sidecar HTTP types ──────────────────────────────────────────────────────
 
 export interface SidecarConfig {
-  /** Base URL of the sidecar, e.g. "http://localhost:3000" */
+  /** Base URL of the sidecar, e.g. "https://bastion-agentique.fly.dev/" */
   baseUrl: string;
   /** Optional API key sent as X-API-Key header */
   apiKey?: string;

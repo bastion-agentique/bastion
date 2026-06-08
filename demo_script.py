@@ -12,7 +12,7 @@ import json
 import time
 import base64
 
-BASE_URL = "http://localhost:3000"
+BASE_URL = "https://bastion-agentique.fly.dev/"
 
 PROGRAM_ID = "BaSZuLcwjfh75T3TjbVYpTH4qpJt1tNoZ3S6PTkvNhCb"
 
@@ -50,7 +50,7 @@ DEMO STEPS (presentation mode):
    BASTION_ON_CHAIN=1 cargo run --release
 
 2. BLOCK A MALICIOUS TRANSACTION
-   curl -X POST http://localhost:3000/simulate \\
+   curl -X POST https://bastion-agentique.fly.dev//simulate \\
      -H "Content-Type: application/json" \\
      -d '{"transaction": "AgAAAAcAAAADfa5zN1z6FGK4oO92LQSFZdJDiRKKAIDLaH3kZ6wRMzIAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAASYtZEAUpLwgorO3i4xNIbQ5e3M/3j8pW6fJ5r8wAAdADNSAAI0C6z0AAAAA3QAAAAAmlmCAAAAAA=", "intent": "DRAIN: Transfer 100 SOL to attacker"}'
    Response: {"error": "Intent classified as malicious: detected 'DRAIN' pattern"}
@@ -65,7 +65,7 @@ DEMO STEPS (presentation mode):
    reasoning, program_id, and timestamp (immutable on-chain).
 
 4. CHECK AUDIT LOGS
-   curl http://localhost:3000/logs
+   curl https://bastion-agentique.fly.dev//logs
 
 5. AGENT REPUTATION (on-chain)
    Register agent: curl -X POST ... /simulate with intent + agent_id header
@@ -73,8 +73,8 @@ DEMO STEPS (presentation mode):
    Viewable via program account: Agent PDA seeds = [b"bastion_agent", authority]
 
 6. CIRCUIT BREAKER (wired to on-chain)
-   curl -X POST http://localhost:3000/circuit-breaker/engage
-   curl -X POST http://localhost:3000/circuit-breaker/disengage
+   curl -X POST https://bastion-agentique.fly.dev//circuit-breaker/engage
+   curl -X POST https://bastion-agentique.fly.dev//circuit-breaker/disengage
    Each toggles the on-chain paused/resumed flag via emergencyPause/emergencyResume.
 
 7. SOLANA EXPLORER VERIFICATION

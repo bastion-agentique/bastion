@@ -111,7 +111,7 @@ Bastion consists of six main components:
 
 ```bash
 # Clone the repository
-git clone https://github.com/bastion-agentic-defense/bastion.git
+git clone https://github.com/bastion-agentique/bastion.git
 cd bastion
 
 # Build the middleware
@@ -123,8 +123,8 @@ export HELIUS_API_KEY="your-api-key"
 # Run the server
 cargo run --release
 
-# Server starts at http://localhost:3000
-# Dashboard at http://localhost:3000/dashboard
+# Server starts at https://bastion-agentique.fly.dev/
+# Dashboard at https://bastion-agentique.fly.dev//dashboard
 ```
 
 ### Run the Dashboard
@@ -137,7 +137,7 @@ pnpm --filter bastion-dashboard dev
 ### Run the MCP Server
 
 ```bash
-BASTION_SIDECAR_URL=http://localhost:3000 \
+BASTION_SIDECAR_URL=https://bastion-agentique.fly.dev/ \
 pnpm --filter @bastion/mcp-server dev:http
 # SSE endpoint: http://localhost:3001/mcp/sse
 # Health: http://localhost:3001/mcp/health
@@ -214,7 +214,7 @@ blocked_addresses = []
 Validate a transaction before signing.
 
 ```bash
-curl -X POST http://localhost:3000/simulate \
+curl -X POST https://bastion-agentique.fly.dev//simulate \
   -H "Content-Type: application/json" \
   -d '{"transaction": "base64_encoded_tx", "intent": "Swap 1 SOL for USDC"}'
 ```
@@ -240,7 +240,7 @@ curl -X POST http://localhost:3000/simulate \
 Fetch audit history.
 
 ```bash
-curl "http://localhost:3000/logs?limit=10&offset=0"
+curl "https://bastion-agentique.fly.dev//logs?limit=10&offset=0"
 ```
 
 ### POST /override
@@ -248,7 +248,7 @@ curl "http://localhost:3000/logs?limit=10&offset=0"
 Override a blocked transaction.
 
 ```bash
-curl -X POST http://localhost:3000/override \
+curl -X POST https://bastion-agentique.fly.dev//override \
   -H "Content-Type: application/json" \
   -d '{"block_id": "uuid", "action": "ALLOW"}'
 ```

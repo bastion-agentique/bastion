@@ -236,7 +236,7 @@ export default function Landing() {
           Bastion v0.1.0 — ZK-Private AI Agent Firewall for Midnight Network
         </span>
         <a
-          href="https://github.com/bastion-agentic-defense/midnight-bastion"
+          href="https://github.com/bastion-agentique/midnight-bastion"
           target="_blank"
           rel="noopener noreferrer"
           className="font-sans text-sm transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded"

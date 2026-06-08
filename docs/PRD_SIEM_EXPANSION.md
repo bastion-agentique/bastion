@@ -90,7 +90,7 @@ Events per second ingested through the universal ingest endpoint with a target o
 
 ---
 
-Repository: https://github.com/bastion-agentic-defense/bastion
+Repository: https://github.com/bastion-agentique/bastion
 Version: 1.0.0 draft
 Date: June 3, 2026
 Author: Daemon Blockint Technologies

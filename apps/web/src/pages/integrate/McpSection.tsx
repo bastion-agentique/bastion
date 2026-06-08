@@ -58,7 +58,7 @@ export default function McpSection() {
           </div>
           <pre className="p-4 font-mono text-xs overflow-x-auto" style={{ color: 'var(--text-primary)' }}>
 {`# Start MCP HTTP server (SSE transport on port 3001)
-BASTION_SIDECAR_URL=http://localhost:3000 \\
+BASTION_SIDECAR_URL=https://bastion-agentique.fly.dev \\
 pnpm --filter @bastion/mcp-server dev:http
 
 # For stdio transport (Claude Desktop / Cursor / Codex)

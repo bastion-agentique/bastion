@@ -96,7 +96,7 @@ midnight-bastion/
 ### Clone and Install
 
 ```bash
-git clone https://github.com/bastion-agentic-defense/midnight-bastion.git
+git clone https://github.com/bastion-agentique/midnight-bastion.git
 cd midnight-bastion
 ```
 
@@ -134,8 +134,8 @@ npm run dev
 
 ## Related
 
-- [Bastion (Solana)](https://github.com/bastion-agentic-defense/bastion)
-- [Bastion EVM](https://github.com/bastion-agentic-defense/bastion-evm)
+- [Bastion (Solana)](https://github.com/bastion-agentique/bastion)
+- [Bastion EVM](https://github.com/bastion-agentique/bastion-evm)
 - [Midnight Docs](https://docs.midnight.network)
 - [Midnight Build Club](https://midnight.network/build-club)
 

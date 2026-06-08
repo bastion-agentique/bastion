@@ -19,7 +19,7 @@ interface UseBastionEventsOptions {
 }
 
 export function useBastionEvents({
-  eventsUrl = 'http://localhost:3000/events',
+  eventsUrl = 'https://bastion-agentique.fly.dev/events',
   enabled = true,
   onAuditRecorded,
   onHITLPending,

@@ -163,7 +163,7 @@ TypeScript SDK (`sdk/`) — `@midnight-bastion/sdk`
 
 ```typescript
 const client = new BastionMidnightClient({
-  middlewareUrl: "http://localhost:3000",
+  middlewareUrl: "https://bastion-agentique.fly.dev/",
   network: "testnet",
 });
 

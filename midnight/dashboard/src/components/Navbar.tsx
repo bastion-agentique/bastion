@@ -3,9 +3,9 @@ import { useTheme } from '../context/ThemeContext';
 
 const NAV_LINKS = [
   { label: 'Home',          href: '/' },
-  { label: 'Docs',          href: 'https://github.com/bastion-agentic-defense/midnight-bastion', external: true },
-  { label: 'SDK',           href: 'https://github.com/bastion-agentic-defense/midnight-bastion/tree/main/sdk', external: true },
-  { label: 'GitHub',        href: 'https://github.com/bastion-agentic-defense', external: true },
+  { label: 'Docs',          href: 'https://github.com/bastion-agentique/midnight-bastion', external: true },
+  { label: 'SDK',           href: 'https://github.com/bastion-agentique/midnight-bastion/tree/main/sdk', external: true },
+  { label: 'GitHub',        href: 'https://github.com/bastion-agentique', external: true },
   { label: 'Dashboard',     href: '/dashboard' },
 ];
 

@@ -58,7 +58,7 @@ Extends the `TxType` enum with robot-specific actions:
 Robots submit telemetry via `POST /robots/:did/telemetry`:
 
 ```bash
-curl -X POST http://localhost:3000/robots/did:bastion:solana:robot-pda/telemetry \
+curl -X POST https://bastion-agentique.fly.dev//robots/did:bastion:solana:robot-pda/telemetry \
   -H "Content-Type: application/json" \
   -d '{
     "location": [-6.2, 106.8],

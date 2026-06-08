@@ -14,7 +14,7 @@ npm install @bastion-agentique/sdk
 ```typescript
 import { BastionClient } from "@bastion-agentique/sdk";
 
-const client = new BastionClient({ baseUrl: "http://localhost:3000" });
+const client = new BastionClient({ baseUrl: "https://bastion-agentique.fly.dev/" });
 
 // Simulate a transaction
 const result = await client.simulate({
@@ -34,18 +34,18 @@ if (result.status === "allowed") {
 
 ```bash
 # Simulate a transaction
-curl -X POST http://localhost:3000/simulate \
+curl -X POST https://bastion-agentique.fly.dev//simulate \
   -H "Content-Type: application/json" \
   -d '{"transaction": "...", "intent": "Swap 1 SOL for USDC"}'
 
 # Get current policy
-curl http://localhost:3000/policy
+curl https://bastion-agentique.fly.dev//policy
 
 # Get audit logs
-curl http://localhost:3000/logs?limit=50
+curl https://bastion-agentique.fly.dev//logs?limit=50
 
 # Human override
-curl -X POST http://localhost:3000/override \
+curl -X POST https://bastion-agentique.fly.dev//override \
   -H "Content-Type: application/json" \
   -d '{"block_id": "...", "action": "ALLOW"}'
 ```
@@ -60,4 +60,4 @@ curl -X POST http://localhost:3000/override \
 ## Links
 
 - **NPM**: https://www.npmjs.com/package/@bastion-agentique/sdk
-- **API Reference**: https://github.com/bastion-agentic-defense/bastion#readme
+- **API Reference**: https://github.com/bastion-agentique/bastion#readme

@@ -8,7 +8,7 @@ interface AgentEvent {
   tx_signature: string;
 }
 
-const SIDECAR_URL = import.meta.env.VITE_SIDECAR_URL || 'http://localhost:3000';
+const SIDECAR_URL = import.meta.env.VITE_SIDECAR_URL || 'https://bastion-agentique.fly.dev/';
 
 export function useAgentEvents() {
   const [events, setEvents] = useState<AgentEvent[]>([]);

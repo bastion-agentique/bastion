@@ -3,7 +3,7 @@ import base64
 import json
 import time
 
-BASE_URL = "http://localhost:3000"
+BASE_URL = "https://bastion-agentique.fly.dev/"
 
 def test_hello():
     print("\n--- Testing Hello ---")

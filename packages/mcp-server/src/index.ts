@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 
-export const SIDECAR_URL = process.env.BASTION_SIDECAR_URL || "http://localhost:3000";
+export const SIDECAR_URL = process.env.BASTION_SIDECAR_URL || "https://bastion-agentique.fly.dev/";
 
 export async function sidecar(path: string, init?: RequestInit) {
   const apiKey = process.env.BASTION_API_KEY;

@@ -82,7 +82,7 @@ bastion/
 ### Quick Setup
 
 ```bash
-git clone --recurse-submodules https://github.com/bastion-agentic-defense/bastion.git
+git clone --recurse-submodules https://github.com/bastion-agentique/bastion.git
 cd bastion
 
 # Install JS dependencies
