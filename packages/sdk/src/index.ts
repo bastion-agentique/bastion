@@ -399,9 +399,9 @@ export class BastionSidecar {
     return this.request<SidecarPolicy>("GET", "/policy");
   }
 
-  /** Update policy */
+  /** Update full policy */
   updatePolicy(policy: Partial<SidecarPolicy>): Promise<SidecarPolicy> {
-    return this.request<SidecarPolicy>("PUT", "/policy", policy);
+    return this.request<SidecarPolicy>("POST", "/policy/full", policy);
   }
 
   /** Get circuit breaker status */
