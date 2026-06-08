@@ -2,7 +2,7 @@ const SOLANA_SUPPORT = {
   wallets: ['Phantom', 'Solflare', 'Backpack'],
   rpc: 'Helius / QuickNode / Triton',
   features: [
-    'Full TypeScript SDK (@bastion/sdk)',
+    'Full TypeScript SDK (@bastion-agentique/sdk)',
     'On-chain audit via Anchor PDA',
     'Helius simulation integration',
     'Program allowlists',
