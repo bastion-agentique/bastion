@@ -332,7 +332,7 @@ server.prompt(
 );
 
 // ═══════════════════════════════════════════════
-//  START
+//  START (only when run directly, not when imported)
 // ═══════════════════════════════════════════════
 
 async function main() {
@@ -346,6 +346,11 @@ async function main() {
   await server.connect(transport);
 }
 
-main().catch((e) => { console.error("[bastion-mcp] Fatal:", e); process.exit(1); });
+const isMainModule = process.argv[1] && (
+  process.argv[1].endsWith('/index.js') || process.argv[1].endsWith('/index')
+);
+if (isMainModule) {
+  main().catch((e) => { console.error("[bastion-mcp] Fatal:", e); process.exit(1); });
+}
 
 }
