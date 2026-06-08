@@ -1,5 +1,7 @@
 # Bastion - AI Agent Firewall for Solana
 
+[![npm](https://img.shields.io/npm/v/@bastion-agentique/sdk?label=sdk)](https://www.npmjs.com/package/@bastion-agentique/sdk)
+
 Bastion is a high-performance security middleware for autonomous AI agents on Solana. It acts as a deterministic barrier between an agent's non-deterministic logic and its wallet, ensuring that every transaction aligns with human-defined safety policies before being signed and broadcast to the network.
 
 ## Table of Contents
@@ -160,7 +162,7 @@ npm install
 ```
 
 ```typescript
-import { BastionClient, AGENT_CAPABILITIES } from "@bastion/sdk";
+import { BastionClient, AGENT_CAPABILITIES } from "@bastion-agentique/sdk";
 
 const client = new BastionClient({
   connection: new Connection("https://api.devnet.solana.com")
@@ -309,18 +311,18 @@ npm run dev
 
 ## SDK
 
-TypeScript SDK for programmatic access.
+TypeScript SDK for programmatic access. [npm → @bastion-agentique/sdk](https://www.npmjs.com/package/@bastion-agentique/sdk)
 
 ### Installation
 
 ```bash
-npm install @bastion/sdk
+npm install @bastion-agentique/sdk
 ```
 
 ### Usage
 
 ```typescript
-import { BastionClient, AGENT_CAPABILITIES } from "@bastion/sdk";
+import { BastionClient, AGENT_CAPABILITIES } from "@bastion-agentique/sdk";
 
 const client = new BastionClient({
   connection: new Connection("https://api.devnet.solana.com")
