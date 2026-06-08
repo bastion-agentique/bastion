@@ -260,7 +260,7 @@ When disabled (default), audit entries are local-only (Sled DB) and circuit brea
 ## TypeScript SDK
 
 ```typescript
-import { BastionClient, BASTION_PROGRAM_ID } from "@bastion/sdk";
+import { BastionClient, BASTION_PROGRAM_ID } from "@bastion-agentique/sdk";
 import { Connection, Keypair } from "@solana/web3.js";
 
 const client = new BastionClient({

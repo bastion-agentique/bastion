@@ -24,7 +24,7 @@ firewall core. The private repo (`bastion-mcp`) is how Bastion generates revenue
 | **Enterprise features** | Tiered access, SLA enforcement, dedicated endpoints |
 
 The private repo deploys to a protected server (Cloudflare Workers, AWS Lambda, or Fly.io).
-The public SDK (`@bastion/sdk`) calls these endpoints without exposing internals.
+The public SDK (`@bastion-agentique/sdk`) calls these endpoints without exposing internals.
 
 ---
 
@@ -406,7 +406,7 @@ SELF_AGENT_ID_VERIFIER=0x...         # Self Protocol contract on Celo
 
 ## Integration with Public Bastion Repo
 
-The public `@bastion/sdk` package should add:
+The public `@bastion-agentique/sdk` package should add:
 
 ```typescript
 // packages/sdk/src/x402.ts (public — no secrets)

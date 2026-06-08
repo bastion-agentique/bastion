@@ -121,7 +121,7 @@ For the sidecar, `HELIUS_API_KEY` is required. Set via `config.toml` or environm
 | **All JS** | `pnpm build` | Recursive across workspaces |
 | **Dashboard** | `pnpm --filter bastion-dashboard build` | Vite production build → `apps/web/dist/` |
 | **Dashboard dev** | `pnpm --filter bastion-dashboard dev` | Vite dev server on port 3000 |
-| **SDK** | `pnpm --filter @bastion/sdk build` | `tsc` → `packages/sdk/dist/` |
+| **SDK** | `pnpm --filter @bastion-agentique/sdk build` | `tsc` → `packages/sdk/dist/` |
 | **All Rust** | `cargo build` | From workspace root |
 | **Rust release** | `cargo build --release` | Optimized binary in `target/release/` |
 | **Rust check** | `cargo check` | Fast type-check only |
@@ -347,7 +347,7 @@ Triggers on push/PR to `main` (ignoring `.md` and `docs/`).
 | `fmt` | `cargo fmt --all -- --check` |
 | `evm` | Checkout submodules, `forge build`, `forge test -vvv` |
 | `web` | `pnpm install`, `pnpm --filter bastion-dashboard build` |
-| `sdk` | `pnpm install`, `pnpm --filter @bastion/sdk build` |
+| `sdk` | `pnpm install`, `pnpm --filter @bastion-agentique/sdk build` |
 
 ---
 
@@ -433,7 +433,7 @@ cd evm && forge build && forge test -vvv && forge fmt --check
 pnpm --filter bastion-dashboard build
 
 # SDK
-pnpm --filter @bastion/sdk build
+pnpm --filter @bastion-agentique/sdk build
 ```
 
 ### PR Process

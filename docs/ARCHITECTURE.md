@@ -178,7 +178,7 @@ bastion/
 | Language | Rust (Anchor 0.30) | Solidity 0.8.28 | Compact (TypeScript) |
 | Framework | Anchor | Foundry | Midnight SDK |
 | Middleware | Axum (Rust) | Sidecar HTTP | Sidecar HTTP |
-| SDK | @bastion/sdk (TS) | ethers.js / viem | @midnight-js |
+| SDK | @bastion-agentique/sdk (TS) | ethers.js / viem | @midnight-js |
 | Dashboard | React 18 + Vite | Same | Same |
 
 ## Agent Delegation System
