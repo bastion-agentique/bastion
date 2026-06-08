@@ -30,8 +30,11 @@ RUN apt-get update && apt-get install -y ca-certificates curl && \
 
 COPY --from=rust-builder /bastion-sidecar /usr/local/bin/bastion-sidecar
 COPY --from=mcp-builder /app/packages/mcp-server/dist /opt/bastion-mcp/dist
-COPY --from=mcp-builder /app/packages/mcp-server/node_modules /opt/bastion-mcp/node_modules
 COPY --from=mcp-builder /app/packages/mcp-server/package.json /opt/bastion-mcp/package.json
+
+WORKDIR /opt/bastion-mcp
+RUN npm install --omit=dev 2>/dev/null || true
+
 COPY config.toml /etc/bastion/config.toml
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
