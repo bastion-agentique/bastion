@@ -8,7 +8,7 @@ use axum::{
         IntoResponse,
         sse::{Event, KeepAlive, Sse},
     },
-    routing::{get, post},
+    routing::{any, get, post},
 };
 use base64::Engine as _;
 use futures::stream::Stream;
@@ -211,6 +211,61 @@ struct ErrorResponse {
 
 async fn hello() -> &'static str {
     "Hello, world!"
+}
+
+// ── MCP Reverse Proxy ──────────────────────────────────────────
+
+async fn proxy_mcp(req: AxumRequest) -> impl IntoResponse {
+    let mcp_backend =
+        std::env::var("MCP_BACKEND_URL").unwrap_or_else(|_| "http://127.0.0.1:3001".to_string());
+
+    let uri = req.uri();
+    let target = format!("{}{}", mcp_backend, uri.path());
+
+    let client = reqwest::Client::new();
+    let method = req.method().clone();
+    let headers = req.headers().clone();
+
+    let body = axum::body::to_bytes(req.into_body(), usize::MAX)
+        .await
+        .unwrap_or_default();
+
+    let mut builder = client.request(method, &target);
+    for (k, v) in headers.iter() {
+        if k != "host" {
+            builder = builder.header(k, v);
+        }
+    }
+
+    match builder.body(body).send().await {
+        Ok(resp) => {
+            let status = resp.status();
+            let is_sse = resp
+                .headers()
+                .get("content-type")
+                .and_then(|v| v.to_str().ok())
+                .map(|v| v.contains("text/event-stream"))
+                .unwrap_or(false);
+
+            let bytes = resp.bytes().await.unwrap_or_default();
+
+            let mut builder = axum::response::Response::builder().status(status.as_u16());
+            builder = builder.header("content-type", "application/json");
+
+            if is_sse {
+                builder = builder
+                    .header("content-type", "text/event-stream")
+                    .header("cache-control", "no-cache")
+                    .header("connection", "keep-alive");
+            }
+
+            builder.body(Body::from(bytes)).unwrap()
+        }
+        Err(e) => axum::response::Response::builder()
+            .status(502)
+            .body(Body::from(format!("MCP backend error: {}", e)))
+            .unwrap(),
+    }
 }
 
 // ── DID Auth Handlers ────────────────────────────────────────
@@ -1966,6 +2021,10 @@ pub fn build_app(
         .route("/did/resolve/:did", get(resolve_did_handler))
         .route("/token-balances", get(get_token_balances))
         .route("/robots/:did/telemetry", post(post_robot_telemetry))
+        // === MCP reverse proxy (Node.js backend on :3001) ===
+        .route("/mcp", any(proxy_mcp))
+        .route("/sse", any(proxy_mcp))
+        .route("/messages", any(proxy_mcp))
         .nest_service("/dashboard", ServeDir::new("static"))
         .layer(
             CorsLayer::new()
