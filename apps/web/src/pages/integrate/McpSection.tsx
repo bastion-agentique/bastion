@@ -27,22 +27,22 @@ export default function McpSection() {
           <div className="space-y-2 font-mono text-xs">
             <div className="flex items-center gap-2">
               <span className="text-green-400 text-[10px]">GET</span>
-              <code className="text-zinc-300">http://localhost:3001/mcp/sse</code>
+              <code className="text-zinc-300">https://bastion-agentique.fly.dev/mcp/sse</code>
               <span className="text-zinc-600 text-[10px]">SSE connection</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-amber-400 text-[10px]">POST</span>
-              <code className="text-zinc-300">http://localhost:3001/mcp/messages</code>
+              <code className="text-zinc-300">https://bastion-agentique.fly.dev/mcp/messages</code>
               <span className="text-zinc-600 text-[10px]">MCP JSON-RPC messages</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-green-400 text-[10px]">GET</span>
-              <code className="text-zinc-300">http://localhost:3001/mcp/health</code>
+              <code className="text-zinc-300">https://bastion-agentique.fly.dev/mcp/health</code>
               <span className="text-zinc-600 text-[10px]">Health check</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-green-400 text-[10px]">GET</span>
-              <code className="text-zinc-300">http://localhost:3001/mcp/pricing</code>
+              <code className="text-zinc-300">https://bastion-agentique.fly.dev/mcp/pricing</code>
               <span className="text-zinc-600 text-[10px]">Tool pricing + free tier info</span>
             </div>
           </div>

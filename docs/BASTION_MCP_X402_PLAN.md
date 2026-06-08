@@ -361,7 +361,7 @@ JWT_SECRET=...
 API_KEY_PREFIX=bastion_sk_
 
 # Bastion Core (Rust sidecar)
-SIDECAR_URL=http://localhost:3001    # Rust policy evaluator
+SIDECAR_URL=https://bastion-agentique.fly.dev/    # Rust policy evaluator
 
 # ERC-8004
 ERC8004_REGISTRY_CELO=0x...          # BastionERC8004Registry on Celo

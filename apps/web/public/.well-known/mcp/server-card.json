@@ -6,8 +6,8 @@
   },
   "transport": {
     "type": "sse",
-    "endpoint": "http://localhost:3001/mcp/sse",
-    "messages": "http://localhost:3001/mcp/messages"
+    "endpoint": "https://bastion-agentique.fly.dev/mcp/sse",
+    "messages": "https://bastion-agentique.fly.dev/mcp/messages"
   },
   "capabilities": {
     "tools": [

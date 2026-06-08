@@ -62,7 +62,7 @@ export default function PricingSection() {
           <div>3. Server verifies on-chain transfer, executes tool</div>
         </div>
         <div className="mt-3 p-3 rounded font-mono text-[10px]" style={{ background: 'var(--bg-subtle)' }}>
-          <span style={{ color: 'var(--text-muted)' }}>curl -X POST http://localhost:3001/mcp/messages \</span><br />
+          <span style={{ color: 'var(--text-muted)' }}>curl -X POST https://bastion-agentique.fly.dev/mcp/messages \</span><br />
           <span style={{ color: 'var(--text-muted)' }}>&nbsp;&nbsp;-H "X-Payment: 5i7KcH..." \</span><br />
           <span style={{ color: 'var(--text-muted)' }}>&nbsp;&nbsp;-H "X-Payment-Chain: solana" \</span><br />
           <span style={{ color: 'var(--text-muted)' }}>&nbsp;&nbsp;-d '&#123;&#123;"jsonrpc":"2.0",...&#125;&#125;'</span>

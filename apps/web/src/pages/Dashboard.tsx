@@ -176,7 +176,7 @@ export default function Dashboard() {
     const sh = await sidecar.fetchHealth();
     setSidecarOnline(sh);
     try {
-      const mcpUrl = import.meta.env.VITE_MCP_URL || 'http://localhost:3001';
+      const mcpUrl = import.meta.env.VITE_MCP_URL || 'https://bastion-agentique.fly.dev/';
       const mcpRes = await fetch(`${mcpUrl}/mcp/health`);
       setMcpOnline(mcpRes.ok);
     } catch { setMcpOnline(false); }

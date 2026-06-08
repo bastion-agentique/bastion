@@ -43,7 +43,7 @@ curl -s https://bastion-agentique.fly.dev/logs?limit=10 | python3 -m json.tool
 | Component | Value |
 |-----------|-------|
 | Sidecar port | `bastion-agentique.fly.dev/` (Axum, Rust) |
-| MCP port | `localhost:3001` (SSE transport) |
+| MCP port | `bastion-agentique.fly.dev/` (SSE transport) |
 | Solana devnet | `https://api.devnet.solana.com` |
 | Program ID | `A29V5MUVs73y7XBHHxPpPcAW7h4gGHupbDdwYSwA2n9D` |
 

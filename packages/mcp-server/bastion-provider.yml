@@ -17,7 +17,7 @@ version: v1
 
 routing:
   type: proxy
-  url: http://localhost:3001
+  url: https://bastion-agentique.fly.dev/
   auth:
     method: header
     key: 'X-Api-Key'

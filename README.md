@@ -141,9 +141,9 @@ pnpm --filter bastion-dashboard dev
 ```bash
 BASTION_SIDECAR_URL=https://bastion-agentique.fly.dev/ \
 pnpm --filter @bastion/mcp-server dev:http
-# SSE endpoint: http://localhost:3001/mcp/sse
-# Health: http://localhost:3001/mcp/health
-# Pricing: http://localhost:3001/mcp/pricing
+# SSE endpoint: https://bastion-agentique.fly.dev//mcp/sse
+# Health: https://bastion-agentique.fly.dev//mcp/health
+# Pricing: https://bastion-agentique.fly.dev//mcp/pricing
 ```
 
 ### Run via pay.sh
