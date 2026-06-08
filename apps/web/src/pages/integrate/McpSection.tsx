@@ -10,7 +10,8 @@ export default function McpSection() {
       </h3>
 
       <p className="font-sans text-sm mb-6 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-        Bastion exposes a Model Context Protocol (MCP) server with SSE transport on port 3001.
+        Bastion exposes a Model Context Protocol (MCP) server with SSE transport.
+        In production, MCP is proxied through the sidecar at <code className="font-mono text-xs">/mcp/*</code> — no separate process needed.
         AI agents connect via MCP to access 15 security tools: simulate transactions, read policy,
         override blocks, manage cases, and more.
       </p>
@@ -22,7 +23,7 @@ export default function McpSection() {
           style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
         >
           <h4 className="font-sans text-sm font-medium mb-3" style={{ color: 'var(--text-primary)' }}>
-            SSE Endpoints
+            SSE Endpoints (Production)
           </h4>
           <div className="space-y-2 font-mono text-xs">
             <div className="flex items-center gap-2">
@@ -57,12 +58,16 @@ export default function McpSection() {
             <span className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>Terminal</span>
           </div>
           <pre className="p-4 font-mono text-xs overflow-x-auto" style={{ color: 'var(--text-primary)' }}>
-{`# Start MCP HTTP server (SSE transport on port 3001)
-BASTION_SIDECAR_URL=https://bastion-agentique.fly.dev \\
-pnpm --filter @bastion/mcp-server dev:http
+{`# Production — bundled in Docker, proxied via sidecar
+# No separate MCP process needed (routes: /mcp/sse, /mcp/messages)
 
-# For stdio transport (Claude Desktop / Cursor / Codex)
-pnpm --filter @bastion/mcp-server dev`}
+# Local dev — stdio transport (Claude Desktop / Cursor / Codex)
+BASTION_SIDECAR_URL=http://localhost:3000 \\
+pnpm --filter @bastion/mcp-server dev
+
+# Local dev — SSE transport (browser agents)
+BASTION_SIDECAR_URL=http://localhost:3000 \\
+pnpm --filter @bastion/mcp-server dev:http`}
           </pre>
         </div>
 

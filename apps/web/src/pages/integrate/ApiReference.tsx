@@ -263,7 +263,7 @@ export default function ApiReference() {
 
       {/* MCP HTTP Endpoints */}
       <div className="mb-8">
-        <p className="font-sans text-xs font-medium mb-3" style={{ color: 'var(--accent)' }}>MCP HTTP Server (:3001)</p>
+        <p className="font-sans text-xs font-medium mb-3" style={{ color: 'var(--accent)' }}>MCP HTTP Server (proxied via sidecar)</p>
         <div className="space-y-1">
           {[
             { method: 'GET', path: '/mcp/health', desc: 'Health check' },

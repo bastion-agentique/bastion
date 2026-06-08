@@ -80,7 +80,7 @@ Bastion intercepts transaction requests, simulates them via Helius Simulation AP
 | On-Chain Audit | Anchor program for immutable records |
 | Agent Registry | On-chain agent identity + reputation |
 | Agent Delegation | Parent agents spawn sub-agents with delegated authority, capability inheritance, budget limits |
-| MCP HTTP Server | 15 tools + 3 prompts via SSE transport on port 3001 for Claude, Cursor, and browser agents |
+| MCP HTTP Server | 15 tools + 3 prompts via SSE, proxied at `/mcp/*` on fly.dev |
 | x402 Payments | Pay-per-call pricing with Solana SOL transfers and free monthly tier |
 | pay.sh Provider | One-command gateway: `pay --sandbox server start bastion-provider.yml` |
 | CORS Support | Browser-native access via SSE with `Access-Control-Allow-Origin: *` |
@@ -94,7 +94,7 @@ Bastion consists of six main components:
 1. **Interceptor (Axum)**: Rust HTTP proxy for transaction validation
 2. **Simulation Core**: Helius API integration for outcome prediction
 3. **Policy Engine**: Static (whitelist), Simulation (balance check), Behavioral (rate limit)
-4. **MCP HTTP Server**: SSE transport on port 3001 with 15 security tools for AI agents
+4. **MCP HTTP Server**: SSE transport proxied at `/mcp/*` via sidecar, 15 security tools for AI agents
 5. **Agent Registry**: DID-based agent identity with delegation hierarchy
 6. **x402 Payment Gateway**: Pay-per-call pricing with Solana SOL transfers + pay.sh integration
 7. **GrondOSINT Oracle**: Address risk scoring via Grond's agentic OSINT pipeline
@@ -138,12 +138,22 @@ pnpm --filter bastion-dashboard dev
 
 ### Run the MCP Server
 
+MCP is now **bundled in Docker** and proxied through the sidecar at `/mcp/*`. No separate process needed in production.
+
 ```bash
-BASTION_SIDECAR_URL=https://bastion-agentique.fly.dev/ \
+# Production (via fly.dev proxy — bundled in Docker)
+# SSE:   https://bastion-agentique.fly.dev/mcp/sse
+# POST:  https://bastion-agentique.fly.dev/mcp/messages
+# Health: https://bastion-agentique.fly.dev/mcp/health
+# Pricing: https://bastion-agentique.fly.dev/mcp/pricing
+
+# Local development (stdio transport — Claude Desktop / Cursor / Codex)
+BASTION_SIDECAR_URL=http://localhost:3000 \
+pnpm --filter @bastion/mcp-server dev
+
+# Local development (SSE transport — browser agents)
+BASTION_SIDECAR_URL=http://localhost:3000 \
 pnpm --filter @bastion/mcp-server dev:http
-# SSE endpoint: https://bastion-agentique.fly.dev//mcp/sse
-# Health: https://bastion-agentique.fly.dev//mcp/health
-# Pricing: https://bastion-agentique.fly.dev//mcp/pricing
 ```
 
 ### Run via pay.sh
@@ -340,9 +350,25 @@ await client.emergencyPause(wallet);
 
 ## EVM (Ethereum/Celo/Polygon/Base)
 
-> **UNDER ACTIVE DEVELOPMENT — Not production-ready.**  
-> The EVM contracts (`evm/`) are in early development. Bastion's primary deployment target is **Solana**.  
-> See [`evm/README.md`](evm/README.md) for current status and roadmap.
+Solidity contracts implementing the full Bastion security stack for EVM chains:
+
+| Contract | Purpose |
+|----------|---------|
+| `BastionFirewall.sol` | ERC-7579 validator module — gates UserOperations |
+| `BastionPolicy.sol` | Per-agent policy rules (allowlists, limits, cooldowns) |
+| `BastionAudit.sol` | EIP-712 signed immutable audit trail |
+| `BastionRegistry.sol` | Agent + target address directory |
+| `BastionERC8004Registry.sol` | ERC-8004 agent identity (ERC-721 + EIP-712) |
+| `BastionSidecar.sol` | Oracle request/fulfill pattern for off-chain simulation |
+
+```bash
+cd evm
+forge build          # compile
+forge test -vvv      # run tests
+forge fmt            # format
+```
+
+See [`evm/README.md`](evm/README.md) for deployment details.
 
 ## Tech Stack
 
@@ -352,7 +378,8 @@ await client.emergencyPause(wallet);
 | Simulation | Helius API |
 | Database | Sled |
 | On-Chain | Anchor, Solana SDK |
-| MCP Server | TypeScript, @modelcontextprotocol/sdk, SSE |
+| EVM Contracts | Solidity 0.8.28, Foundry, OpenZeppelin, Solady |
+| MCP Server | TypeScript, @modelcontextprotocol/sdk, SSE (proxied via sidecar) |
 | Payments | x402 (Solana), pay.sh |
 | SDK | TypeScript |
 | Dashboard | React, Vite, TailwindCSS |
