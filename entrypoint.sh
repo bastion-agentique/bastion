@@ -6,8 +6,13 @@ fi
 
 # Start MCP server in background
 export PATH="/usr/local/bin:$PATH"
-BASTION_SIDECAR_URL="http://localhost:3000" /usr/local/bin/node /opt/bastion-mcp/dist/index.js &
+echo "[entrypoint] Starting MCP server on port 3001..."
+BASTION_SIDECAR_URL="http://localhost:3000" /usr/local/bin/node /opt/bastion-mcp/dist/index.js > /tmp/mcp.log 2>&1 &
 MCP_PID=$!
+echo "[entrypoint] MCP PID: $MCP_PID"
+sleep 2
+cat /tmp/mcp.log
 
 # Start sidecar in foreground
+echo "[entrypoint] Starting sidecar..."
 exec bastion-sidecar
