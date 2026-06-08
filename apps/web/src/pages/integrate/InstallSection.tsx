@@ -51,17 +51,17 @@ export default function InstallSection() {
         </pre>
       </div>
 
-      {/* EVM — Foundry Contracts */}
+      {/* EVM — Coming Soon */}
       <div
-        className="rounded-xl p-4 opacity-70"
+        className="rounded-xl p-4 opacity-50"
         style={{ background: 'var(--bg-subtle)', border: '1px dashed var(--border)' }}
       >
         <div className="flex items-center gap-2 mb-1">
-          <span className="font-mono text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b' }}>Foundry</span>
-          <span className="font-sans text-xs" style={{ color: 'var(--text-muted)' }}>EVM Contracts — 6 Solidity files</span>
+          <span className="font-mono text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(107,114,128,0.1)', color: '#6B7280' }}>Coming Soon</span>
+          <span className="font-sans text-xs" style={{ color: 'var(--text-muted)' }}>EVM SDK (Solidity + TypeScript)</span>
         </div>
-        <code className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
-          cd evm && forge build && forge test -vvv
+        <code className="font-mono text-xs" style={{ color: '#6B7280' }}>
+          # npm install @bastion-agentique/sdk-evm viem
         </code>
       </div>
     </section>

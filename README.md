@@ -350,7 +350,9 @@ await client.emergencyPause(wallet);
 
 ## EVM (Ethereum/Celo/Polygon/Base)
 
-Solidity contracts implementing the full Bastion security stack for EVM chains:
+> **UNDER ACTIVE DEVELOPMENT — Not production-ready.**
+
+Solidity contracts in `evm/src/` implementing the Bastion security stack for EVM chains:
 
 | Contract | Purpose |
 |----------|---------|

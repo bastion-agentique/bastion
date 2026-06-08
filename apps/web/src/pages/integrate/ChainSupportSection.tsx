@@ -22,7 +22,7 @@ const EVM_SUPPORT = {
     'Solidity firewall (Foundry)',
     'Per-agent policy engine',
   ],
-  status: 'In Progress (Foundry)',
+  status: 'In Progress',
 } as const;
 
 export default function ChainSupportSection() {
