@@ -5,6 +5,7 @@ const NAV_LINKS = [
   { label: 'Home',          href: '/' },
   { label: 'Documentation', href: 'https://github.com/bastion-agentique/bastion', external: true },
   { label: 'SDK',           href: '/integrate' },
+  { label: 'Community',     href: 'https://discord.gg/hXVFB2Tz2t', external: true },
   { label: 'GitHub',        href: 'https://github.com/bastion-agentique', external: true },
 ];
 
