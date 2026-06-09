@@ -91,6 +91,7 @@ export default function Landing() {
           <a href="#how-it-works" className="text-sm text-zinc-400 hover:text-white transition-colors no-underline">How it works</a>
           <a href="#faq" className="text-sm text-zinc-400 hover:text-white transition-colors no-underline">FAQ</a>
           <a href="#contact" className="text-sm text-zinc-400 hover:text-white transition-colors no-underline">Contact</a>
+          <a href="https://discord.gg/hXVFB2Tz2t" target="_blank" rel="noopener noreferrer" className="text-sm text-zinc-400 hover:text-white transition-colors no-underline">Community</a>
         </div>
         <Link to="/integrate" className="rounded-full bg-white text-black px-6 py-2.5 text-sm font-medium hover:bg-zinc-200 transition-colors no-underline">
           Get Started
