@@ -1,37 +1,58 @@
-# Bastion v2: AI Agent Firewall 🛡️
+# Bastion: AI Agent Firewall
 
 **Tagline:** "Trust your Agent, but Verify every Transaction."
+**Web2 tagline:** "Trust your Agent, but Verify every Call."
+
+> Alpha software. Bastion is in active development and not yet production hardened. Use with caution.
 
 ## The Problem
-AI Agents are non-deterministic. They hallucinate. Prompt injection attacks can force them to sign malicious transactions.
-Currently, agents sign whatever the LLM outputs. This is a massive security risk.
+AI Agents are non-deterministic. They hallucinate. Prompt injection attacks can force them to sign malicious transactions or send sensitive data to unauthorized APIs.
+Currently, agents sign whatever the LLM outputs and call whatever APIs the LLM suggests. This is a massive security risk.
 
 ## The Solution
-**Bastion** is a Rust-based middleware that sits between the Agent's "Brain" (LLM) and the "Wallet" (Signing).
-It intercepts every transaction request, **Simulates** it, and checks it against a strict **Policy Engine**.
+**Bastion** is a Rust-based middleware firewall that sits between the Agent's "Brain" (LLM) and both the "Wallet" (Signing) and the "Internet" (API calls).
+It intercepts every transaction request and every HTTP API call, **Simulates** them, and checks against a strict **Policy Engine**.
 
-## v2 New Features (vs Sentinel v1)
+## Current Capabilities
 
-### 1. On-Chain Audit Program
-- Anchor program for immutable audit records on Solana
-- PDA-based audit log storage
-- Verifiable reputation for agents
-- Program allowlist managed on-chain
+### Blockchain Firewall (Production)
+- Transaction simulation via Helius on Solana
+- EVM transaction simulation via Celo eth_call
+- Program allowlists (whitelist mode)
+- Native token caps per transaction and per 24h window
+- Per-minute rate limits
+- Daemon BlockInt security checks (flash loan detection, high slippage, mint/freeze authority changes, risk-labeled addresses)
+- On-chain audit via Anchor PDA (immutable records on Solana)
+- Agent identity registry with W3C DID compliance
+- Agent delegation (hierarchical sub-agents, budget limits, capability inheritance)
+- Circuit breaker with fleet-wide transaction pausing
+- Human-in-the-loop override for blocked transactions
+- SOL staking for higher transaction limits
+- MCP HTTP server (15 tools, 3 prompts, SSE transport)
+- x402 pay-per-call pricing with Solana SOL transfers
+- pay.sh provider gateway
+- CORS support for browser-native access
+- Robot/physical agent telemetry ingestion
 
-### 2. Agent Identity Registry
-- On-chain agent registration
-- Capability bitmasks
-- Stake-weighted reputation
+### Web2 API Firewall (In Progress)
+- HTTP forward proxy for AI agent API calls
+- Endpoint allowlist/blocklist rules
+- Provider budget enforcement (spend caps per time window)
+- Content inspection (PII, secrets, prompt injection detection)
+- Header filtering
+- Rate limiting per provider
+- OpenAPI spec auto-configuration (parses OpenAPI 3.0 specs into allowlists)
+- Provider adapters (OpenAI, Stripe, Slack, GitHub, AWS)
+- TypeScript SDK (@bastion-agentique/web2-sdk v0.1.0)
+- Rust policy engine (bastion-web2-firewall crate)
 
-### 3. Multi-Agent Support
-- Session key management per agent
-- Agent-specific policies
-- Per-agent rate limits
-
-### 4. Enhanced Policy Engine
-- Time-based policy windows
-- Geographic/frequency-based throttling
-- Emergency circuit breaker
+### SIEM & Correlation (Planned)
+- Universal event ingestion (CloudTrail, syslog, webhooks)
+- Cross-event correlation engine (YAML rules, sliding windows)
+- Case management dashboard
+- On-chain case closure via Anchor
+- MITRE ATT&CK Web3/ICS mapping
+- GrondOSINT threat enrichment pipeline
 
 ## Core Architecture
 

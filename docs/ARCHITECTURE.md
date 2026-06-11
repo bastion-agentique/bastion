@@ -1,6 +1,8 @@
 # Bastion Architecture
 
-Bastion Agentic Defense is security middleware for autonomous AI agents operating on blockchain infrastructure. It provides a transaction firewall, a programmable policy engine, and an immutable audit layer deployed across Solana, EVM chains, and Midnight Network.
+Bastion Agentic Defense is security middleware for autonomous AI agents operating on blockchain infrastructure and Web2 API ecosystems. It provides a transaction firewall, a Web2 API proxy firewall, a programmable policy engine, and an immutable audit layer deployed across Solana, EVM chains, and Midnight Network.
+
+> Alpha software. Bastion is in active development and not yet production hardened. Use with caution.
 
 ## System Overview
 
@@ -15,14 +17,16 @@ Bastion Agentic Defense is security middleware for autonomous AI agents operatin
 │                         Bastion Monorepo                         │
 │                                                                  │
 │  ┌──────────────┐   ┌──────────────┐   ┌──────────────────────┐ │
-│  │ crates/core  │   │   SDK + CLI  │   │  Compliance Dashboard│ │
-│  │ (chain-agn.) │   │  (TypeScript)│   │  (React, apps/web/)  │ │
+│  │ crates/core  │   │   SDK + Web2  │   │  Dashboard (React)   │ │
+│  │ (chain-agn.) │   │  (TypeScript) │   │  (apps/web)           │ │
 │  └──────┬───────┘   └──────────────┘   └──────────────────────┘ │
 │         │                                                        │
-│         ▼                                                        │
-│  ┌──────────────┐                                                │
-│  │crates/sidecar│  ← Off-chain evaluator (Axum HTTP)             │
-│  └──────┬───────┘                                                │
+│    ┌────┴─────────────────────────────┐                          │
+│    ▼                                  ▼                          │
+│  ┌──────────────┐               ┌────────────────────┐          │
+│  │crates/sidecar│               │crates/web2-firewall│          │
+│  │(Solana/tx)   │               │(Web2 API proxy)    │          │
+│  └──────┬───────┘               └────────────────────┘          │
 │         │                                                        │
 │    ┌────┴──────────────────────────┐                             │
 │    ▼                               ▼                             │
@@ -31,6 +35,9 @@ Bastion Agentic Defense is security middleware for autonomous AI agents operatin
 │  │ (Anchor) │  │(Solidity)│  │ (Compact)│                       │
 │  └──────────┘  └──────────┘  └──────────┘                       │
 │                                                                  │
+│  ┌───────────────────────────────────────────────┐              │
+│  │ crates/correlation (SIEM event correlation)   │              │
+│  └───────────────────────────────────────────────┘              │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -54,16 +61,26 @@ The shared foundation. Every chain-specific adapter normalizes its native transa
 
 ### crates/sidecar — Off-Chain Evaluator Service
 
-An Axum HTTP server that exposes the policy evaluator as a REST API. This is the bridge that lets non-Rust chain implementations (EVM, Midnight) access the Rust policy engine.
+An Axum HTTP server that exposes the policy evaluator as a REST API. This is the bridge that lets non-Rust chain implementations (EVM, Midnight) access the Rust policy engine. Also serves as the host for Web2 proxy endpoints, MCP reverse proxy, agent registry, case management, DID resolution, and robot telemetry.
 
-**Flow:**
-1. Agent submits transaction → sidecar receives it
-2. Sidecar normalizes the transaction into `NormalizedTransaction`
-3. Calls `PolicyEvaluator::evaluate()` against the active policy set
-4. Returns `FirewallDecision` to the caller
-5. Applies chain-specific enforcement (on-chain for Solana, via oracle for EVM/Midnight)
+**Key endpoints:** `/simulate`, `/api/v2/simulate-evm`, `/api/v2/evaluate`, `/events` (SSE), `/agents`, `/policy`, `/circuit-breaker`, `/cases`, `/ingest`, `/did/resolve`, `/robots/:did/telemetry`, `/token-balances`, `/mcp/*` (reverse proxy).
 
-**CORS:** `CorsLayer` with `Access-Control-Allow-Origin: *`, headers: `Content-Type, Authorization, X-Api-Key, X-Payment, X-Payment-Chain, X-Agent-Id`.
+### crates/web2-firewall — Web2 API Proxy Firewall
+
+A new crate providing a proxy engine that evaluates AI agent HTTP API calls against policy rules before forwarding to target providers. Shares the chain-agnostic policy engine trait from bastion-core.
+
+**Key types:**
+- `ApiEvent` — normalized API call (method, URL, headers, body, provider, agent_id, timestamp)
+- `ProxyDecision` — Pass, Block, PendingHITL, LogOnly (maps to FirewallDecision)
+- `ApiPolicyRule` — EndpointAllowlist, EndpointBlocklist, ProviderBudget, RateLimit, ContentInspection, HeaderFilter, CostCap, TimeOfDayRestriction
+- `OpenApiSpec` — parses OpenAPI 3.0 specs, generates auto-configured allowlist rules
+- `ProxyEngine` — evaluates ApiEvents against rules, detects providers from URL patterns
+
+**Provider adapters:** OpenAI, Stripe, Slack, GitHub (factory pattern via `ProviderAdapter` trait).
+
+### crates/correlation — SIEM Correlation Engine
+
+Sliding time window event correlation engine. Matches sequences of SecurityEvents against YAML-defined correlation rules. Integrates with GrondOSINT for threat context enrichment and MITRE ATT&CK mapping for Web3 and ICS categories.
 
 ### packages/mcp-server — MCP HTTP Server (SSE)
 
@@ -82,16 +99,18 @@ The Solana-native enforcement layer. Deployed as an Anchor program on Solana dev
 
 ### evm/ — Solidity Contracts (ERC-7579 Compatible)
 
-Four contracts deployed via Foundry:
+Six contracts deployed via Foundry:
 
 | Contract | Role |
 |----------|------|
 | `BastionFirewall` | ERC-7579 validator module. Gates agent UserOperations through `validateUserOp()` |
 | `BastionPolicy` | Per-agent rules: target allowlists, value limits, rate limits, cooldowns |
-| `BastionAudit` | Immutable on-chain audit log with EIP-712 typed data |
+| `BastionAudit` | Immutable on-chain audit log with EIP-712 typed structured data |
 | `BastionRegistry` | Directory of agents, targets, and verified contracts |
+| `BastionERC8004Registry` | ERC-8004 agent identity (ERC-721 soulbound token + EIP-712 wallet binding) |
+| `BastionSidecar` | Oracle request/fulfill pattern for off-chain simulation |
 
-Chain support: Base, Ethereum mainnet, Polygon, Arbitrum.
+Chain support: Celo, Base, Ethereum mainnet, Polygon. ~54 Foundry tests.
 
 ### midnight/ — Compact ZK Contracts
 
@@ -103,21 +122,18 @@ Privacy-preserving security middleware for Midnight Network. Uses Midnight's Com
 
 ## Data Flow
 
-### Transaction Evaluation Flow
+### Transaction Evaluation Flow (Blockchain)
 
 ```
 Agent
   │
   ├──1. Submit transaction──▶ Chain-specific adapter
   │                              │
-  │                              ├── Solana: Anchor CPI
-  │                              ├── EVM: ERC-7579 validateUserOp
+  │                              ├── Solana: Anchor CPI → /simulate
+  │                              ├── EVM: /api/v2/simulate-evm (eth_call)
   │                              └── Midnight: Compact contract
   │                              │
-  │                    2. Normalize to ──▶ NormalizedTransaction
-  │                        NormalizedTx      │
-  │                                          ▼
-  │                               PolicyEvaluator::evaluate()
+  │                    2. Policy check ──▶ PolicyEngine (crates/core)
   │                                          │
   │                                    ┌─────┴─────┐
   │                                    ▼           ▼
@@ -129,9 +145,48 @@ Agent
   │                          │         │         │
   │                          │         │         ▼
   │                          │         │    Human approval
-  │                          │         │    (override endpoint)
+  │                          │         │    (POST /override)
   │                          │         │
   └──3. Result returned◀─────┴─────────┘
+```
+
+### Web2 API Proxy Flow
+
+```
+Agent (LangChain, CrewAI, Vercel AI SDK)
+  │
+  ├──1. HTTP call──▶ BastionWeb2Client (packages/web2-sdk)
+  │                    │
+  │                    ▼
+  │              ProxyEngine::evaluate(ApiEvent)
+  │                    │
+  │              ┌─────┴─────┐
+  │              ▼           ▼
+  │        ProxyDecision    Sled Audit Log
+  │              │
+  │    ┌─────────┼─────────┐
+  │    ▼         ▼         ▼
+  │  Pass      Block    PendingHITL
+  │    │         │         │
+  │    ▼         ▼         ▼
+  │  Forward   403 /    Human
+  │  to API    reject   approval
+  │
+  └──2. Response returned to agent
+```
+
+### Event Ingestion Flow (SIEM)
+
+```
+Any source (CloudTrail, GitHub webhook, syslog, OJK stream, robot telemetry)
+  │
+  ▼
+POST /ingest ──▶ SecurityEvent (crates/core)
+  │
+  ├──▶ Sled DB (local audit)
+  ├──▶ CorrelationEngine (cross-event pattern matching)
+  ├──▶ GrondOSINT (threat enrichment)
+  └──▶ On-chain Anchor audit (optional, enterprise tier)
 ```
 
 ## Security Model
@@ -160,26 +215,43 @@ Bastion achieves cross-chain policy coherence through:
 
 ```
 bastion/
-├── crates/            ← Rust workspace
-│   ├── core/          ← Chain-agnostic types + policy engine
-│   ├── sidecar/       ← Off-chain evaluator HTTP service
-│   └── solana/        ← Anchor on-chain program
-├── evm/               ← Solidity contracts (Foundry)
-├── midnight/          ← Compact ZK contracts
-├── apps/web/          ← React compliance dashboard (Vite + Tailwind)
-├── packages/sdk/      ← TypeScript SDK
-└── docs/              ← Architecture, threat model, contribution guide
+├── crates/                  ← Rust workspace
+│   ├── core/                ← Chain-agnostic types + policy engine (SecurityEvent, FirewallDecision, PolicyRule)
+│   ├── sidecar/             ← Axum HTTP server (simulation, agents, DID, cases, events, MCP proxy, telemetry)
+│   ├── web2-firewall/       ← Web2 API proxy engine (ApiEvent, ProxyDecision, ApiPolicyRule, OpenApiSpec, ProviderAdapter)
+│   ├── correlation/         ← SIEM correlation engine (sliding window, YAML rules, MITRE ATT&CK mapping)
+│   └── solana/programs/     ← Anchor on-chain program (bastion-audit)
+├── evm/                     ← Solidity contracts (Foundry, 6 contracts, ~54 tests)
+├── midnight/                ← Compact ZK contracts (audit, policy, registry)
+├── apps/web/                ← React compliance dashboard (Vite + TailwindCSS)
+├── packages/
+│   ├── sdk/                 ← @bastion-agentique/sdk (TypeScript, on-chain + sidecar clients, 6 tests)
+│   └── web2-sdk/            ← @bastion-agentique/web2-sdk (TypeScript, BastionWeb2Client, 9 tests)
+├── .agents/skills/          ← 48 agent skills (blockchain forensics, compliance, DeFi security, Web2 firewall)
+├── docs/                    ← Architecture, roadmap, expansion plans, PRDs
+├── config.toml              ← Sidecar policy configuration
+├── Cargo.toml               ← Rust workspace manifest
+├── pnpm-workspace.yaml      ← pnpm monorepo config
+└── docker-compose.yml       ← Docker compose for sidecar + MCP
 ```
 
 ## Technology Stack
 
-| Layer | Solana | EVM | Midnight |
-|-------|--------|-----|----------|
-| Language | Rust (Anchor 0.30) | Solidity 0.8.28 | Compact (TypeScript) |
-| Framework | Anchor | Foundry | Midnight SDK |
-| Middleware | Axum (Rust) | Sidecar HTTP | Sidecar HTTP |
-| SDK | @bastion-agentique/sdk (TS) | ethers.js / viem | @midnight-js |
-| Dashboard | React 18 + Vite | Same | Same |
+| Component | Technology | Version |
+|-----------|-----------|---------|
+| **Rust Sidecar** | Rust (edition 2024), Axum, Tokio, Sled | 1.85+ |
+| **Rust Core** | serde, thiserror, uuid, async-trait | 0.1.0 |
+| **Rust Web2 Firewall** | bastion-web2-firewall, http, url, reqwest | 0.1.0 |
+| **Rust Correlation** | bastion-correlation | - |
+| **Solana On-Chain** | Anchor, solana-program, borsh | 0.30.1 / 1.18 / 1 |
+| **EVM Contracts** | Solidity, Foundry, OpenZeppelin, Solady | 0.8.28 |
+| **Midnight ZK** | Compact, @midnight-ntwrk/midnight-js | 0.1.0 |
+| **Dashboard** | React, Vite, TailwindCSS, TypeScript | 18 / 5 / 3.4 / 5 |
+| **SDK** | TypeScript, Anchor, @solana/web3.js | 5 / 0.30.1 / 1.91 |
+| **Web2 SDK** | TypeScript, BastionWeb2Client | 5 / 0.1.0 |
+| **MCP Server** | TypeScript, @modelcontextprotocol/sdk, SSE | - |
+| **Payments** | x402 (Solana), pay.sh | - |
+| **CI/CD** | GitHub Actions, Netlify, Vercel, Fly.io, Docker | - |
 
 ## Agent Delegation System
 
