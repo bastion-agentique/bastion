@@ -442,4 +442,4 @@ Apache-2.0 License - See LICENSE file for details.
 
 ---
 
-Built for the Solana Frontier Hackathon by Bastion Defend.
+Built for the Solana Frontier Hackathon by Bastion Agentique.

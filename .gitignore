@@ -11,3 +11,4 @@ agent_store/
 .vercel
 
 .env.local
+POSITIONING.md
