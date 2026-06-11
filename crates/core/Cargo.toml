@@ -2,7 +2,7 @@
 name = "bastion-core"
 version = "0.1.0"
 edition = "2024"
-description = "Chain-agnostic core types and policy engine for Bastion Agentic Defense"
+description = "Chain-agnostic core types and policy engine for Bastion Agentique"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt"] }

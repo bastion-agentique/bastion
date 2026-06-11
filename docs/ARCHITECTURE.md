@@ -1,6 +1,6 @@
 # Bastion Architecture
 
-Bastion Agentic Defense is security middleware for autonomous AI agents operating on blockchain infrastructure and Web2 API ecosystems. It provides a transaction firewall, a Web2 API proxy firewall, a programmable policy engine, and an immutable audit layer deployed across Solana, EVM chains, and Midnight Network.
+Bastion Agentique is security middleware for autonomous AI agents operating on blockchain infrastructure and Web2 API ecosystems. It provides a transaction firewall, a Web2 API proxy firewall, a programmable policy engine, and an immutable audit layer deployed across Solana, EVM chains, and Midnight Network.
 
 > Alpha software. Bastion is in active development and not yet production hardened. Use with caution.
 

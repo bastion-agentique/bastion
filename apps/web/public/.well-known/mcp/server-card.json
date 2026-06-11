@@ -1,6 +1,6 @@
 {
   "serverInfo": {
-    "name": "Bastion Agentic Defense",
+    "name": "Bastion Agentique",
     "version": "0.3.0",
     "description": "AI Agent Firewall for Solana — simulates, validates, and audits every transaction before signing."
   },

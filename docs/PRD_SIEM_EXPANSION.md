@@ -1,4 +1,4 @@
-# Product Requirements Document: Bastion Agentic Defense System SIEM Expansion
+# Product Requirements Document: Bastion Agentique System SIEM Expansion
 
 ## 1. Executive Summary
 
@@ -74,7 +74,7 @@ Bastion targets four market verticals in Indonesia. Government and regulatory bo
 
 ## 19. Compliance Alignment
 
-Bastion aligns with SNI ISO IEC 27001 for information security management systems, which is mandatory for fintech licensing under OJK regulation number 4 of 2021. The on chain audit trail satisfies the POJK 11 of 2022 requirement for tamper proof audit logging in financial technology operations. The policy engine's rate limiting, value caps, and program allowlists satisfy the access control requirements of ISO 27001 Annex A.9. The human override workflow satisfies the segregation of duties requirement by separating automated decisions from human approval. The circuit breaker satisfies the incident response requirement of ISO 27001 Annex A.16. The W3C DID layer satisfies Indonesia's Personal Data Protection Law number 27 of 2022 by providing decentralized identity management where the data subject controls their own identifiers. The Midnight ZK privacy layer provides selective disclosure capabilities that exceed GDPR requirements by keeping transaction data private by default. All development is tracked through timestamped Git commits in the public bastion agentic defense GitHub repository at github.com slash bastion agentic defense slash bastion, providing independent proof of development under Section 8 of applicable non disclosure agreements.
+Bastion aligns with SNI ISO IEC 27001 for information security management systems, which is mandatory for fintech licensing under OJK regulation number 4 of 2021. The on chain audit trail satisfies the POJK 11 of 2022 requirement for tamper proof audit logging in financial technology operations. The policy engine's rate limiting, value caps, and program allowlists satisfy the access control requirements of ISO 27001 Annex A.9. The human override workflow satisfies the segregation of duties requirement by separating automated decisions from human approval. The circuit breaker satisfies the incident response requirement of ISO 27001 Annex A.16. The W3C DID layer satisfies Indonesia's Personal Data Protection Law number 27 of 2022 by providing decentralized identity management where the data subject controls their own identifiers. The Midnight ZK privacy layer provides selective disclosure capabilities that exceed GDPR requirements by keeping transaction data private by default. All development is tracked through timestamped Git commits in the public bastion agentique GitHub repository at github.com slash bastion agentique slash bastion, providing independent proof of development under Section 8 of applicable non disclosure agreements.
 
 ## 20. Competitive Analysis
 
