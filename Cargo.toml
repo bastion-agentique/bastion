@@ -5,6 +5,7 @@ members = [
     "crates/correlation",
     "crates/sidecar",
     "crates/solana/programs/bastion-audit",
+    "crates/web2-firewall",
 ]
 
 [workspace.package]

@@ -14,10 +14,13 @@
 |-------|-----------|---------|
 | **Rust Sidecar** | Rust (edition 2024), Axum 0.8, Tokio 1, Sled 0.34 | 1.85+ |
 | **Rust Core** | serde, thiserror, uuid, async-trait | 0.1.0 |
+| **Rust Web2 Firewall** | bastion-web2-firewall, http, url, reqwest | 0.1.0 |
+| **Rust Correlation** | bastion-correlation (SIEM correlation engine) | — |
 | **Solana On-Chain** | Anchor 0.30.1, solana-program 1.18, borsh 1 | 0.2.0 |
 | **EVM Contracts** | Solidity 0.8.28, Foundry, OpenZeppelin, Solady | — |
 | **Dashboard** | React 18, Vite 5, TailwindCSS 3.4, TypeScript 5 | 0.2.0 |
-| **SDK** | TypeScript 5, Anchor 0.30.1, @solana/web3.js 1.91 | 0.2.0 |
+| **SDK** | TypeScript 5, Anchor 0.30.1, @solana/web3.js 1.91 | 0.5.1 |
+| **Web2 SDK** | TypeScript 5, BastionWeb2Client | 0.1.0 |
 | **EVM Wallet** | wagmi 2.12, viem 2.21, RainbowKit 2.2, TanStack Query 5 | — |
 | **Solana Wallet** | wallet-adapter-react, wallet-adapter-solflare/phantom/backpack | — |
 | **Midnight ZK** | Compact lang, @midnight-ntwrk/midnight-js | 0.1.0 |
@@ -47,6 +50,8 @@ bastion/
 ├── crates/                    ← Rust workspace
 │   ├── core/                  ← Chain-agnostic policy engine (bastion-core)
 │   ├── sidecar/               ← HTTP evaluator server (Axum, bastion-sidecar)
+│   ├── web2-firewall/         ← Web2 API proxy firewall (bastion-web2-firewall) NEW
+│   ├── correlation/           ← SIEM correlation engine (bastion-correlation)
 │   └── solana/programs/       ← Anchor on-chain program (bastion-audit)
 ├── evm/                       ← Solidity contracts (Foundry)
 │   ├── src/                   ← BastionFirewall, BastionPolicy, BastionAudit,
@@ -175,10 +180,12 @@ Agent Operator (policy config, HITL review)
 │  │ (chain-agn.) │   │  (TypeScript)│   │  (apps/web)           │ │
 │  └──────┬───────┘   └──────────────┘   └──────────────────────┘ │
 │         │                                                        │
-│         ▼                                                        │
-│  ┌──────────────┐                                                │
-│  │crates/sidecar│  ← Off-chain evaluator (Axum HTTP server)      │
-│  └──────┬───────┘                                                │
+│    ┌────┴─────────────────────────────┐                          │
+│    ▼                                  ▼                          │
+│  ┌──────────────┐               ┌───────────────────┐           │
+│  │crates/sidecar│               │crates/web2-firewall│  ← NEW  │
+│  │(Solana/chain)│               │(Web2 proxy engine) │          │
+│  └──────┬───────┘               └───────────────────┘           │
 │         │                                                        │
 │    ┌────┴──────────────────────────┐                             │
 │    ▼                               ▼                             │

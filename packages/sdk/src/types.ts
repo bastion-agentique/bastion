@@ -156,3 +156,155 @@ export interface OverrideRequest {
 export interface CircuitBreakerStatus {
   engaged: boolean;
 }
+
+// ── EVM Simulation types ─────────────────────────────────────────────────────
+
+export interface EvmTxParams {
+  from: string;
+  to: string;
+  value?: string;
+  data?: string;
+  gas?: string;
+  gasPrice?: string;
+  maxFeePerGas?: string;
+  maxPriorityFeePerGas?: string;
+  nonce?: string;
+}
+
+export interface EvmSimulateRequest {
+  transaction: EvmTxParams;
+  intent?: string;
+  chain?: string;
+  agentId?: string;
+}
+
+export interface EvmSimulateResponse {
+  allowed: boolean;
+  decision: string;
+  reason?: string;
+  simulationResult?: {
+    logs: string[];
+    error?: unknown;
+    balanceChanges?: Record<string, number>;
+    simulationHash?: number[];
+  };
+  riskScore?: number;
+  riskSummary?: string;
+}
+
+// ── SSE Events ────────────────────────────────────────────────────────────────
+
+export interface SseEvent {
+  type: string;
+  data: unknown;
+  id?: string;
+}
+
+export class BastionEventStream {
+  private abortController: AbortController;
+  private url: string;
+  private headers: Record<string, string>;
+
+  constructor(url: string, abortController: AbortController, headers: Record<string, string> = {}) {
+    this.url = url;
+    this.abortController = abortController;
+    this.headers = headers;
+  }
+
+  private async *streamEvents(): AsyncGenerator<SseEvent> {
+    const response = await fetch(this.url, {
+      headers: {
+        Accept: "text/event-stream",
+        ...this.headers,
+      },
+      signal: this.abortController.signal,
+    });
+
+    if (!response.ok || !response.body) {
+      throw new Error(`SSE connection failed: ${response.status}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        let eventType = "message";
+        let eventData = "";
+        let eventId: string | undefined;
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) {
+            if (eventData) {
+              yield {
+                type: eventType,
+                data: tryParseJson(eventData),
+                id: eventId,
+              };
+            }
+            eventType = "message";
+            eventData = "";
+            eventId = undefined;
+            continue;
+          }
+
+          if (trimmed.startsWith("event: ")) {
+            eventType = trimmed.slice(7);
+          } else if (trimmed.startsWith("data: ")) {
+            eventData = trimmed.slice(6);
+          } else if (trimmed.startsWith("id: ")) {
+            eventId = trimmed.slice(4);
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
+
+  /** Iterate over SSE events (for use in for-await-of loops) */
+  async *[Symbol.asyncIterator](): AsyncGenerator<SseEvent> {
+    yield* this.streamEvents();
+  }
+
+  /** Subscribe with callbacks */
+  on(eventType: string | undefined, callback: (data: unknown, event: SseEvent) => void): () => void {
+    let cancelled = false;
+    (async () => {
+      for await (const sseEvent of this.streamEvents()) {
+        if (cancelled) break;
+        if (!eventType || sseEvent.type === eventType) {
+          callback(sseEvent.data, sseEvent);
+        }
+      }
+    })().catch(() => {
+      /* stream closed */
+    });
+
+    return () => {
+      cancelled = true;
+      this.abortController.abort();
+    };
+  }
+
+  close(): void {
+    this.abortController.abort();
+  }
+}
+
+function tryParseJson(value: string): unknown {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}

@@ -6,35 +6,10 @@ import type {
   AuditEntry,
   Agent,
   Policy,
-  SidecarConfig,
-  SimulateRequest,
-  SimulateResponse,
-  SimulateBlockedResponse,
-  LogsQuery,
-  LogsResponse,
-  SidecarPolicy,
-  HealthResponse,
-  OverrideRequest,
-  CircuitBreakerStatus,
 } from "./types";
 
-export { AGENT_CAPABILITIES, DECISION } from "./types";
-export type {
-  AuditState,
-  AuditEntry,
-  Agent,
-  Policy,
-  SidecarConfig,
-  SimulateRequest,
-  SimulateResponse,
-  SimulateBlockedResponse,
-  LogsQuery,
-  LogsResponse,
-  SidecarPolicy,
-  HealthResponse,
-  OverrideRequest,
-  CircuitBreakerStatus,
-} from "./types";
+export { AGENT_CAPABILITIES, DECISION, BastionEventStream } from "./types";
+export { BastionSidecar } from "./sidecar";
 
 export const BASTION_PROGRAM_ID = new PublicKey(idl.address);
 
@@ -318,104 +293,5 @@ export class BastionClient {
 
   removeEventListener(listenerId: number): Promise<void> {
     return this.program.removeEventListener(listenerId);
-  }
-}
-
-// ── Sidecar HTTP client ────────────────────────────────────────────────────
-
-export class BastionSidecar {
-  private baseUrl: string;
-  private headers: Record<string, string>;
-
-  constructor(config: SidecarConfig) {
-    this.baseUrl = config.baseUrl.replace(/\/$/, "");
-    this.headers = { "Content-Type": "application/json" };
-    if (config.apiKey) {
-      this.headers["X-API-Key"] = config.apiKey;
-    }
-  }
-
-  private async request<T>(
-    method: string,
-    path: string,
-    body?: unknown,
-    query?: Record<string, string | number | undefined>
-  ): Promise<T> {
-    let url = `${this.baseUrl}${path}`;
-    if (query) {
-      const params = new URLSearchParams();
-      for (const [k, v] of Object.entries(query)) {
-        if (v !== undefined) params.set(k, String(v));
-      }
-      const qs = params.toString();
-      if (qs) url += `?${qs}`;
-    }
-
-    const res = await fetch(url, {
-      method,
-      headers: this.headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-    });
-
-    const json = await res.json();
-
-    if (!res.ok) {
-      const err = (json as { error?: string }).error ?? res.statusText;
-      const e = Object.assign(new Error(err), {
-        status: res.status,
-        body: json,
-      });
-      throw e;
-    }
-
-    return json as T;
-  }
-
-  /** Check sidecar health */
-  health(): Promise<HealthResponse> {
-    return this.request<HealthResponse>("GET", "/health");
-  }
-
-  /**
-   * Submit a base64-encoded Solana transaction for simulation + policy evaluation.
-   * Throws with `status: 403` and `body.block_id` if blocked pending human review.
-   */
-  simulate(req: SimulateRequest): Promise<SimulateResponse> {
-    return this.request<SimulateResponse>("POST", "/simulate", req);
-  }
-
-  /** Fetch paginated audit logs */
-  logs(query?: LogsQuery): Promise<LogsResponse> {
-    return this.request<LogsResponse>("GET", "/logs", undefined, query as Record<string, string | number | undefined>);
-  }
-
-  /** Human-in-the-loop: approve or reject a blocked transaction */
-  approve(req: OverrideRequest): Promise<SimulateResponse | { error: string }> {
-    return this.request("POST", "/override", req);
-  }
-
-  /** Get current policy */
-  getPolicy(): Promise<SidecarPolicy> {
-    return this.request<SidecarPolicy>("GET", "/policy");
-  }
-
-  /** Update full policy */
-  updatePolicy(policy: Partial<SidecarPolicy>): Promise<SidecarPolicy> {
-    return this.request<SidecarPolicy>("POST", "/policy/full", policy);
-  }
-
-  /** Get circuit breaker status */
-  circuitBreakerStatus(): Promise<CircuitBreakerStatus> {
-    return this.request<CircuitBreakerStatus>("GET", "/circuit-breaker/status");
-  }
-
-  /** Engage circuit breaker — pauses all transaction processing */
-  engageCircuitBreaker(): Promise<CircuitBreakerStatus> {
-    return this.request<CircuitBreakerStatus>("POST", "/circuit-breaker/engage");
-  }
-
-  /** Disengage circuit breaker */
-  disengageCircuitBreaker(): Promise<CircuitBreakerStatus> {
-    return this.request<CircuitBreakerStatus>("POST", "/circuit-breaker/disengage");
   }
 }

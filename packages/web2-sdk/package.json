@@ -1,0 +1,29 @@
+{
+  "name": "@bastion-agentique/web2-sdk",
+  "version": "0.1.0",
+  "description": "Web2 proxy/firewall SDK for Bastion. Protect AI agents calling external REST/gRPC/GraphQL APIs.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist/", "README.md"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bastion-agentique/bastion.git",
+    "directory": "packages/web2-sdk"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": ["bastion", "web2", "api-firewall", "ai-agents", "proxy"],
+  "license": "Apache-2.0"
+}
