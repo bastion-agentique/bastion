@@ -156,34 +156,6 @@ console.log(tree.children.length, 'sub-agents');`,
   (event) => console.log(event.name)
 );`,
   },
-  {
-    method: 'stakeLamports',
-    signature: 'stakeLamports(signer, amount): Promise<Transaction>',
-    description: 'Stake SOL from your wallet into the AgentStake PDA. Higher stake = higher transaction limits via StakeWeighted policy. 48h min before unstaking.',
-    example: `const tx = await client.stakeLamports(wallet, 5000000000); // 5 SOL
-await connection.sendTransaction(tx, [wallet]);`,
-  },
-  {
-    method: 'requestUnstake',
-    signature: 'requestUnstake(signer): Promise<Transaction>',
-    description: 'Request to unstake SOL. Starts a 7-day cooldown. Stake still counts during cooldown.',
-    example: `const tx = await client.requestUnstake(wallet);
-await connection.sendTransaction(tx, [wallet]);`,
-  },
-  {
-    method: 'claimUnstake',
-    signature: 'claimUnstake(signer): Promise<Transaction>',
-    description: 'Claim your unstaked SOL after the 7-day cooldown period expires.',
-    example: `const tx = await client.claimUnstake(wallet);
-await connection.sendTransaction(tx, [wallet]);`,
-  },
-  {
-    method: 'fetchAgentStake',
-    signature: 'fetchAgentStake(authority): Promise<AgentStake>',
-    description: 'Fetch the AgentStake PDA for a given authority, including staked_lamports and unstake status.',
-    example: `const stake = await client.fetchAgentStake(wallet.publicKey);
-console.log(stake.staked_lamports);`,
-  },
 ];
 
 function ApiMethodCard({ method }: { method: ApiMethod }) {
@@ -298,9 +270,7 @@ export default function ApiReference() {
             { method: 'GET', path: '/agents/:did/children', desc: 'List sub-agents' },
             { method: 'GET', path: '/agents/:did/tree', desc: 'Delegation tree' },
             { method: 'POST', path: '/agents/:did/delegate', desc: 'Spawn sub-agent (auth)' },
-            { method: 'POST', path: '/agents/:did/stake', desc: 'Stake SOL (auth)' },
-            { method: 'POST', path: '/agents/:did/stake/unstake', desc: 'Request unstake (auth)' },
-            { method: 'POST', path: '/agents/:did/stake/claim', desc: 'Claim unstaked SOL (auth)' },
+            { method: 'GET', path: '/agents/:did/stake', desc: 'Agent stake status' },
             { method: 'GET', path: '/policy', desc: 'Current policy' },
             { method: 'POST', path: '/policy/full', desc: 'Update policy (auth)' },
             { method: 'GET', path: '/circuit-breaker/status', desc: 'Breaker status' },

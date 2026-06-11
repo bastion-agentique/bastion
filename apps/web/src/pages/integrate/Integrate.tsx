@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Navbar } from '../../components/Navbar';
 import InstallSection from './InstallSection';
-import StakingSection from './StakingSection';
+import ReputationSection from './ReputationSection';
 import QuickStartSection from './QuickStartSection';
 import McpSection from './McpSection';
 import PricingSection from './PricingSection';
@@ -106,7 +106,7 @@ export default function Integrate() {
         <div className="space-y-20 pb-20" id="install">
           <InstallSection />
           <QuickStartSection />
-          <StakingSection />
+          <ReputationSection />
           <McpSection />
           <PricingSection />
           <PersistentSetup />
