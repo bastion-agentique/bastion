@@ -110,6 +110,9 @@ export default function Landing() {
           <p className="font-sans mt-8 max-w-xl text-base leading-relaxed text-zinc-400">
             Building infrastructure for brilliant agents, fearless developers, and decentralized protocols. Through the noise, we craft a firewall for pure execution.
           </p>
+          <p className="font-sans mt-4 max-w-xl text-sm leading-relaxed text-amber-500/70">
+            Bastion is in alpha testing. Use with caution in production environments.
+          </p>
           <div className="flex items-center gap-4 mt-12">
             <Link
               to="/integrate"

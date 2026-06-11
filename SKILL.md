@@ -7,7 +7,8 @@ metadata: {
   "emoji": "🛡️",
   "requires": {
     "bins": ["bastion"]
-  }
+  },
+  "alphaWarning": "Bastion is in alpha testing. Use with caution in production environments."
 }
 ---
 

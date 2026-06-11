@@ -6,6 +6,12 @@ pnpm add @bastion-agentique/sdk @solana/web3.js @coral-xyz/anchor
 # or
 yarn add @bastion-agentique/sdk @solana/web3.js @coral-xyz/anchor`;
 
+const WEB2_INSTALL = `npm install @bastion-agentique/web2-sdk`;
+const WEB2_DEPS = `# or
+pnpm add @bastion-agentique/web2-sdk
+# or
+yarn add @bastion-agentique/web2-sdk`;
+
 export default function InstallSection() {
   const [copied, setCopied] = useState(false);
 
@@ -47,6 +53,37 @@ export default function InstallSection() {
         <pre className="px-4 pb-4 overflow-x-auto">
           <code className="font-mono text-sm leading-relaxed block" style={{ color: 'var(--text-muted)' }}>
             {SOLANA_DEPS}
+          </code>
+        </pre>
+      </div>
+
+      {/* Web2 Proxy SDK */}
+      <div
+        className="rounded-xl overflow-hidden mb-4"
+        style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}
+      >
+        <div className="flex items-center justify-between px-4 py-2" style={{ borderBottom: '1px solid var(--border)' }}>
+          <span className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>Web2 — Terminal</span>
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(WEB2_INSTALL);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            }}
+            className="font-sans text-xs font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] rounded px-2 py-0.5"
+            style={{ color: copied ? '#22c55e' : 'var(--text-muted)' }}
+          >
+            {copied ? 'Copied' : 'Copy'}
+          </button>
+        </div>
+        <pre className="p-4 overflow-x-auto">
+          <code className="font-mono text-sm leading-relaxed block" style={{ color: 'var(--text-primary)' }}>
+            {WEB2_INSTALL}
+          </code>
+        </pre>
+        <pre className="px-4 pb-4 overflow-x-auto">
+          <code className="font-mono text-sm leading-relaxed block" style={{ color: 'var(--text-muted)' }}>
+            {WEB2_DEPS}
           </code>
         </pre>
       </div>

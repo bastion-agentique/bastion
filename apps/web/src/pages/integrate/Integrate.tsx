@@ -43,7 +43,9 @@ export default function Integrate() {
             className="animate-fade-rise-delay font-sans mt-6 max-w-xl mx-auto text-base leading-relaxed"
             style={{ color: 'var(--text-muted)' }}
           >
-            Install the SDK, register your agent, set a policy, connect via MCP. Every transaction validated before signing. Solana native. Zero trust.
+            Install the SDK, register your agent, set a policy, connect via MCP. Every transaction validated before signing. Every API call inspected before sending. Solana native. Web2 proxy. Zero trust.
+
+            Bastion is in alpha testing. Use with caution in production environments.
           </p>
 
           {/* Action buttons */}

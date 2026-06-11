@@ -5,6 +5,8 @@
 > Same brand. Same trust-but-verify philosophy. Same agent registry, policy engine, audit trail, GrondOSINT, and HITL flow — applied to HTTP API calls instead of blockchain transactions.
 >
 > **Repo:** `bastion` (this repo)
+>
+> **Alpha software.** Bastion and its Web2 proxy are in active development. Use with caution in production environments.
 
 ---
 
