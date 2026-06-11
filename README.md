@@ -50,11 +50,12 @@ Bastion is an upgraded fork of Sentinel (by ClawdieLabs), built for the Solana F
 | Human override | Yes | No | Yes | Yes | No |
 | Helius simulation | Yes | No | No | No | No |
 | TypeScript SDK | Yes | No | Yes | No | No |
+| Web2 API firewall | Yes (in progress) | No | No | No | No |
 | Dashboard | Yes | No | No | No | No |
 
 **Why this wins:**
 
-1. **On-chain audit** = Judges can verifyagent behavior on Solana Explorer
+1. **On-chain audit** = Judges can verify agent behavior on Solana Explorer
 2. **Reputation** = First-of-its-kind on-chain agent identity
 3. **Circuit breaker** = Pauses entire protocol in emergencies
 4. **Demo-able** = Show it block a real drain attack, show on-chain record
@@ -95,17 +96,17 @@ Bastion intercepts transaction requests, simulates them via Helius Simulation AP
 
 ## Architecture
 
-Bastion consists of six main components:
+Bastion consists of nine main components:
 
-1. **Interceptor (Axum)**: Rust HTTP proxy for transaction validation
-2. **Simulation Core**: Helius API integration for outcome prediction
-3. **Policy Engine**: Static (whitelist), Simulation (balance check), Behavioral (rate limit)
-4. **MCP HTTP Server**: SSE transport proxied at `/mcp/*` via sidecar, 15 security tools for AI agents
-5. **Agent Registry**: DID-based agent identity with delegation hierarchy
-6. **x402 Payment Gateway**: Pay-per-call pricing with Solana SOL transfers + pay.sh integration
-7. **GrondOSINT Oracle**: Address risk scoring via Grond's agentic OSINT pipeline
-8. **On-Chain Audit Program**: Anchor program for immutable records
-9. **Dashboard**: React+Vite UI for monitoring, agent fleet visualization, and policy management
+1. **Transaction Firewall** — Solana + EVM transaction interception and simulation
+2. **Simulation Core** — Helius API and Celo eth_call for outcome prediction
+3. **Policy Engine** — Static allowlists, simulation checks, BlockInt security rules
+4. **Web2 Proxy Firewall** — HTTP API gateway for AI agent calls to OpenAI, Stripe, Slack, GitHub, AWS
+5. **MCP HTTP Server** — SSE transport proxied via sidecar, 15 security tools for AI agents
+6. **Agent Registry** — W3C DID-based agent identity with hierarchical delegation
+7. **x402 Payment Gateway** — Pay-per-call pricing with Solana SOL transfers
+8. **GrondOSINT Oracle** — Address and API endpoint risk scoring via Daemon BlockInt
+9. **On-Chain Audit Program** — Anchor program for immutable records on Solana
 
 ## Quick Start
 
@@ -173,8 +174,10 @@ pay --sandbox server start packages/mcp-server/bastion-provider.yml
 ### Use the SDK
 
 ```bash
-cd sdk
-npm install
+cd packages/sdk
+pnpm install
+pnpm build
+pnpm test
 ```
 
 ```typescript
@@ -290,9 +293,6 @@ BaSZuLcwjfh75T3TjbVYpTH4qpJt1tNoZ3S6PTkvNhCb (deprecated) | **New:** `A29V5MUVs7
 | register_agent | Register agent on-chain |
 | update_agent_reputation | Update agent reputation |
 | set_policy | Set on-chain policy |
-| stake_lamports | Stake SOL for higher transaction limits |
-| request_unstake | Start 7-day unstake cooldown |
-| claim_unstake | Claim SOL after cooldown expires |
 | emergency_pause | Pause protocol |
 | emergency_resume | Resume protocol |
 
@@ -320,38 +320,67 @@ The dashboard provides real-time monitoring and policy management.
 ### Run
 
 ```bash
-cd dashboard
-npm install
-npm run dev
+pnpm --filter bastion-dashboard dev
+# Dashboard opens at http://localhost:5173
 ```
 
 ## SDK
 
-TypeScript SDK for programmatic access. [npm → @bastion-agentique/sdk](https://www.npmjs.com/package/@bastion-agentique/sdk)
+### @bastion-agentique/sdk — Solana + EVM Chain Firewall
 
-### Installation
+TypeScript SDK for on-chain agent security. [npm → @bastion-agentique/sdk](https://www.npmjs.com/package/@bastion-agentique/sdk)
 
 ```bash
 npm install @bastion-agentique/sdk
 ```
 
-### Usage
-
 ```typescript
-import { BastionClient, AGENT_CAPABILITIES } from "@bastion-agentique/sdk";
+import { BastionClient, BastionSidecar, AGENT_CAPABILITIES } from "@bastion-agentique/sdk";
 
+// On-chain client
 const client = new BastionClient({
   connection: new Connection("https://api.devnet.solana.com")
 });
-
-// Register agent
 await client.registerAgent(wallet, "MyBot", AGENT_CAPABILITIES.TRANSFER);
 
-// Set policy
-await client.setPolicy(wallet, [jupiterProgram], 5, 10);
+// Sidecar HTTP client
+const sidecar = new BastionSidecar({ baseUrl: "https://bastion-agentique.fly.dev" });
+const result = await sidecar.simulate({ transaction: base64Tx, intent: "Swap 1 SOL" });
 
-// Emergency pause
-await client.emergencyPause(wallet);
+// EVM simulation
+const evmResult = await sidecar.simulateEvm({
+  transaction: { from: "0x...", to: "0x..." },
+  chain: "celo"
+});
+
+// Real-time audit events
+const stream = sidecar.events();
+for await (const event of stream) {
+  console.log(event.type, event.data);
+}
+```
+
+### @bastion-agentique/web2-sdk — API Gateway Firewall (In Progress)
+
+TypeScript SDK for AI agent API call security. [npm → @bastion-agentique/web2-sdk](https://www.npmjs.com/package/@bastion-agentique/web2-sdk)
+
+```bash
+npm install @bastion-agentique/web2-sdk
+```
+
+```typescript
+import { BastionWeb2Client } from "@bastion-agentique/web2-sdk";
+
+const client = new BastionWeb2Client({ proxyUrl: "http://localhost:4000" });
+
+const req = client.buildRequest("POST", "https://api.openai.com/v1/chat/completions", {
+  "Content-Type": "application/json"
+}, JSON.stringify({ model: "gpt-4o", messages: [] }));
+
+const result = await client.evaluate(req);
+if (result.decision === "pass") {
+  // proceed with API call
+}
 ```
 
 ## EVM (Ethereum/Celo/Polygon/Base)
@@ -382,17 +411,19 @@ See [`evm/README.md`](evm/README.md) for deployment details.
 
 | Component | Technology |
 |-----------|-------------|
-| Middleware | Rust, Axum |
-| Simulation | Helius API |
+| Middleware | Rust, Axum, Tokio |
+| Simulation | Helius API, Celo eth_call |
 | Database | Sled |
-| On-Chain | Anchor, Solana SDK |
-| EVM Contracts | Solidity 0.8.28, Foundry, OpenZeppelin, Solady |
-| Web2 Firewall | Rust (bastion-web2-firewall), OpenAPI parser, provider adapters |
-| MCP Server | TypeScript, @modelcontextprotocol/sdk, SSE (proxied via sidecar) |
+| On-Chain (Solana) | Anchor, solana-program |
+| On-Chain (EVM) | Solidity 0.8.28, Foundry, OpenZeppelin, Solady |
+| ZK Privacy | Midnight Compact (proof verification) |
+| Web2 Firewall | Rust (bastion-web2-firewall), OpenAPI parser |
+| MCP Server | TypeScript, @modelcontextprotocol/sdk, SSE |
 | Payments | x402 (Solana), pay.sh |
 | SDK | TypeScript (@bastion-agentique/sdk) |
 | Web2 SDK | TypeScript (@bastion-agentique/web2-sdk) |
 | Dashboard | React, Vite, TailwindCSS |
+| Agent Skills | 48 blockint/Web2 skills (.agents/skills/) |
 
 ## Contributing
 
@@ -403,7 +434,7 @@ See [`evm/README.md`](evm/README.md) for deployment details.
 
 ## Acknowledgments
 
-- **Grond** ([github.com/daemon-blockint-tech/Grond](https://github.com/daemon-blockint-tech/grond)) — Agentic OSINT platform that powers Bastion's address risk oracle. Thank you to the Grond team for building the intelligence pipeline that feeds Bastion's blockint rules with real-world threat data.
+- **Daemon Blockint Technologies** ([github.com/daemon-blockint-tech/daemon](https://github.com/daemon-blockint-tech/daemon)) — Powers Bastion's entire intelligence layer. GrondOSINT provides the threat oracle, the Blockint rules engine detects flash loans, high slippage, authority changes, and risk labeled addresses, and the 48 agent skills ecosystem covers blockchain forensics, compliance workflows, and DeFi security auditing. Thank you to the Daemon team for the intelligence pipeline that makes Bastion possible.
 
 ## License
 
