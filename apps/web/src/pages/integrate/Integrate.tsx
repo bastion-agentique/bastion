@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Navbar } from '../../components/Navbar';
 import InstallSection from './InstallSection';
 import ReputationSection from './ReputationSection';
 import QuickStartSection from './QuickStartSection';
@@ -19,8 +18,6 @@ export default function Integrate() {
 
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden" style={{ background: 'var(--bg)' }}>
-      <Navbar />
-
       <main className="relative z-10 max-w-6xl mx-auto px-6 pt-32 pb-20">
         {/* Hero */}
         <section className="text-center mb-20" aria-labelledby="integrate-headline">
