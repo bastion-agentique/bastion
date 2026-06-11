@@ -235,7 +235,7 @@ Depth 3 is not permitted. Attempting to delegate beyond depth 2 returns `MaxDele
 
 ### Capability Inheritance
 Child capabilities MUST be a **subset** of parent capabilities:
-- Parent has `TRANSFER | SWAP | DELEGATE` → Child can have `TRANSFER` or `SWAP` but NOT `STAKE`
+- Parent has `TRANSFER | SWAP | DELEGATE` → Child can have `TRANSFER` or `SWAP`
 - Capability check validates: `child_bitmask & !parent_bitmask == 0`
 
 ### Budget Enforcement
@@ -302,33 +302,11 @@ The current MVP implements delegation entirely in the sidecar (off-chain). Futur
 - New SDK methods associated with the on-chain program
 - Rebuild: `cargo build-sbf && solana program deploy --program-id ...`
 
-## Staking & Stake-Weighted Policy
+## Reputation (Replaces Staking)
 
-### AgentStake PDA
+Staking has been removed from the on-chain program. Agent reputation provides the chain-agnostic primitive for trust and limits. See `docs/ROADMAP.md` for the full migration plan.
 
-Agents stake SOL to an `AgentStake` PDA for higher transaction limits:
-- Seeds: `["agent_stake", authority]`
-- 48h minimum before first unstake
-- 7-day unstake cooldown (stake still counts during cooldown)
-- Max multiplier cap: 10x, floor: 0.1x
-
-### Depth Decay
-
-Stake weight decays with delegation depth:
-- Depth 0 (root): 100% stake weight
-- Depth 1 (sub-agent): 50% stake weight
-- Depth 2 (sub-sub): 25% stake weight
-- Formula: `max_delegation = staked * (1 / 2^depth)`
-
-### StakeWeighted Policy
-
-Effective limit: `base_limit * (1 + stake/min_stake * multiplier) * decay^depth`, capped at `base_limit * MAX_STAKE_MULTIPLIER (10)`, floored at `base_limit * 0.1`.
-
-### Instructions
-
-| Instruction | Description |
-|------------|-------------|
-| `stake_lamports` | Deposit SOL into AgentStake PDA |
-| `request_unstake` | Start 7-day cooldown |
-| `claim_unstake` | Withdraw SOL after cooldown |
-| `slash_stake` | Authority-only: slash misbehaving agent's stake |
+- Reputation scores are stored on-chain as `u64` on the Agent PDA
+- Higher reputation unlocks elevated transaction limits via the policy engine
+- Reputation is representable across Solana (Anchor), EVM (uint256), and Midnight
+- All limit enforcement runs through `crates/core` policy engine, not on-chain staking

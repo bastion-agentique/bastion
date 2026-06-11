@@ -125,7 +125,7 @@ Bastion makes Celo more capable as a platform for AI and agent activity in three
 
 ## Technical credibility
 
-**Proven architecture**: Bastion's core middleware is written in Rust (Axum), battle-tested on Solana with a deployed Anchor program (program ID: `BaSZuLcwjfh75T3TjbVYpTH4qpJt1tNoZ3S6PTkvNhCb`). The simulation pipeline connects to Helius for Solana and will connect to Celo nodes for EVM simulation.
+**Proven architecture**: Bastion's core middleware is written in Rust (Axum), battle-tested on Solana with a deployed Anchor program (program ID: `A29V5MUVs73y7XBHHxPpPcAW7h4gGHupbDdwYSwA2n9D`). The simulation pipeline connects to Helius for Solana and Celo nodes for EVM simulation.
 
 **EVM port is real**: The `evm/` directory contains Solidity contracts (Foundry). The frontend already supports Celo via RainbowKit/wagmi with a chain switcher. This is not vaporware . The codebase is multichain by design.
 

@@ -81,7 +81,7 @@ Telemetry creates a `SecurityEvent` with `source: "robot-telemetry"` and `classi
 Robots in a fleet can be organized hierarchically:
 
 ```
-Fleet Operator (parent agent, stakes SOL)
+Fleet Operator (parent agent, manages reputation)
   ├── Drone Squadron A (child, depth 1)
   │   ├── Drone A1 (child, depth 2, 50% stake weight)
   │   └── Drone A2 (child, depth 2)

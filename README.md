@@ -360,9 +360,13 @@ for await (const event of stream) {
 }
 ```
 
-### @bastion-agentique/web2-sdk — API Gateway Firewall (In Progress)
+## Web2 SDK (In Progress)
 
-TypeScript SDK for AI agent API call security. [npm → @bastion-agentique/web2-sdk](https://www.npmjs.com/package/@bastion-agentique/web2-sdk)
+> **IN PROGRESS — Not production-ready.**
+
+TypeScript SDK for AI agent API call security. Proxy engine inspects every HTTP call before reaching providers.
+
+[npm → @bastion-agentique/web2-sdk](https://www.npmjs.com/package/@bastion-agentique/web2-sdk)
 
 ```bash
 npm install @bastion-agentique/web2-sdk
@@ -378,10 +382,10 @@ const req = client.buildRequest("POST", "https://api.openai.com/v1/chat/completi
 }, JSON.stringify({ model: "gpt-4o", messages: [] }));
 
 const result = await client.evaluate(req);
-if (result.decision === "pass") {
-  // proceed with API call
-}
+// result.decision: "pass" | "block" | "pending_hitl"
 ```
+
+See [`docs/WEB2_EXPANSION_PLAN.md`](docs/WEB2_EXPANSION_PLAN.md) for the full roadmap.
 
 ## EVM (Ethereum/Celo/Polygon/Base)
 

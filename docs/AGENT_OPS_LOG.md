@@ -1,7 +1,7 @@
 # Bastion Agent Operations Log
 
 > **Reference for AI agents integrating with Bastion**  
-> Generated: 2026-06-04 | Sidecar: `0.3.0` | Solana devnet | Program: `A29V5MUVs73y7XBHHxPpPcAW7h4gGHupbDdwYSwA2n9D`
+> Generated: 2026-06-11 | Sidecar: `0.5.2` | Solana devnet | Program: `A29V5MUVs73y7XBHHxPpPcAW7h4gGHupbDdwYSwA2n9D`
 
 ## Quick Start (Copy-Paste)
 
@@ -121,9 +121,6 @@ No API keys. The sidecar is open on localhost. In production:
 | `GET` | `/agents/:did` | Single agent detail |
 | `GET` | `/agents/:did/audit` | Agent-specific audit trail |
 | `GET` | `/agents/:did/stake` | Agent stake status |
-| `POST` | `/agents/:did/stake` | Stake SOL via SDK |
-| `POST` | `/agents/:did/stake/unstake` | Request unstake |
-| `POST` | `/agents/:did/stake/claim` | Claim unstaked SOL |
 | `GET` | `/agents/:did/children` | List sub-agents |
 | `GET` | `/agents/:did/tree` | Full delegation tree |
 | `POST` | `/agents/:did/delegate` | Spawn sub-agent |
@@ -191,9 +188,6 @@ await fetch("https://bastion-agentique.fly.dev/agents", {
   })
 });
 
-// Stake SOL for higher limits
-await client.stakeLamports(wallet, 5_000_000_000); // 5 SOL
-
 // Fetch delegation tree
 const tree = await client.fetchAgentTree(wallet.publicKey);
 console.log(`Delegation depth: ${tree.children.length}`);
@@ -208,5 +202,5 @@ console.log(`Delegation depth: ${tree.children.length}`);
 3. **Policy is configurable** — max SOL/tx, rate limits, blockint rules all modifiable via API.
 4. **Audit trail is persistent** — All decisions logged to Sled DB with intent, reasoning, tx details.
 5. **DID provides identity** — Every agent gets a W3C DID with Ed25519 verification key + service endpoints.
-6. **Staking exists** — Stake SOL via SDK for higher transaction limits (StakeWeighted policy).
+6. **Reputation drives limits** — Agent reputation score unlocks higher transaction limits and trust gated features.
 7. **Case management** — Create, list, update investigation cases linked to blocked transactions.

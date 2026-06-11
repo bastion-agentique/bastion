@@ -10,7 +10,7 @@ I need to be careful about the Solana mention. The project does have Solana supp
 Good catches. Here's the corrected version with no dashes, semicolons, or colons, and re-centered on Ethereum/EVM since this is ETHGlobal.
 ---
 What is the current state of the project?
-> Bastion (v0.3.0) is an AI Agent Firewall. It is security middleware that intercepts every transaction from autonomous AI agents, simulates it against live chain state via eth_simulateTransaction and eth_call, validates it against a programmable policy engine with allowlists, token caps, rate limits, and time windows, and records an immutable on-chain audit trail. Suspicious transactions are flagged for human-in-the-loop override via a React compliance dashboard.
+> Bastion (v0.5.2) is an AI Agent Firewall. It is security middleware that intercepts every transaction from autonomous AI agents, simulates it against live chain state via eth_simulateTransaction and eth_call, validates it against a programmable policy engine with allowlists, token caps, rate limits, and time windows, and records an immutable on-chain audit trail. Suspicious transactions are flagged for human-in-the-loop override via a React compliance dashboard.
 >
 > It supports EVM chains via Foundry contracts on Ethereum, Base, Polygon, Arbitrum, and Celo. Cross-chain support extends to Solana and Midnight Network as secondary targets.
 >
