@@ -2,6 +2,31 @@
 
 All notable changes to Bastion will be documented in this file.
 
+## [0.5.2] — 2026-06-11
+
+### Added
+- **SDK: simulateEvm() method** — `POST /api/v2/simulate-evm` for EVM transaction simulation
+- **SDK: events() method** — SSE stream for real-time audit events via `BastionEventStream`
+- **Web2 API firewall crate** (`crates/web2-firewall`) — proxy engine, policy rules, OpenAPI parser, provider adapters (OpenAI, Stripe, Slack, GitHub)
+- **Web2 SDK** (`@bastion-agentique/web2-sdk` v0.1.0) — BastionWeb2Client with TDD (9 tests)
+- **Web2 agent skill** — `web2-api-firewall-administrator` for proxy policy configuration
+- **docs/WEB2_EXPANSION_PLAN.md** — phased rollout, pricing, GTM, repo positioning rule
+- **SDK tests** — jest infrastructure, 6 tests for BastionSidecar
+- **EVM types** — EvmTxParams, EvmSimulateRequest, EvmSimulateResponse, SseEvent
+
+### Changed
+- **SDK: extracted BastionSidecar** to `sidecar.ts` for clean test isolation
+- **AGENTS.md** — added Web2 stack, web2-firewall crate, updated architecture diagram
+- **SPEC.md** — rewritten for current capabilities (blockchain + Web2 + SIEM)
+- **ARCHITECTURE.md** — added Web2 API proxy flow, SIEM ingestion flow, complete repo structure
+- **README.md** — added Web2 SDK badge, alpha disclaimer, updated tech stack and features
+- **Landing page** — added Web2 proxy mention and alpha disclaimer
+- **/integrate page** — added Web2 SDK install block, Proxy card, alpha disclaimer
+- **All .md files** — added alpha testing disclaimer
+
+### Fixed
+- **Issue #10** — `updatePolicy` confirmed using `POST /policy/full`, missing methods added
+
 ## [0.3.0] — 2026-06-04
 
 ### Added

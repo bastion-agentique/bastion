@@ -36,13 +36,16 @@ cd apps/web && pnpm build && cd ../..
 
 ```
 bastion/
-├── crates/core/       → cargo test -p bastion-core
-├── crates/sidecar/    → cargo test -p bastion-sidecar
-├── crates/solana/     → cd crates/solana && anchor test
-├── evm/               → cd evm && forge test
-├── midnight/          → see midnight/README.md
-├── apps/web/          → cd apps/web && pnpm dev
-└── packages/sdk/      → cd packages/sdk && pnpm build
+├── crates/core/          → cargo test -p bastion-core
+├── crates/sidecar/       → cargo test -p bastion-sidecar
+├── crates/web2-firewall/ → cargo test -p bastion-web2-firewall
+├── crates/correlation/   → cargo test -p bastion-correlation
+├── crates/solana/        → cd crates/solana && anchor test
+├── evm/                  → cd evm && forge test
+├── midnight/             → see midnight/README.md
+├── apps/web/             → cd apps/web && pnpm dev
+├── packages/sdk/         → cd packages/sdk && pnpm build && pnpm test
+└── packages/web2-sdk/    → cd packages/web2-sdk && pnpm build && pnpm test
 ```
 
 ## Development Workflow
@@ -59,6 +62,7 @@ cargo test
 # Run specific crate tests
 cargo test -p bastion-core
 cargo test -p bastion-sidecar
+cargo test -p bastion-web2-firewall
 
 # Format
 cargo fmt
@@ -126,13 +130,26 @@ cd packages/sdk
 # Build
 pnpm build
 
-# Run tests
+# Run tests (jest)
+pnpm test
+```
+
+### Web2 SDK (packages/web2-sdk/)
+
+```bash
+cd packages/web2-sdk
+
+# Build
+pnpm build
+
+# Run tests (jest)
 pnpm test
 ```
 
 ## Testing Guidelines
 
 - **Unit tests** go in the same file as the code (`#[cfg(test)] mod tests` for Rust)
+- **TypeScript tests** use jest with ts-jest, co-located in `src/*.test.ts`
 - **Integration tests** go in `tests/` directory at crate root
 - **Policy tests** should cover: pass, block, HITL trigger for each rule type
 - **EVM tests** should use Foundry's cheatcodes for state manipulation
@@ -151,19 +168,23 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ## Pull Request Checklist
 
-- [ ] All tests pass (`cargo test && cd evm && forge test`)
+- [ ] All Rust tests pass (`cargo test -p bastion-core -p bastion-web2-firewall`)
+- [ ] All TypeScript tests pass (`pnpm -r test`)
+- [ ] All builds succeed (`pnpm -r build`)
 - [ ] Code is formatted (`cargo fmt && forge fmt`)
-- [ ] No new clippy warnings (`cargo clippy -- -D warnings`)
+- [ ] No new clippy warnings (`cargo clippy -p bastion-core -p bastion-sidecar -p bastion-web2-firewall -- -D warnings`)
 - [ ] PR targets `main` branch
 - [ ] Commit messages follow conventional commits
+- [ ] Commits are GPG signed
 
 ## CI
 
-GitHub Actions runs on every push and PR:
+GitHub Actions runs on every push and PR (see `.github/workflows/ci.yml`):
 
-- Rust: `cargo fmt --check`, `cargo clippy`, `cargo test`
-- EVM: `forge build`, `forge test`
-- Dashboard: `pnpm build`
+- Rust: `cargo fmt --check`, `cargo clippy`, `cargo test` (core, sidecar, web2-firewall, correlation, solana)
+- EVM: `forge build`, `forge test -vvv`
+- Dashboard: `pnpm install`, `pnpm --filter bastion-dashboard build`
+- SDK: `pnpm install`, `pnpm --filter @bastion-agentique/sdk build`
 
 ## Security
 
@@ -172,4 +193,4 @@ Email the maintainers directly. See [SECURITY.md](../SECURITY.md) for details.
 
 ## License
 
-MIT — see the [LICENSE](../LICENSE) file (forthcoming).
+Apache-2.0 — see the [LICENSE](../LICENSE) file.
