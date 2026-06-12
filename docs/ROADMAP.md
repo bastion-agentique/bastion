@@ -16,7 +16,7 @@
 
 ## Week of 2026-06-11 → 2026-06-18
 
-### Day 1–2: Remove Staking (Solana Program Cleanup)
+### Day 1–2: Remove Staking (Solana Program Cleanup) — DONE
 
 **Goal:** Trim the on-chain program to the minimum viable audit surface.
 
@@ -35,7 +35,17 @@
 
 ---
 
-### Day 2–3: Quasar Migration (Solana Program)
+### Day 2–3: Quasar Migration (Solana Program) — BLOCKED
+
+**Status:** `quasar-lang` is published on crates.io at v0.0.0 (published 2026-03-20 by @deanmlittle, 2,032 lines of Rust). The crate resolves but is a pre-release skeleton. Actual migration is blocked until quasar-lang reaches a stable release with:
+- `#[derive(Accounts)]` support
+- `Ctx<T>` context types
+- `#[instruction(discriminator = N)]` discriminators
+- `emit_cpi!` event macro
+- `#![no_std]` compatibility
+- Solana BPF target support
+
+**When ready, follow these steps to migrate from Anchor 0.30 to Quasar.**
 
 **Goal:** Port `bastion-audit` from Anchor 0.30 to Quasar, with a smaller binary.
 
