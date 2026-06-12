@@ -35,19 +35,22 @@
 
 ---
 
-### Day 2–3: Quasar Migration (Solana Program) — BLOCKED
+### Day 2–3: Quasar Migration (Solana Program) — BLOCKED on crate maturity
 
-**Status:** `quasar-lang` is published on crates.io at v0.0.0 (published 2026-03-20 by @deanmlittle, 2,032 lines of Rust). The crate resolves but is a pre-release skeleton. Actual migration is blocked until quasar-lang reaches a stable release with:
-- `#[derive(Accounts)]` support
-- `Ctx<T>` context types
-- `#[instruction(discriminator = N)]` discriminators
-- `emit_cpi!` event macro
-- `#![no_std]` compatibility
-- Solana BPF target support
+**Status:** Attempted migration to `quasar-lang` v0.0.0 on 2026-06-12. The crate compiles (`#[derive(Accounts)]`, `#[program]`, `Ctx<T>`, `#![no_std]` all resolve) but the published version is missing features documented on quasar-lang.com:
 
-**When ready, follow these steps to migrate from Anchor 0.30 to Quasar.**
+| Feature (docs) | v0.0.0 status |
+|---|---|
+| `quasar_lang::String<N>` | Not exported |
+| `quasar_lang::Vec<T, N>` | Not exported |
+| `Clock::get()` via `Sysvar` | Trait not in scope |
+| Seed field shorthand (`agent` vs `agent.key().as_ref()`) | Partial |
+| `Option<[u8; 32]>: WriteBytes` | Not implemented |
+| PodU64/PodBool ergonomic `.into()` | Manual `.into()` needed everywhere |
 
-**Goal:** Port `bastion-audit` from Anchor 0.30 to Quasar, with a smaller binary.
+**When ready:** The migration guide at `quasar-lang.com/docs/getting-started/migrating-from-anchor` is production-quality and the API is well-designed. The program was fully ported (see git history) and will compile once the crate reaches parity with the docs.
+
+**Estimated savings:** Binary size ~50-70% smaller, deploy cost ~2 SOL → ~0.8-1 SOL.
 
 **Steps:**
 
