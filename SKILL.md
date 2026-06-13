@@ -56,10 +56,10 @@ pnpm --filter @bastion/mcp-server dev:http
 ```
 
 Endpoints:
-- `GET /mcp/sse` — SSE connection
-- `POST /mcp/messages` — MCP JSON-RPC messages
-- `GET /mcp/health` — Health check
-- `GET /mcp/pricing` — Tool pricing + free tier info
+- `GET /mcp/sse`, SSE connection
+- `POST /mcp/messages`, MCP JSON-RPC messages
+- `GET /mcp/health`, Health check
+- `GET /mcp/pricing`, Tool pricing + free tier info
 
 For stdio transport (Claude Desktop / Cursor / Codex):
 ```bash
@@ -80,7 +80,7 @@ Paid tools require Solana SOL transfer to treasury before execution:
 
 **Flow:** Transfer SOL → `E9PsSz9XWgNR3TmSC57NHC2ZxJzF5NmbrWsDKEe7A7yM`, then retry with `X-Payment: <tx_hash>, X-Payment-Chain: solana` headers.
 
-**pay.sh:** `pay --sandbox server start packages/mcp-server/bastion-provider.yml` — no manual headers needed.
+**pay.sh:** `pay --sandbox server start packages/mcp-server/bastion-provider.yml`, no manual headers needed.
 
 ## CORS
 
@@ -120,7 +120,7 @@ Then call `POST /override` with:
 }
 ```
 
-## Agent Self-Registration (NEW — v0.3.0)
+## Agent Self-Registration (NEW, v0.3.0)
 
 **An AI coding agent MUST register itself with Bastion before sending transactions.** This gives you a DID, tracks your audit trail, and enables delegation.
 
@@ -186,7 +186,7 @@ curl -s "https://bastion-agentique.fly.dev/agents/did:bastion:solana:PARENT_DID/
 
 ### Auth Notes
 
-- `BASTION_API_KEY` is optional — if not set, all endpoints are open
+- `BASTION_API_KEY` is optional, if not set, all endpoints are open
 - Mutating endpoints (`POST /agents`, `POST /override`, `/policy/*`, `/circuit-breaker/*`) require the header when `BASTION_API_KEY` is configured
 - Read-only endpoints (`GET /agents`, `GET /health`, `GET /logs`) are always open
 - The correct header is `X-Api-Key` (not `Authorization`)

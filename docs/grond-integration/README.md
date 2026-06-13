@@ -42,7 +42,7 @@ Set the environment variable:
 export GROND_API_URL=http://localhost:8000
 ```
 
-Start Bastion — it will auto-detect and enable the GrondOSINT oracle.
+Start Bastion, it will auto-detect and enable the GrondOSINT oracle.
 
 ## Configuration
 

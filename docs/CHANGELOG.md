@@ -2,40 +2,40 @@
 
 All notable changes to Bastion will be documented in this file.
 
-## [0.5.2] — 2026-06-11
+## [0.5.2], 2026-06-11
 
 ### Added
-- **SDK: simulateEvm() method** — `POST /api/v2/simulate-evm` for EVM transaction simulation
-- **SDK: events() method** — SSE stream for real-time audit events via `BastionEventStream`
-- **Web2 API firewall crate** (`crates/web2-firewall`) — proxy engine, policy rules, OpenAPI parser, provider adapters (OpenAI, Stripe, Slack, GitHub)
-- **Web2 SDK** (`@bastion-agentique/web2-sdk` v0.1.0) — BastionWeb2Client with TDD (9 tests)
-- **Web2 agent skill** — `web2-api-firewall-administrator` for proxy policy configuration
-- **docs/WEB2_EXPANSION_PLAN.md** — phased rollout, pricing, GTM, repo positioning rule
-- **SDK tests** — jest infrastructure, 6 tests for BastionSidecar
-- **EVM types** — EvmTxParams, EvmSimulateRequest, EvmSimulateResponse, SseEvent
+- **SDK: simulateEvm() method**, `POST /api/v2/simulate-evm` for EVM transaction simulation
+- **SDK: events() method**, SSE stream for real-time audit events via `BastionEventStream`
+- **Web2 API firewall crate** (`crates/web2-firewall`), proxy engine, policy rules, OpenAPI parser, provider adapters (OpenAI, Stripe, Slack, GitHub)
+- **Web2 SDK** (`@bastion-agentique/web2-sdk` v0.1.0), BastionWeb2Client with TDD (9 tests)
+- **Web2 agent skill**, `web2-api-firewall-administrator` for proxy policy configuration
+- **docs/WEB2_EXPANSION_PLAN.md**, phased rollout, pricing, GTM, repo positioning rule
+- **SDK tests**, jest infrastructure, 6 tests for BastionSidecar
+- **EVM types**, EvmTxParams, EvmSimulateRequest, EvmSimulateResponse, SseEvent
 
 ### Changed
 - **SDK: extracted BastionSidecar** to `sidecar.ts` for clean test isolation
-- **AGENTS.md** — added Web2 stack, web2-firewall crate, updated architecture diagram
-- **SPEC.md** — rewritten for current capabilities (blockchain + Web2 + SIEM)
-- **ARCHITECTURE.md** — added Web2 API proxy flow, SIEM ingestion flow, complete repo structure
-- **README.md** — added Web2 SDK badge, alpha disclaimer, updated tech stack and features
-- **Landing page** — added Web2 proxy mention and alpha disclaimer
-- **/integrate page** — added Web2 SDK install block, Proxy card, alpha disclaimer
-- **All .md files** — added alpha testing disclaimer
+- **AGENTS.md**, added Web2 stack, web2-firewall crate, updated architecture diagram
+- **SPEC.md**, rewritten for current capabilities (blockchain + Web2 + SIEM)
+- **ARCHITECTURE.md**, added Web2 API proxy flow, SIEM ingestion flow, complete repo structure
+- **README.md**, added Web2 SDK badge, alpha disclaimer, updated tech stack and features
+- **Landing page**, added Web2 proxy mention and alpha disclaimer
+- **/integrate page**, added Web2 SDK install block, Proxy card, alpha disclaimer
+- **All .md files**, added alpha testing disclaimer
 
 ### Fixed
-- **Issue #10** — `updatePolicy` confirmed using `POST /policy/full`, missing methods added
+- **Issue #10**, `updatePolicy` confirmed using `POST /policy/full`, missing methods added
 
-## [0.3.0] — 2026-06-04
+## [0.3.0], 2026-06-04
 
 ### Added
 - **Agent delegation system**: Parent agents spawn sub-agents with delegated authority
 - `POST /agents/:did/delegate` endpoint for spawning sub-agents
 - `DELETE /agents/:did/delegation/:child_did` endpoint for revoking delegations
-- `GET /agents/:did/children` — list sub-agents of a parent
-- `GET /agents/:did/tree` — full delegation tree
-- AgentList page `/agents` — browse all registered agents with filters
+- `GET /agents/:did/children`, list sub-agents of a parent
+- `GET /agents/:did/tree`, full delegation tree
+- AgentList page `/agents`, browse all registered agents with filters
 - AgentDetail delegation UI: parent link, sub-agents list, budget progress, revoke button
 - Dashboard hierarchy mode: parent/child clustering, delegation depth indicator
 - SDK: `delegateAgent()`, `revokeDelegation()`, `fetchAgentTree()`, `fetchAgentChildren()`
@@ -61,7 +61,7 @@ All notable changes to Bastion will be documented in this file.
 
 ---
 
-## [0.2.0] — 2026-06-03
+## [0.2.0], 2026-06-03
 
 ### Added
 - Security audit remediation across entire monorepo
@@ -99,7 +99,7 @@ All notable changes to Bastion will be documented in this file.
 
 ---
 
-## [0.1.0] — 2026-05-01
+## [0.1.0], 2026-05-01
 
 ### Added
 - Initial release: Bastion sidecar with Axum HTTP server
@@ -108,7 +108,7 @@ All notable changes to Bastion will be documented in this file.
 - On-chain audit program (Anchor, Solana devnet)
 - TypeScript SDK (`@bastion-agentique/sdk`)
 - React dashboard with agent fleet visualizer
-- EVM contracts (Solidity, Foundry) — under development
+- EVM contracts (Solidity, Foundry), under development
 - Arcium MXE confidentiality engine (MPC circuits)
 - MCP server with 15 tools + 3 prompts
 - SIEM expansion: correlation engine, ingestion, case management, DID resolver

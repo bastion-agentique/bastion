@@ -1,8 +1,8 @@
-# AGENTS.md — Bastion
+# AGENTS.md, Bastion
 
 > **Trust your Agent, but Verify every Transaction.**
 >
-> Bastion is a multichain AI agent firewall — security middleware that intercepts, simulates, and validates blockchain transactions from autonomous AI agents before they reach the network.
+> Bastion is a multichain AI agent firewall, security middleware that intercepts, simulates, and validates blockchain transactions from autonomous AI agents before they reach the network.
 >
 > **If you are an AI coding agent reading this:** see [`SKILL.md`](SKILL.md) for self-registration and integration instructions. You can register yourself with a running Bastion instance via `POST /agents` to receive a W3C DID, trackable identity, and delegation capabilities.
 >
@@ -199,17 +199,17 @@ Agent Operator (policy config, HITL review)
 
 ### How components relate
 
-1. **`crates/core`** — Chain-agnostic policy engine. Defines `NormalizedTransaction`, `FirewallDecision` (Pass/Block/PendingHITL), `PolicyEvaluator<O: RiskOracle>`, `PolicyRule`, `PolicySet`, `AuditRecord`, and `RiskOracle` trait.
+1. **`crates/core`**, Chain-agnostic policy engine. Defines `NormalizedTransaction`, `FirewallDecision` (Pass/Block/PendingHITL), `PolicyEvaluator<O: RiskOracle>`, `PolicyRule`, `PolicySet`, `AuditRecord`, and `RiskOracle` trait.
 
-2. **`crates/sidecar`** — Axum HTTP server (port 3000) that runs the policy evaluator. Exposes REST API for simulation, audit logging, policy management, circuit breaker, and human override. Uses Helius API for Solana simulation, Sled DB for audit logs, GrondOSINT for risk oracle.
+2. **`crates/sidecar`**, Axum HTTP server (port 3000) that runs the policy evaluator. Exposes REST API for simulation, audit logging, policy management, circuit breaker, and human override. Uses Helius API for Solana simulation, Sled DB for audit logs, GrondOSINT for risk oracle.
 
-3. **`crates/solana/programs/bastion-audit`** — Anchor program deployed on Solana devnet. Program ID: `A29V5MUVs73y7XBHHxPpPcAW7h4gGHupbDdwYSwA2n9D`. Instructions: `initialize`, `logAudit`, `registerAgent`, `updateAgentReputation`, `setPolicy`, `emergencyPause`, `emergencyResume`.
+3. **`crates/solana/programs/bastion-audit`**, Anchor program deployed on Solana devnet. Program ID: `A29V5MUVs73y7XBHHxPpPcAW7h4gGHupbDdwYSwA2n9D`. Instructions: `initialize`, `logAudit`, `registerAgent`, `updateAgentReputation`, `setPolicy`, `emergencyPause`, `emergencyResume`.
 
-4. **`evm/`** — 6 Solidity contracts implementing ERC-7579 validator module, policy engine, immutable EIP-712 audit trail, agent registry, ERC-8004 identity, and sidecar oracle.
+4. **`evm/`**, 6 Solidity contracts implementing ERC-7579 validator module, policy engine, immutable EIP-712 audit trail, agent registry, ERC-8004 identity, and sidecar oracle.
 
-5. **`apps/web/`** — React dashboard with Solana (wallet-adapter) and EVM (RainbowKit) wallet connections. Shows audit logs, policy settings, stats. Supports chain switching between Solana and Celo.
+5. **`apps/web/`**, React dashboard with Solana (wallet-adapter) and EVM (RainbowKit) wallet connections. Shows audit logs, policy settings, stats. Supports chain switching between Solana and Celo.
 
-6. **`packages/sdk/`** — TypeScript SDK (`@bastion-agentique/sdk`) wrapping the Solana Anchor program. Exposes `BastionClient` with typed methods for all on-chain operations.
+6. **`packages/sdk/`**, TypeScript SDK (`@bastion-agentique/sdk`) wrapping the Solana Anchor program. Exposes `BastionClient` with typed methods for all on-chain operations.
 
 ---
 
@@ -217,13 +217,13 @@ Agent Operator (policy config, HITL review)
 
 ### Rust Sidecar
 
-- **Entry:** `crates/sidecar/src/main.rs` — binds `0.0.0.0:3000`
-- **Routes:** `crates/sidecar/src/lib.rs` — all HTTP handlers
-- **Policy engine:** `crates/core/` — chain-agnostic evaluation logic
-- **Simulation:** `crates/sidecar/src/simulation.rs` — Helius API integration
-- **Audit DB:** `crates/sidecar/src/audit.rs` — Sled-based log store
-- **Risk oracle:** `crates/sidecar/src/grond_oracle.rs` — GrondOSINT integration
-- **On-chain client:** `crates/sidecar/src/program_client.rs` — Anchor program RPC
+- **Entry:** `crates/sidecar/src/main.rs`, binds `0.0.0.0:3000`
+- **Routes:** `crates/sidecar/src/lib.rs`, all HTTP handlers
+- **Policy engine:** `crates/core/`, chain-agnostic evaluation logic
+- **Simulation:** `crates/sidecar/src/simulation.rs`, Helius API integration
+- **Audit DB:** `crates/sidecar/src/audit.rs`, Sled-based log store
+- **Risk oracle:** `crates/sidecar/src/grond_oracle.rs`, GrondOSINT integration
+- **On-chain client:** `crates/sidecar/src/program_client.rs`, Anchor program RPC
 
 ### Solana On-Chain
 
@@ -233,27 +233,27 @@ Agent Operator (policy config, HITL review)
 
 ### EVM Contracts
 
-- **Firewall:** `evm/src/BastionFirewall.sol` — ERC-7579 validator, gates UserOperations
-- **Policy:** `evm/src/BastionPolicy.sol` — Per-agent rules (allowlists, limits, cooldowns)
-- **Audit:** `evm/src/BastionAudit.sol` — EIP-712 signed audit entries
-- **Registry:** `evm/src/BastionRegistry.sol` — Agent + target directory
-- **ERC-8004:** `evm/src/BastionERC8004Registry.sol` — Agent identity (ERC-721 + EIP-712)
-- **Sidecar:** `evm/src/BastionSidecar.sol` — Oracle request/fulfill pattern
+- **Firewall:** `evm/src/BastionFirewall.sol`, ERC-7579 validator, gates UserOperations
+- **Policy:** `evm/src/BastionPolicy.sol`, Per-agent rules (allowlists, limits, cooldowns)
+- **Audit:** `evm/src/BastionAudit.sol`, EIP-712 signed audit entries
+- **Registry:** `evm/src/BastionRegistry.sol`, Agent + target directory
+- **ERC-8004:** `evm/src/BastionERC8004Registry.sol`, Agent identity (ERC-721 + EIP-712)
+- **Sidecar:** `evm/src/BastionSidecar.sol`, Oracle request/fulfill pattern
 - **Deploy:** `evm/script/DeployBastion.s.sol`
 
 ### Web Dashboard
 
 - **Entry:** `apps/web/src/main.tsx`
-- **App shell:** `apps/web/src/App.tsx` — providers, wallet setup, routing
+- **App shell:** `apps/web/src/App.tsx`, providers, wallet setup, routing
 - **Pages:** `apps/web/src/pages/Landing.tsx`, `Dashboard.tsx`, `integrate/Integrate.tsx`
 - **Solana hooks:** `apps/web/src/hooks/useBastionProgram.ts`
 - **EVM hooks:** `apps/web/src/hooks/useBastionEVM.ts` (currently stubs)
-- **Chain context:** `apps/web/src/context/ChainContext.tsx` — Solana/Celo switching
+- **Chain context:** `apps/web/src/context/ChainContext.tsx`, Solana/Celo switching
 - **Theme:** `apps/web/src/context/ThemeContext.tsx`
 
 ### TypeScript SDK
 
-- **Entry:** `packages/sdk/src/index.ts` — `BastionClient` class
+- **Entry:** `packages/sdk/src/index.ts`, `BastionClient` class
 - **Types:** `packages/sdk/src/types.ts`
 - **IDL:** `packages/sdk/src/idl.json`
 
@@ -374,7 +374,7 @@ Triggers on push/PR to `main` (ignoring `.md` and `docs/`).
 'function getEntry(uint256 id) returns ((address agent, string reason))'
 ```
 
-### Don't use `@solana/wallet-adapter-wallets` — use individual adapters
+### Don't use `@solana/wallet-adapter-wallets`, use individual adapters
 
 The monolithic `@solana/wallet-adapter-wallets` package pulls in ~40+ adapters including `@coinbase/wallet-sdk` which breaks the Vite build with buffer polyfill issues. Use individual adapter packages instead:
 
@@ -421,8 +421,8 @@ pnpm --filter bastion-dashboard build
 
 ### Branch Strategy
 
-- **`main`** — production branch, deploys to Netlify/Vercel. All merges must pass CI.
-- **`run`** — development/experimental branch.
+- **`main`**, production branch, deploys to Netlify/Vercel. All merges must pass CI.
+- **`run`**, development/experimental branch.
 
 ### Pre-commit Checklist
 
@@ -469,7 +469,7 @@ The dashboard supports:
 - **Solana:** Phantom, Solflare, Backpack wallets (via `@solana/wallet-adapter`). Connected through devnet by default.
 - **EVM (Celo):** MetaMask, WalletConnect (via RainbowKit/wagmi). Custom Celo chain config at `apps/web/src/App.tsx:26-37`.
 
-Chain switching is handled by `ChainContext` — toggles between Solana and Celo providers.
+Chain switching is handled by `ChainContext`, toggles between Solana and Celo providers.
 
 ---
 

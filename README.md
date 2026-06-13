@@ -90,7 +90,7 @@ Bastion intercepts transaction requests, simulates them via Helius Simulation AP
 | x402 Payments | Pay-per-call pricing with Solana SOL transfers and free monthly tier |
 | pay.sh Provider | One-command gateway: `pay --sandbox server start bastion-provider.yml` |
 | CORS Support | Browser-native access via SSE with `Access-Control-Allow-Origin: *` |
-| SOL Staking | AgentStake PDA — stake SOL for higher transaction limits via StakeWeighted policy |
+| SOL Staking | AgentStake PDA, stake SOL for higher transaction limits via StakeWeighted policy |
 | Emergency Pause | Circuit breaker for protocol |
 | Web2 API Firewall | In progress. Proxy engine for API calls to OpenAI, Stripe, Slack, GitHub, and AWS. See `@bastion-agentique/web2-sdk` |
 
@@ -98,15 +98,15 @@ Bastion intercepts transaction requests, simulates them via Helius Simulation AP
 
 Bastion consists of nine main components:
 
-1. **Transaction Firewall** — Solana + EVM transaction interception and simulation
-2. **Simulation Core** — Helius API and Celo eth_call for outcome prediction
-3. **Policy Engine** — Static allowlists, simulation checks, BlockInt security rules
-4. **Web2 Proxy Firewall** — HTTP API gateway for AI agent calls to OpenAI, Stripe, Slack, GitHub, AWS
-5. **MCP HTTP Server** — SSE transport proxied via sidecar, 15 security tools for AI agents
-6. **Agent Registry** — W3C DID-based agent identity with hierarchical delegation
-7. **x402 Payment Gateway** — Pay-per-call pricing with Solana SOL transfers
-8. **GrondOSINT Oracle** — Address and API endpoint risk scoring via Daemon BlockInt
-9. **On-Chain Audit Program** — Anchor program for immutable records on Solana
+1. **Transaction Firewall**, Solana + EVM transaction interception and simulation
+2. **Simulation Core**, Helius API and Celo eth_call for outcome prediction
+3. **Policy Engine**, Static allowlists, simulation checks, BlockInt security rules
+4. **Web2 Proxy Firewall**, HTTP API gateway for AI agent calls to OpenAI, Stripe, Slack, GitHub, AWS
+5. **MCP HTTP Server**, SSE transport proxied via sidecar, 15 security tools for AI agents
+6. **Agent Registry**, W3C DID-based agent identity with hierarchical delegation
+7. **x402 Payment Gateway**, Pay-per-call pricing with Solana SOL transfers
+8. **GrondOSINT Oracle**, Address and API endpoint risk scoring via Daemon BlockInt
+9. **On-Chain Audit Program**, Anchor program for immutable records on Solana
 
 ## Quick Start
 
@@ -148,17 +148,17 @@ pnpm --filter bastion-dashboard dev
 MCP is now **bundled in Docker** and proxied through the sidecar at `/mcp/*`. No separate process needed in production.
 
 ```bash
-# Production (via fly.dev proxy — bundled in Docker)
+# Production (via fly.dev proxy, bundled in Docker)
 # SSE:   https://bastion-agentique.fly.dev/mcp/sse
 # POST:  https://bastion-agentique.fly.dev/mcp/messages
 # Health: https://bastion-agentique.fly.dev/mcp/health
 # Pricing: https://bastion-agentique.fly.dev/mcp/pricing
 
-# Local development (stdio transport — Claude Desktop / Cursor / Codex)
+# Local development (stdio transport, Claude Desktop / Cursor / Codex)
 BASTION_SIDECAR_URL=http://localhost:3000 \
 pnpm --filter @bastion/mcp-server dev
 
-# Local development (SSE transport — browser agents)
+# Local development (SSE transport, browser agents)
 BASTION_SIDECAR_URL=http://localhost:3000 \
 pnpm --filter @bastion/mcp-server dev:http
 ```
@@ -326,7 +326,7 @@ pnpm --filter bastion-dashboard dev
 
 ## SDK
 
-### @bastion-agentique/sdk — Solana + EVM Chain Firewall
+### @bastion-agentique/sdk, Solana + EVM Chain Firewall
 
 TypeScript SDK for on-chain agent security. [npm → @bastion-agentique/sdk](https://www.npmjs.com/package/@bastion-agentique/sdk)
 
@@ -362,7 +362,7 @@ for await (const event of stream) {
 
 ## Web2 SDK (In Progress)
 
-> **IN PROGRESS — Not production-ready.**
+> **IN PROGRESS, Not production-ready.**
 
 TypeScript SDK for AI agent API call security. Proxy engine inspects every HTTP call before reaching providers.
 
@@ -389,13 +389,13 @@ See [`docs/WEB2_EXPANSION_PLAN.md`](docs/WEB2_EXPANSION_PLAN.md) for the full ro
 
 ## EVM (Ethereum/Celo/Polygon/Base)
 
-> **UNDER ACTIVE DEVELOPMENT — Not production-ready.**
+> **UNDER ACTIVE DEVELOPMENT, Not production-ready.**
 
 Solidity contracts in `evm/src/` implementing the Bastion security stack for EVM chains:
 
 | Contract | Purpose |
 |----------|---------|
-| `BastionFirewall.sol` | ERC-7579 validator module — gates UserOperations |
+| `BastionFirewall.sol` | ERC-7579 validator module, gates UserOperations |
 | `BastionPolicy.sol` | Per-agent policy rules (allowlists, limits, cooldowns) |
 | `BastionAudit.sol` | EIP-712 signed immutable audit trail |
 | `BastionRegistry.sol` | Agent + target address directory |
@@ -438,7 +438,7 @@ See [`evm/README.md`](evm/README.md) for deployment details.
 
 ## Acknowledgments
 
-- **Daemon Blockint Technologies** ([github.com/daemon-blockint-tech/daemon](https://github.com/daemon-blockint-tech/daemon)) — Powers Bastion's entire intelligence layer. GrondOSINT provides the threat oracle, the Blockint rules engine detects flash loans, high slippage, authority changes, and risk labeled addresses, and the 48 agent skills ecosystem covers blockchain forensics, compliance workflows, and DeFi security auditing. Thank you to the Daemon team for the intelligence pipeline that makes Bastion possible.
+- **Daemon Blockint Technologies** ([github.com/daemon-blockint-tech/daemon](https://github.com/daemon-blockint-tech/daemon)), Powers Bastion's entire intelligence layer. GrondOSINT provides the threat oracle, the Blockint rules engine detects flash loans, high slippage, authority changes, and risk labeled addresses, and the 48 agent skills ecosystem covers blockchain forensics, compliance workflows, and DeFi security auditing. Thank you to the Daemon team for the intelligence pipeline that makes Bastion possible.
 
 ## License
 

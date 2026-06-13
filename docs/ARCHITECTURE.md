@@ -43,7 +43,7 @@ Bastion Agentique is security middleware for autonomous AI agents operating on b
 
 ## Component Architecture
 
-### crates/core — Chain-Agnostic Policy Engine
+### crates/core, Chain-Agnostic Policy Engine
 
 The shared foundation. Every chain-specific adapter normalizes its native transaction format into `NormalizedTransaction` and passes it through `PolicyEvaluator`. The evaluator returns a `FirewallDecision`: `Pass`, `Block { reason, policy_id }`, or `PendingHITL { approval_id, reason }`.
 
@@ -59,45 +59,45 @@ The shared foundation. Every chain-specific adapter normalizes its native transa
 | `RiskOracle` | Trait for address risk scoring (Webacy is first impl) |
 | `AuditRecord` | Chain-agnostic audit event structure |
 
-### crates/sidecar — Off-Chain Evaluator Service
+### crates/sidecar, Off-Chain Evaluator Service
 
 An Axum HTTP server that exposes the policy evaluator as a REST API. This is the bridge that lets non-Rust chain implementations (EVM) access the Rust policy engine. Also serves as the host for Web2 proxy endpoints, MCP reverse proxy, agent registry, case management, DID resolution, and robot telemetry.
 
 **Key endpoints:** `/simulate`, `/api/v2/simulate-evm`, `/api/v2/evaluate`, `/events` (SSE), `/agents`, `/policy`, `/circuit-breaker`, `/cases`, `/ingest`, `/did/resolve`, `/robots/:did/telemetry`, `/token-balances`, `/mcp/*` (reverse proxy).
 
-### crates/web2-firewall — Web2 API Proxy Firewall
+### crates/web2-firewall, Web2 API Proxy Firewall
 
 A new crate providing a proxy engine that evaluates AI agent HTTP API calls against policy rules before forwarding to target providers. Shares the chain-agnostic policy engine trait from bastion-core.
 
 **Key types:**
-- `ApiEvent` — normalized API call (method, URL, headers, body, provider, agent_id, timestamp)
-- `ProxyDecision` — Pass, Block, PendingHITL, LogOnly (maps to FirewallDecision)
-- `ApiPolicyRule` — EndpointAllowlist, EndpointBlocklist, ProviderBudget, RateLimit, ContentInspection, HeaderFilter, CostCap, TimeOfDayRestriction
-- `OpenApiSpec` — parses OpenAPI 3.0 specs, generates auto-configured allowlist rules
-- `ProxyEngine` — evaluates ApiEvents against rules, detects providers from URL patterns
+- `ApiEvent`, normalized API call (method, URL, headers, body, provider, agent_id, timestamp)
+- `ProxyDecision`, Pass, Block, PendingHITL, LogOnly (maps to FirewallDecision)
+- `ApiPolicyRule`, EndpointAllowlist, EndpointBlocklist, ProviderBudget, RateLimit, ContentInspection, HeaderFilter, CostCap, TimeOfDayRestriction
+- `OpenApiSpec`, parses OpenAPI 3.0 specs, generates auto-configured allowlist rules
+- `ProxyEngine`, evaluates ApiEvents against rules, detects providers from URL patterns
 
 **Provider adapters:** OpenAI, Stripe, Slack, GitHub (factory pattern via `ProviderAdapter` trait).
 
-### crates/correlation — SIEM Correlation Engine
+### crates/correlation, SIEM Correlation Engine
 
 Sliding time window event correlation engine. Matches sequences of SecurityEvents against YAML-defined correlation rules. Integrates with GrondOSINT for threat context enrichment and MITRE ATT&CK mapping for Web3 and ICS categories.
 
-### packages/mcp-server — MCP HTTP Server (SSE)
+### packages/mcp-server, MCP HTTP Server (SSE)
 
 TypeScript MCP server on port 3001 bridging AI agents to Bastion sidecar. SSE transport (`GET /mcp/sse` + `POST /mcp/messages`). 15 tools + 3 prompts. x402 payment verification for paid tools via Solana RPC polling. pay.sh provider YAML at `bastion-provider.yml`.
 
-### crates/solana — Anchor On-Chain Program
+### crates/solana, Anchor On-Chain Program
 
 The Solana-native enforcement layer. Deployed as an Anchor program on Solana devnet. Provides:
 
-- `AuditState` — master state: owner, total_audits, allowed/blocked counts, paused flag
-- `AuditEntry` — per-transaction immutable record
-- `Agent` — on-chain agent identity with reputation score
-- `Policy` — on-chain policy state
+- `AuditState`, master state: owner, total_audits, allowed/blocked counts, paused flag
+- `AuditEntry`, per-transaction immutable record
+- `Agent`, on-chain agent identity with reputation score
+- `Policy`, on-chain policy state
 
 **Instructions:** `initialize`, `logAudit`, `registerAgent`, `updateAgentReputation`, `setPolicy`, `emergencyPause`, `emergencyResume`
 
-### evm/ — Solidity Contracts (ERC-7579 Compatible)
+### evm/, Solidity Contracts (ERC-7579 Compatible)
 
 Six contracts deployed via Foundry:
 
@@ -112,7 +112,7 @@ Six contracts deployed via Foundry:
 
 Chain support: Celo, Base, Ethereum mainnet, Polygon. ~54 Foundry tests.
 
-### Arcium MXE — Confidentiality Engine
+### Arcium MXE, Confidentiality Engine
 
 Arcium is the Confidential Supercomputer on Solana, enabling trustless computation over fully confidential data powered by MPC. By using Arcium to handle off-chain cryptographic credentials, Bastion completely bypasses the need for a traditional, vulnerable cross-chain relayer.
 
@@ -120,17 +120,17 @@ Arcium is the Confidential Supercomputer on Solana, enabling trustless computati
 
 Instead of relying on a centralized off-chain server to compute an agent's reputation or evaluate Web2 inputs, Bastion leverages Arcium's Multiparty computation eXecution Environments (MXEs). These MXEs function similarly to virtual machines, providing secure, isolated, encrypted spaces for running complex programs confidentially. The computation runs across Arcium's distributed network using Multi-Party Computation (MPC) protocols, ensuring that no single node ever sees the complete plaintext data. This means threat intelligence rules, the agent's intent, and the Web2 API context remain totally private while being computed.
 
-- **MXEs** — Isolated MPC environments for secure confidential computation
-- **Arcis circuits** — Rust-based MPC circuits for compliance logic
-- **Cerberus protocol** — Dishonest-majority MPC security model
+- **MXEs**, Isolated MPC environments for secure confidential computation
+- **Arcis circuits**, Rust-based MPC circuits for compliance logic
+- **Cerberus protocol**, Dishonest-majority MPC security model
 
 #### Bridging to EVM Chains (Without a Bridge)
 
-Because Arcium requires an underlying blockchain to act as a data availability and state consensus layer, it can be invoked by Solana and then return verifiable outputs to any EVM chain — Base, Celo, Ethereum mainnet, Polygon, Arbitrum. Once the MXE computes the agent's reputation or validates a transaction payload against Bastion's firewall policies, the Arcium nodes collectively generate a cryptographic signature. The agent carries this signature to the target EVM chain. A lightweight Solidity contract on that chain simply verifies the Arcium signature. This turns Arcium into an encrypted I/O device — the heavy lifting and master state stay on Solana, but EVM agents across any supported chain can still prove they have passed Bastion's firewall in real-time.
+Because Arcium requires an underlying blockchain to act as a data availability and state consensus layer, it can be invoked by Solana and then return verifiable outputs to any EVM chain, Base, Celo, Ethereum mainnet, Polygon, Arbitrum. Once the MXE computes the agent's reputation or validates a transaction payload against Bastion's firewall policies, the Arcium nodes collectively generate a cryptographic signature. The agent carries this signature to the target EVM chain. A lightweight Solidity contract on that chain simply verifies the Arcium signature. This turns Arcium into an encrypted I/O device, the heavy lifting and master state stay on Solana, but EVM agents across any supported chain can still prove they have passed Bastion's firewall in real-time.
 
 #### The Security Guarantee
 
-Arcium utilizes a dishonest majority trust model, meaning the system maintains its security even if only one single node in the computation cluster is honest. Relying on a standard relayer means trusting a small multi-sig or centralized infrastructure; relying on Arcium means backing Bastion's multichain expansion with military-grade cryptographic accountability.
+Arcium utilizes a dishonest majority trust model, meaning the system maintains its security even if only one single node in the computation cluster is honest. Relying on a standard relayer means trusting a small multi-sig or centralized infrastructure, relying on Arcium means backing Bastion's multichain expansion with military-grade cryptographic accountability.
 
 ## Data Flow
 
@@ -204,12 +204,12 @@ POST /ingest ──▶ SecurityEvent (crates/core)
 
 Bastion protects against six threat actor classes:
 
-1. **Compromised agent** — LLM manipulated, firewall is last line of defense
-2. **Malicious operator** — on-chain policy lives where operator can't modify it
-3. **Policy bypass** — aggregate behavioral analysis, sliding window counters
-4. **Intent observer** (Arcium MXE) — MPC confidentiality prevents strategy extraction
-5. **Cross-chain correlator** (Base spoke) — Arcium signature verification, randomized delays
-6. **Governance attacker** — time-locked multisig policy upgrades
+1. **Compromised agent**, LLM manipulated, firewall is last line of defense
+2. **Malicious operator**, on-chain policy lives where operator can't modify it
+3. **Policy bypass**, aggregate behavioral analysis, sliding window counters
+4. **Intent observer** (Arcium MXE), MPC confidentiality prevents strategy extraction
+5. **Cross-chain correlator** (Base spoke), Arcium signature verification, randomized delays
+6. **Governance attacker**, time-locked multisig policy upgrades
 
 For the full threat model, see `docs/THREAT_MODEL.md` (forthcoming).
 
@@ -217,10 +217,10 @@ For the full threat model, see `docs/THREAT_MODEL.md` (forthcoming).
 
 Bastion achieves cross-chain policy coherence through:
 
-- **NormalizedTransaction** — single canonical format across all chains
-- **PolicyEvaluator** — single evaluation logic, four chain adapters
-- **crates/sidecar** — HTTP bridge for non-Rust chains to access the Rust evaluator
-- **ERC-8004** — canonical agent identity anchor across chains (forthcoming)
+- **NormalizedTransaction**, single canonical format across all chains
+- **PolicyEvaluator**, single evaluation logic, four chain adapters
+- **crates/sidecar**, HTTP bridge for non-Rust chains to access the Rust evaluator
+- **ERC-8004**, canonical agent identity anchor across chains (forthcoming)
 
 ## Repository Structure
 
@@ -266,7 +266,7 @@ bastion/
 
 ## Agent Delegation System
 
-Bastion supports hierarchical agent delegation — parent agents spawn sub-agents with delegated authority.
+Bastion supports hierarchical agent delegation, parent agents spawn sub-agents with delegated authority.
 
 ### Delegation Flow
 

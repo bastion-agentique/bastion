@@ -1,4 +1,4 @@
-# Integrate Bastion — SDK & API
+# Integrate Bastion, SDK & API
 
 Bastion provides a TypeScript SDK and REST API for integrating the
 AI agent firewall into your application.

@@ -4,11 +4,11 @@
 
 ## Overview
 
-Arcium is the Confidential Supercomputer on Solana — enabling trustless computation over fully confidential data powered by MPC. Integrating Arcium with Bastion enables:
+Arcium is the Confidential Supercomputer on Solana, enabling trustless computation over fully confidential data powered by MPC. Integrating Arcium with Bastion enables:
 
-1. **Confidential policy evaluation** — agents never see the policy rules they're being evaluated against
-2. **Private agent identity** — ZK proofs of authorization without revealing which agent
-3. **Sealed audit entries** — on-chain audit trail that's verifiable but only readable by authorized parties
+1. **Confidential policy evaluation**, agents never see the policy rules they're being evaluated against
+2. **Private agent identity**, ZK proofs of authorization without revealing which agent
+3. **Sealed audit entries**, on-chain audit trail that's verifiable but only readable by authorized parties
 
 ## Architecture
 
@@ -24,7 +24,7 @@ Agent → Sidecar → Arcium MPC Circuit → FirewallDecision
 
 | Bastion Component | Arcium Feature | Benefit |
 |---|---|---|
-| **Policy evaluation** | Arcis circuit | Policy rules are encrypted; agents only see the binary allow/block decision |
+| **Policy evaluation** | Arcis circuit | Policy rules are encrypted, agents only see the binary allow/block decision |
 | **Agent identity** | X25519 key exchange | Agent proves authorization with Rescue cipher encryption |
 | **Multi-agent operations** | Secret sharing | Fleet coordinates without revealing individual positions |
 | **Audit trail** | Sealed computation | Audit entries are verifiable but only readable by authorized parties |
@@ -65,7 +65,7 @@ pub struct ConfidentialPolicy {
     pub allowed_destinations: Shared<Vec<[u8; 32]>>,
 }
 
-/// Evaluate a transaction against a policy — confidentially.
+/// Evaluate a transaction against a policy, confidentially.
 /// Returns 0 (Pass) or 1 (Block).
 pub fn evaluate_confidential(
     tx: ConfidentialTx,
