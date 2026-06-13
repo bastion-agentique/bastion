@@ -38,6 +38,14 @@ cd bastion && cargo build --release
 - **pay.sh Provider**: One-command gateway with automatic payment handling.
 - **Auth: pay.sh + x402.** pay.sh pre-verifies payment before proxying to sidecar. x402 on MCP server handles tool payment. Sidecar REST API is open.
 
+## Skills Ecosystem
+
+Bastion integrates with these agent skill packages:
+
+- **Arcium Docs** (`arcium-docs`): MXE (Multi-party Execution) confidential computing on Solana. Covers threshold encryption, MPC key management, and encrypted on-chain state for privacy-preserving agent transactions.
+- **Base Docs** (`base-docs`): Base L2 (EVM hub-and-spoke). Covers cross-chain settlement, bridging, and EVM-compatible smart contract deployment for multi-chain agent workflows.
+- **Solana Agent Skills** (`solana-agent-skills`): Foundation-maintained Solana skills for wallet management, transaction building, program interaction, and on-chain state queries.
+
 ## Staking (AgentStake PDA)
 
 Start the MCP HTTP server for browser-native agent access:

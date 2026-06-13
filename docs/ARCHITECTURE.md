@@ -1,6 +1,6 @@
 # Bastion Architecture
 
-Bastion Agentique is security middleware for autonomous AI agents operating on blockchain infrastructure and Web2 API ecosystems. It provides a transaction firewall, a Web2 API proxy firewall, a programmable policy engine, and an immutable audit layer deployed across Solana, EVM chains, and Midnight Network.
+Bastion Agentique is security middleware for autonomous AI agents operating on blockchain infrastructure and Web2 API ecosystems. It provides a transaction firewall, a Web2 API proxy firewall, a programmable policy engine, and an immutable audit layer deployed across Solana, EVM chains, and Base (EVM hub-and-spoke).
 
 > Alpha software. Bastion is in active development and not yet production hardened. Use with caution.
 
@@ -31,8 +31,8 @@ Bastion Agentique is security middleware for autonomous AI agents operating on b
 │    ┌────┴──────────────────────────┐                             │
 │    ▼                               ▼                             │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐                       │
-│  │ Solana   │  │   EVM    │  │ Midnight │                       │
-│  │ (Anchor) │  │(Solidity)│  │ (Compact)│                       │
+│  │ Solana   │  │   EVM    │  │  Arcium  │                       │
+│  │ (Anchor) │  │(Solidity)│  │  (MXEs)  │                       │
 │  └──────────┘  └──────────┘  └──────────┘                       │
 │                                                                  │
 │  ┌───────────────────────────────────────────────┐              │
@@ -61,7 +61,7 @@ The shared foundation. Every chain-specific adapter normalizes its native transa
 
 ### crates/sidecar — Off-Chain Evaluator Service
 
-An Axum HTTP server that exposes the policy evaluator as a REST API. This is the bridge that lets non-Rust chain implementations (EVM, Midnight) access the Rust policy engine. Also serves as the host for Web2 proxy endpoints, MCP reverse proxy, agent registry, case management, DID resolution, and robot telemetry.
+An Axum HTTP server that exposes the policy evaluator as a REST API. This is the bridge that lets non-Rust chain implementations (EVM) access the Rust policy engine. Also serves as the host for Web2 proxy endpoints, MCP reverse proxy, agent registry, case management, DID resolution, and robot telemetry.
 
 **Key endpoints:** `/simulate`, `/api/v2/simulate-evm`, `/api/v2/evaluate`, `/events` (SSE), `/agents`, `/policy`, `/circuit-breaker`, `/cases`, `/ingest`, `/did/resolve`, `/robots/:did/telemetry`, `/token-balances`, `/mcp/*` (reverse proxy).
 
@@ -112,13 +112,25 @@ Six contracts deployed via Foundry:
 
 Chain support: Celo, Base, Ethereum mainnet, Polygon. ~54 Foundry tests.
 
-### midnight/ — Compact ZK Contracts
+### Arcium MXE — Confidentiality Engine
 
-Privacy-preserving security middleware for Midnight Network. Uses Midnight's Compact language for:
+Arcium is the Confidential Supercomputer on Solana, enabling trustless computation over fully confidential data powered by MPC. By using Arcium to handle off-chain cryptographic credentials, Bastion completely bypasses the need for a traditional, vulnerable cross-chain relayer.
 
-- `audit.compact` — ZK-proven audit log (proves compliance ran without revealing transaction contents)
-- `policy.compact` — Policy engine with private state
-- `registry.compact` — Agent and target directory
+#### The Off-Chain Execution Engine (MXEs)
+
+Instead of relying on a centralized off-chain server to compute an agent's reputation or evaluate Web2 inputs, Bastion leverages Arcium's Multiparty computation eXecution Environments (MXEs). These MXEs function similarly to virtual machines, providing secure, isolated, encrypted spaces for running complex programs confidentially. The computation runs across Arcium's distributed network using Multi-Party Computation (MPC) protocols, ensuring that no single node ever sees the complete plaintext data. This means threat intelligence rules, the agent's intent, and the Web2 API context remain totally private while being computed.
+
+- **MXEs** — Isolated MPC environments for secure confidential computation
+- **Arcis circuits** — Rust-based MPC circuits for compliance logic
+- **Cerberus protocol** — Dishonest-majority MPC security model
+
+#### Bridging to EVM Chains (Without a Bridge)
+
+Because Arcium requires an underlying blockchain to act as a data availability and state consensus layer, it can be invoked by Solana and then return verifiable outputs to any EVM chain — Base, Celo, Ethereum mainnet, Polygon, Arbitrum. Once the MXE computes the agent's reputation or validates a transaction payload against Bastion's firewall policies, the Arcium nodes collectively generate a cryptographic signature. The agent carries this signature to the target EVM chain. A lightweight Solidity contract on that chain simply verifies the Arcium signature. This turns Arcium into an encrypted I/O device — the heavy lifting and master state stay on Solana, but EVM agents across any supported chain can still prove they have passed Bastion's firewall in real-time.
+
+#### The Security Guarantee
+
+Arcium utilizes a dishonest majority trust model, meaning the system maintains its security even if only one single node in the computation cluster is honest. Relying on a standard relayer means trusting a small multi-sig or centralized infrastructure; relying on Arcium means backing Bastion's multichain expansion with military-grade cryptographic accountability.
 
 ## Data Flow
 
@@ -131,7 +143,6 @@ Agent
   │                              │
   │                              ├── Solana: Anchor CPI → /simulate
   │                              ├── EVM: /api/v2/simulate-evm (eth_call)
-  │                              └── Midnight: Compact contract
   │                              │
   │                    2. Policy check ──▶ PolicyEngine (crates/core)
   │                                          │
@@ -196,8 +207,8 @@ Bastion protects against six threat actor classes:
 1. **Compromised agent** — LLM manipulated, firewall is last line of defense
 2. **Malicious operator** — on-chain policy lives where operator can't modify it
 3. **Policy bypass** — aggregate behavioral analysis, sliding window counters
-4. **Intent observer** (Midnight) — ZK privacy prevents strategy extraction
-5. **Cross-chain correlator** (Midnight) — randomized delays, batching
+4. **Intent observer** (Arcium MXE) — MPC confidentiality prevents strategy extraction
+5. **Cross-chain correlator** (Base spoke) — Arcium signature verification, randomized delays
 6. **Governance attacker** — time-locked multisig policy upgrades
 
 For the full threat model, see `docs/THREAT_MODEL.md` (forthcoming).
@@ -222,7 +233,7 @@ bastion/
 │   ├── correlation/         ← SIEM correlation engine (sliding window, YAML rules, MITRE ATT&CK mapping)
 │   └── solana/programs/     ← Anchor on-chain program (bastion-audit)
 ├── evm/                     ← Solidity contracts (Foundry, 6 contracts, ~54 tests)
-├── midnight/                ← Compact ZK contracts (audit, policy, registry)
+├── arcium/                   ← Arcium MXE integration
 ├── apps/web/                ← React compliance dashboard (Vite + TailwindCSS)
 ├── packages/
 │   ├── sdk/                 ← @bastion-agentique/sdk (TypeScript, on-chain + sidecar clients, 6 tests)
@@ -245,7 +256,7 @@ bastion/
 | **Rust Correlation** | bastion-correlation | - |
 | **Solana On-Chain** | Anchor, solana-program, borsh | 0.30.1 / 1.18 / 1 |
 | **EVM Contracts** | Solidity, Foundry, OpenZeppelin, Solady | 0.8.28 |
-| **Midnight ZK** | Compact, @midnight-ntwrk/midnight-js | 0.1.0 |
+| **Arcium MXE** | Arcis (Rust MPC circuits), @arcium-hq/client | mainnet-alpha |
 | **Dashboard** | React, Vite, TailwindCSS, TypeScript | 18 / 5 / 3.4 / 5 |
 | **SDK** | TypeScript, Anchor, @solana/web3.js | 5 / 0.30.1 / 1.91 |
 | **Web2 SDK** | TypeScript, BastionWeb2Client | 5 / 0.1.0 |

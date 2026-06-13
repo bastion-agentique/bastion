@@ -10,7 +10,7 @@
 |---|---|
 | **Remove staking mechanism** | SOL-lamport PDAs are Solana-only. Staking duplicates `reputation_score` which already exists on `Agent`. True multichain means chain-agnostic primitives only. |
 | **Migrate Solana program to Quasar** | `#![no_std]` + zero-copy reduces binary size ~50–70%, lowering mainnet deployment cost from ~2 SOL → ~0.8–1 SOL. Smaller binary = lower CU per instruction. |
-| **Reputation as the universal primitive** | `reputation_score: u64` on `Agent` is representable on Solana (Anchor/Quasar), EVM (uint256 in registry), and Midnight. All limit enforcement runs through `crates/core` policy engine, not on-chain staking. |
+| **Reputation as the universal primitive** | `reputation_score: u64` on `Agent` is representable on Solana (Anchor/Quasar), EVM (uint256 in registry), and Base (via Arcium). All limit enforcement runs through `crates/core` policy engine, not on-chain staking. |
 
 ---
 

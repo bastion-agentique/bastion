@@ -129,40 +129,6 @@ pub async fn resolve_did(
                 },
             })
         }
-        "midnight" => {
-            let identifier = parts[3];
-            let vm_id = format!("{did}#midnight-key");
-            Some(DidResolveResult {
-                did_document: DidDocument {
-                    context: vec![
-                        "https://www.w3.org/ns/did/v1".to_string(),
-                        "https://w3id.org/security/suites/jubjub-2021/v1".to_string(),
-                    ],
-                    id: did.to_string(),
-                    controller: vec![did.to_string()],
-                    verification_method: vec![VerificationMethod {
-                        id: vm_id,
-                        kind: "JubjubVerificationKey2021".to_string(),
-                        controller: did.to_string(),
-                        public_key_base58: identifier.to_string(),
-                    }],
-                    service: vec![ServiceEndpoint {
-                        id: format!("{did}#midnight-disclosure"),
-                        kind: "MidnightSelectiveDisclosure".to_string(),
-                        service_endpoint: "https://bastion-agentique.fly.dev/midnight/disclose"
-                            .to_string(),
-                    }],
-                },
-                metadata: DidResolutionMetadata {
-                    content_type: "application/did+ld+json".to_string(),
-                    retrieved: std::time::SystemTime::now()
-                        .duration_since(std::time::UNIX_EPOCH)
-                        .unwrap_or_default()
-                        .as_secs()
-                        .to_string(),
-                },
-            })
-        }
         _ => None,
     }
 }

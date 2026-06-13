@@ -109,6 +109,6 @@ All notable changes to Bastion will be documented in this file.
 - TypeScript SDK (`@bastion-agentique/sdk`)
 - React dashboard with agent fleet visualizer
 - EVM contracts (Solidity, Foundry) — under development
-- Midnight Network ZK contracts (Compact)
+- Arcium MXE confidentiality engine (MPC circuits)
 - MCP server with 15 tools + 3 prompts
 - SIEM expansion: correlation engine, ingestion, case management, DID resolver

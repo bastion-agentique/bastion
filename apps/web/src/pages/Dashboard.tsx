@@ -380,10 +380,10 @@ export default function Dashboard() {
             <p className="font-sans text-[10px] uppercase tracking-wider text-zinc-500 mb-2">Source Chain</p>
             <DonutChart size={100} segments={trackedAgents.length > 0 ? (() => {
               const sol = trackedAgents.filter(a => a.did.includes(':solana:')).length;
-              const mid = trackedAgents.filter(a => a.did.includes(':midnight:')).length;
+              const evm = trackedAgents.filter(a => a.did.includes(':base:') || a.did.includes(':celo:')).length;
               const seg: {label:string;value:number;color:string}[] = [
                 sol > 0 ? { label: 'Solana', value: sol, color: '#9945FF' } : null,
-                mid > 0 ? { label: 'Midnight', value: mid, color: '#7C3AED' } : null,
+                evm > 0 ? { label: 'EVM (Base/Celo)', value: evm, color: '#3b82f6' } : null,
               ].filter(Boolean) as {label:string;value:number;color:string}[];
               return seg.length > 0 ? seg : [{ label: 'Solana', value: stats.total, color: '#9945FF' }];
             })() : [{ label: 'Solana', value: stats.total, color: '#9945FF' }]} />

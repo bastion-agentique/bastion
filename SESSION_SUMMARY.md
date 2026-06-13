@@ -7,7 +7,7 @@
 
 - **MCP server**: Separate private repo (`bastion-mcp`), not integrated into monorepo
 - **Dashboard real-time**: SSE (Server-Sent Events) streaming, not polling
-- **Midnight ZK PoC**: Research artifact only (compact contracts + ZK tests on local devnet)
+- **Arcium MXE integration**: Confidentiality engine (MPC circuits) for compliance verification
 - **Execution order**: Phase 1 (Celo deploy) → Phases 2+3 parallel → Phase 4. Phase 5 independent
 - **Celo testnet**: Celo Sepolia (chainId 11142220) replaced Alfajores
 
@@ -111,7 +111,7 @@
 - Dashboard editable policy configuration UI
 - Dashboard audit log search filters (agent, chain, risk score, date range)
 - GrondOSINT multi-source pipeline (Tavily, Shodan, social signals with explainable reasoning)
-- Midnight ZK PoC: compact contract ZK proof tests + integration guide
+- Arcium MXE integration: MPC circuit compliance verification + integration guide
 
 ## Key Code Locations
 

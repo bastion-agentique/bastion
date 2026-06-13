@@ -12,13 +12,9 @@
 
 ## 0. Repo Positioning
 
-**`bastion` = Agent Firewall** (this repo). Solana-native + EVM multichain AI transaction firewall + Web2 API gateway firewall + agent-to-agent security + public SDKs, docs, OSS community.
+**`bastion` = Agent Firewall + Compliance SIEM** (this repo). Solana-native + EVM multichain AI transaction firewall + Web2 API gateway firewall + Arcium MXE compliance engine + agent-to-agent security + public SDKs, docs, OSS community.
 
-**`bastion-enterprise`** = Privacy-preserving SIEM for agents. Midnight ZK, closed enterprise connectors, compliance analytics, regulated deployment.
-
-**Positioning rule:** If it's about **blocking, inspecting, or governing agent actions** → `bastion`. If it's about **observability, privacy-preserving logging, compliance analytics, or enterprise SIEM** → `bastion-enterprise`.
-
-Web2 API gateway firewall blocks/inspects agent API calls → belongs in `bastion`. `bastion-enterprise` stays focused on the Midnight privacy SIEM product.
+**All features** — blocking, inspecting, governing, observability, privacy-preserving logging, compliance analytics, and enterprise SIEM — live in this single repository.
 
 ---
 
@@ -79,7 +75,7 @@ bastion/
 │   │       ├── tls.rs               ← TLS termination + mTLS
 │   │       └── webhook.rs           ← Inbound webhook security
 │   ├── solana/                      ← UNCHANGED: Anchor program
-│   └── midnight/                    ← UNCHANGED: must stay for prover infra
+│   └── arcium/                      ← Arcium MXE integration
 ├── packages/
 │   ├── sdk/                         ← UPDATED: @bastion-agentique/sdk (new Web2 methods)
 │   └── web2-sdk/                    ← NEW: @bastion-agentique/web2-sdk
@@ -96,7 +92,7 @@ bastion/
 │               └── useWeb2Proxy.ts        ← NEW
 ├── agents/                          ← NEW: Web2 agent skills
 └── docs/
-    ├── PRD_SIEM_EXPANSION.md        ← bastion-enterprise scope reference
+    ├── PRD_SIEM_EXPANSION.md        ← SIEM expansion PRD
     └── WEB2_EXPANSION_PLAN.md       ← THIS FILE
 ```
 
@@ -287,20 +283,18 @@ LOG_ONLY        → Pass through, log for audit
 
 ---
 
-## 11. What Stays in bastion-enterprise
+## 11. Enterprise Features (All in This Repo)
 
-For clarity, these features **do not** belong in `bastion` — they live in `bastion-enterprise`:
+These features are part of `bastion` and serve the enterprise compliance use case:
 
-| Feature | Why enterprise-only |
-|---------|-------------------|
-| Midnight ZK privacy-preserving SIEM | Privacy story, regulated enterprise buyer |
-| Closed-source enterprise connectors | Proprietary integration contracts |
+| Feature | Enterprise Value |
+|---------|-----------------|
+| Arcium MPC confidential compliance | Privacy story, regulated enterprise buyer |
 | Compliance analytics & reporting dashboards | Enterprise SIEM scope |
-| BSSN/OJK regulatory reporting modules | Indonesian reg-tech, commercial |
-| Case management with on-chain case closure | SIEM workflow, enterprise |
-| SLA-backed audit evidence chain | Paid enterprise support |
+| Case management with on-chain case closure | SIEM workflow |
+| SLA-backed audit evidence chain | Enterprise support |
 
-**Rule of thumb:** If it helps an agent developer **block or inspect** → `bastion`. If it helps a compliance officer **audit or report** → `bastion-enterprise`.
+All features — blocking, inspecting, auditing, and reporting — live in this single repository.
 
 ---
 

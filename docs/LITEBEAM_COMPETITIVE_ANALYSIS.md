@@ -36,7 +36,7 @@ Two products serve the AI agent ecosystem from opposite ends of the stack:
 | **Layer** | **Security** — prevent bad transactions | **Routing** — find best vendor + settle payment |
 | **Value prop** | "Trust your Agent, but Verify every Transaction" | "One MCP connection. Every microservice. Zero config." |
 | **Integration** | Sidecar HTTP proxy + on-chain program | Single MCP server config block |
-| **Chains** | Solana + EVM (Celo/Base/Polygon/ETH) + Midnight (ZK) | Base (USDC settlement) + Tempo (MPP buffer) |
+| **Chains** | Solana + EVM (Celo/Base/Polygon/ETH) + Arcium MXE | Base (USDC settlement) + Tempo (MPP buffer) |
 | **Maturity** | Active dev (5+ crates, 6 contracts, SDK, dashboard, CI/CD) | Very early (6 commits, 0 releases, 0 stars) |
 
 ### The Recommendation
@@ -199,7 +199,7 @@ An **AI microservice routing layer** — a single MCP gateway that lets AI agent
 | **Integration** | Sidecar proxy + on-chain program | Single MCP config block | Litebeam |
 | **MCP tool count** | 15 tools + 3 prompts | 2 tools | Bastion |
 | **On-chain depth** | Solana Anchor program + 6 EVM contracts | Base payment settlement only | Bastion |
-| **Multi-chain** | Solana + EVM + Midnight | Base + Tempo | Bastion |
+| **Multi-chain** | Solana + EVM + Arcium | Base + Tempo | Bastion |
 | **Payment layer** | x402 in MCP (undocumented) | Primary product feature | Litebeam |
 | **Policy engine** | `PolicyEvaluator<O: RiskOracle>` (chain-agnostic) | N/A | Bastion |
 | **Transaction simulation** | Helius + EVM simulation | None | Bastion |
@@ -266,7 +266,7 @@ An **AI microservice routing layer** — a single MCP gateway that lets AI agent
 |---|---|---|---|
 | M1 | **Transaction simulation** | Helius API + EVM simulation before signing | No pre-execution validation |
 | M2 | **Risk oracle** | GrondOSINT integration for address risk | No risk scoring for addresses |
-| M3 | **Multi-chain support** | Solana + EVM (4 chains) + Midnight | Base only |
+| M3 | **Multi-chain support** | Solana + EVM (4 chains) + Arcium | Base only |
 | M4 | **On-chain audit trail** | Anchor PDA on Solana + EIP-712 events on EVM | Just payment tx history |
 | M5 | **Circuit breaker** | On-chain `emergency_pause`/`emergency_resume` | No emergency controls |
 | M6 | **Agent identity system** | W3C DID resolution, ERC-8004 NFTs, parent/child delegation with budget limits | No agent identity concept |
@@ -513,8 +513,8 @@ await mcp.callTool("bastion-safe-call", {
 │ [Configure]     │ │ [Built-in]      │ │ [Built-in]      │
 └─────────────────┘ └─────────────────┘ └─────────────────┘
 ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│ x402            │ │ Midnight ZK     │ │ Celo EVM        │
-│ Payment network │ │ Privacy         │ │ ERC-7579        │
+│ x402            │ │ Arcium MXE     │ │ Celo EVM        │
+│ Payment network │ │ Confidentiality│ │ ERC-7579        │
 │ [MCP tool]      │ │ [Coming soon]   │ │ [Deployed]      │
 └─────────────────┘ └─────────────────┘ └─────────────────┘
 ```
@@ -625,8 +625,8 @@ Content:
 ┌──────────────────────────────────────────────────────────────────┐
 │                        Settlement Layer                           │
 │  ┌─────────┐  ┌─────────┐  ┌──────────┐  ┌──────────┐           │
-│  │ Solana  │  │   EVM   │  │   Base   │  │ Midnight │           │
-│  │ (audit) │  │ (audit) │  │ (USDC)   │  │   (ZK)   │           │
+│  │ Solana  │  │   EVM   │  │   Base   │  │  Arcium │           │
+│  │ (audit) │  │ (audit) │  │ (USDC)   │  │  (MXE)  │           │
 │  └─────────┘  └─────────┘  └──────────┘  └──────────┘           │
 │        │             │            │              │                │
 │        ▼             ▼            ▼              ▼                │
@@ -705,7 +705,7 @@ Content:
 | **Simulation** | Yes (Helius + EVM) | No |
 | **Policy engine** | Yes (chain-agnostic) | No (only budget limits) |
 | **Payment** | x402 (MCP tool, undocumented) | Primary feature (USDC, 0.5% fee) |
-| **Chains** | Solana, Celo, Base, Polygon, ETH, Midnight | Base, Tempo |
+| **Chains** | Solana, Celo, Base, Polygon, ETH, Arcium | Base, Tempo |
 | **Open source** | Full monorepo | Partial (protocol layer only) |
 | **Audit trail** | On-chain (Anchor + EIP-712) + Sled | Payment tx history |
 | **Agent identity** | W3C DID + ERC-8004 + delegation | None |

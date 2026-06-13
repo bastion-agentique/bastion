@@ -25,7 +25,7 @@
 | **Web2 SDK** | TypeScript 5, BastionWeb2Client | 0.1.0 |
 | **EVM Wallet** | wagmi 2.12, viem 2.21, RainbowKit 2.2, TanStack Query 5 | — |
 | **Solana Wallet** | wallet-adapter-react, wallet-adapter-solflare/phantom/backpack | — |
-| **Midnight ZK** | Compact lang, @midnight-ntwrk/midnight-js | 0.1.0 |
+| **Arcium MXE** | Arcis (Rust MPC circuits), @arcium-hq/client | mainnet-alpha |
 | **Package Manager** | pnpm 9+ (workspaces) | — |
 | **CI/CD** | GitHub Actions, Netlify, Vercel | — |
 
@@ -61,7 +61,6 @@ bastion/
 │   ├── test/                  ← 4 Foundry test files (~54 tests)
 │   ├── script/                ← DeployBastion.s.sol
 │   └── lib/                   ← forge-std, openzeppelin-contracts, solady (submodules)
-├── midnight/                  ← Midnight ZK contracts + SDK
 ├── docs/                      ← Architecture, contributing, deployment plans
 ├── netlify/                   ← Netlify edge functions
 ├── config.toml                ← Sidecar policy config
@@ -192,7 +191,7 @@ Agent Operator (policy config, HITL review)
 │    ┌────┴──────────────────────────┐                             │
 │    ▼                               ▼                             │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐                       │
-│  │ Solana   │  │   EVM    │  │ Midnight │                       │
+│  │ Solana   │  │   EVM    │  │  Arcium  │                       │
 │  │ (Anchor) │  │(Solidity)│  │ (Compact)│                       │
 │  └──────────┘  └──────────┘  └──────────┘                       │
 └──────────────────────────────────────────────────────────────────┘

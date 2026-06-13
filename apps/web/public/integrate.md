@@ -54,7 +54,7 @@ curl -X POST https://bastion-agentique.fly.dev//override \
 
 - Solana (primary)
 - Celo (EVM)
-- Midnight (Compact/ZK)
+- Arcium MXE (confidential computing)
 - Base, Ethereum, Polygon, Arbitrum (via chain-agnostic core)
 
 ## Links

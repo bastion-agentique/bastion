@@ -215,7 +215,7 @@ server.tool(
 
 server.tool(
   "bastion_resolve_did",
-  "Resolve a W3C DID identifier to its DID Document. Supports did:bastion:solana: (Solana PDA-based) and did:bastion:midnight: (ZK commitment-based) identifiers.",
+  "Resolve a W3C DID identifier to its DID Document. Supports did:bastion:solana: (Solana PDA-based) identifiers.",
   {
     did: z.string().describe("Full DID identifier, e.g. did:bastion:solana:BaSZuLcwj...Cb"),
   },

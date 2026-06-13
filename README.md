@@ -420,7 +420,7 @@ See [`evm/README.md`](evm/README.md) for deployment details.
 | Database | Sled |
 | On-Chain (Solana) | Anchor, solana-program |
 | On-Chain (EVM) | Solidity 0.8.28, Foundry, OpenZeppelin, Solady |
-| ZK Privacy | Midnight Compact (proof verification) |
+| Confidentiality Engine | Arcium MXEs, Arcis (Rust MPC circuits) |
 | Web2 Firewall | Rust (bastion-web2-firewall), OpenAPI parser |
 | MCP Server | TypeScript, @modelcontextprotocol/sdk, SSE |
 | Payments | x402 (Solana), pay.sh |

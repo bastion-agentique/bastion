@@ -48,7 +48,6 @@ pub enum Chain {
     Polygon,
     Arbitrum,
     Celo,
-    Midnight,
 }
 
 /// Transaction type classification.

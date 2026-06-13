@@ -12,7 +12,7 @@ Good catches. Here's the corrected version with no dashes, semicolons, or colons
 What is the current state of the project?
 > Bastion (v0.5.2) is an AI Agent Firewall. It is security middleware that intercepts every transaction from autonomous AI agents, simulates it against live chain state via eth_simulateTransaction and eth_call, validates it against a programmable policy engine with allowlists, token caps, rate limits, and time windows, and records an immutable on-chain audit trail. Suspicious transactions are flagged for human-in-the-loop override via a React compliance dashboard.
 >
-> It supports EVM chains via Foundry contracts on Ethereum, Base, Polygon, Arbitrum, and Celo. Cross-chain support extends to Solana and Midnight Network as secondary targets.
+> It supports EVM chains via Foundry contracts on Ethereum, Base, Polygon, Arbitrum, and Celo. Solana as primary and Base as secondary targets.
 >
 > Repository https://github.com/bastion-agentique/bastion
 > Dashboard https://bastionagenticdefense.netlify.app/dashboard
@@ -31,7 +31,7 @@ On-chain audit trail hardening and ERC-8004 agent identity registry
 > Harden the EVM audit contracts so every firewall decision produces a verifiable on-chain record with full transaction context. Complete the ERC-8004 compliant agent identity registry so every AI agent has a provable on-chain identity with capability bitmasks and reputation scores. This closes the accountability loop where agents are identifiable, their actions are auditable, and malicious agents are attributable.
 Compliance dashboard with real-time HITL override
 > Build out the React dashboard with WebSocket-based real-time transaction monitoring. Add a HITL override queue where human operators can review blocked transactions and approve or reject with a single click while the override is recorded on-chain. Add policy configuration UI and audit log search with filtering by agent, chain, and risk score. This makes Bastion operational for real teams managing fleets of AI agents.
-> Stretch goal Deploy the full stack end-to-end on Celo mainnet to demonstrate multi-chain production readiness. Also deliver a Midnight Network proof-of-concept for ZK privacy-preserving audit trails.
+> Stretch goal Deploy the full stack end-to-end on Celo mainnet to demonstrate multi-chain production readiness. Also deliver an Arcium MXE integration for confidential compliance verification.
 ---
 ### Which motivations apply?
 - Shipping a production-ready product
@@ -111,7 +111,7 @@ What is the current state of the project?
 >
 > Every transaction an AI agent proposes flows through Bastion. It simulates against live chain state, validates against a programmable policy engine with allowlists, token caps, rate limits, and time windows, and records an immutable on-chain audit trail. Suspicious transactions are flagged for human review via a compliance dashboard. The firewall is permissionless: any agent on any supported chain can plug in with no gatekeepers.
 >
-> It currently supports EVM chains via Foundry contracts on Ethereum, Base, Polygon, Arbitrum, and Celo. Cross-chain coverage extends to Solana and Midnight Network as secondary targets.
+> It currently supports EVM chains via Foundry contracts on Ethereum, Base, Polygon, Arbitrum, and Celo. Solana as primary and Base as secondary targets.
 >
 > Repository https://github.com/bastion-agentique/bastion
 > Dashboard https://bastionagenticdefense.netlify.app/dashboard
@@ -130,7 +130,7 @@ On-chain audit trail and ERC-8004 agent identity registry
 > Harden the EVM audit contracts so every firewall decision produces a verifiable on-chain record with full transaction context. Complete the ERC-8004 compliant agent identity registry so every AI agent has a provable on-chain identity with capability bitmasks and reputation scores. This closes the accountability loop: agents are identifiable, their actions are auditable, and malicious agents are attributable. This is Bastion's equivalent of Zeus' proof of reserves, verifiable infrastructure where every decision can be independently confirmed on-chain.
 Compliance dashboard with real-time HITL override
 > Build out the dashboard with real-time transaction monitoring, a HITL override queue where operators review and approve or reject blocked transactions with on-chain recording, policy configuration UI, and audit log search with filtering by agent, chain, and risk score.
-> Stretch goal Deploy the full stack on Celo mainnet and deliver a Midnight Network proof-of-concept for ZK privacy-preserving audit trails, demonstrating the same multi-chain infrastructure thesis that Zeus proves with Bitcoin.
+> Stretch goal Deploy the full stack on Celo mainnet and deliver an Arcium MXE integration for confidential compliance verification, demonstrating the same multi-chain infrastructure thesis that Zeus proves with Bitcoin.
 ---
 ### Which motivations apply?
 - Shipping a production-ready product

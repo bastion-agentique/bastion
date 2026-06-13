@@ -42,7 +42,6 @@ bastion/
 ├── crates/correlation/   → cargo test -p bastion-correlation
 ├── crates/solana/        → cd crates/solana && anchor test
 ├── evm/                  → cd evm && forge test
-├── midnight/             → see midnight/README.md
 ├── apps/web/             → cd apps/web && pnpm dev
 ├── packages/sdk/         → cd packages/sdk && pnpm build && pnpm test
 └── packages/web2-sdk/    → cd packages/web2-sdk && pnpm build && pnpm test

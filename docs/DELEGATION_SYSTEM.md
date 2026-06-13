@@ -308,5 +308,5 @@ Staking has been removed from the on-chain program. Agent reputation provides th
 
 - Reputation scores are stored on-chain as `u64` on the Agent PDA
 - Higher reputation unlocks elevated transaction limits via the policy engine
-- Reputation is representable across Solana (Anchor), EVM (uint256), and Midnight
+- Reputation is representable across Solana (Anchor), EVM (uint256), and Base (via Arcium signature verification)
 - All limit enforcement runs through `crates/core` policy engine, not on-chain staking
