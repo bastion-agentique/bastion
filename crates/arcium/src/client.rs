@@ -1,3 +1,5 @@
+//! Arcium MXE client trait and implementations.
+
 use async_trait::async_trait;
 
 use crate::types::{ArciumError, MxeConfig, MxeResult};
@@ -10,7 +12,11 @@ use crate::types::{ArciumError, MxeConfig, MxeResult};
 #[async_trait]
 pub trait ArciumClient: Send + Sync {
     /// Evaluate a transaction against the MXE policy circuit.
-    async fn evaluate(&self, config: &MxeConfig, tx_data: &[u8]) -> Result<MxeResult, ArciumError>;
+    async fn evaluate(
+        &self,
+        config: &MxeConfig,
+        tx_data: &[u8],
+    ) -> Result<MxeResult, ArciumError>;
 }
 
 /// A no-op client that always returns `FirewallDecision::Pass`.

@@ -1,3 +1,5 @@
+//! Core types for Arcium MXE integration.
+
 use bastion_core::FirewallDecision;
 use serde::{Deserialize, Serialize};
 
@@ -8,7 +10,7 @@ pub struct MxeConfig {
     pub cluster_id: String,
     /// The MXE computation identifier.
     pub mxe_id: String,
-    /// Maximum time (ms) to wait for MXE computation.
+    /// Maximum time in milliseconds to wait for MXE computation.
     pub computation_timeout: u64,
     /// Minimum number of nodes required for consensus.
     pub required_nodes: u32,
@@ -28,15 +30,24 @@ pub struct MxeResult {
 /// Errors specific to Arcium MXE operations.
 #[derive(Debug, thiserror::Error)]
 pub enum ArciumError {
+    /// MXE computation timed out.
     #[error("MXE computation timed out after {0}ms")]
     Timeout(u64),
 
+    /// Not enough nodes responded for consensus.
     #[error("Insufficient nodes: need {required}, have {available}")]
-    InsufficientNodes { required: u32, available: u32 },
+    InsufficientNodes {
+        /// Number of nodes required.
+        required: u32,
+        /// Number of nodes that responded.
+        available: u32,
+    },
 
+    /// Circuit execution failed.
     #[error("Circuit execution failed: {0}")]
     CircuitError(String),
 
+    /// Signature verification failed.
     #[error("Signature verification failed")]
     SignatureVerificationFailed,
 }
