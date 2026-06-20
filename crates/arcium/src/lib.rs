@@ -7,8 +7,13 @@
 
 pub mod circuits;
 pub mod client;
+pub mod evaluator;
 pub mod solana;
 pub mod types;
 
+#[cfg(test)]
+mod evaluator_tests;
+
 pub use client::{ArciumClient, NoopArciumClient};
+pub use evaluator::ArcumPolicyEvaluator;
 pub use types::{ArciumError, MxeConfig, MxeResult};
