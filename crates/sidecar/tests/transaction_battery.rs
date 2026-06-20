@@ -183,6 +183,7 @@ fn build_test_app(
         helius_rpc_url: String::new(),
         alchemy_api_key: String::new(),
         alchemy_rpc_url: String::new(),
+        ..Policy::default()
     };
     (
         build_app(

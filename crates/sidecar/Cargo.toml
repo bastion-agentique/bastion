@@ -26,6 +26,7 @@ tower-http = { version = "0.5", features = ["fs", "cors"] }
 sha2 = "0.10"
 bastion-core = { path = "../core" }
 bastion-correlation = { path = "../correlation" }
+bastion-arcium = { path = "../arcium" }
 chrono = { version = "0.4", features = ["serde"] }
 async-trait = "0.1"
 async-stream = "0.3"

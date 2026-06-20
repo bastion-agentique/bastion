@@ -90,6 +90,7 @@ fn policy_with_allowed(program_ids: &[Pubkey]) -> Policy {
         helius_rpc_url: String::new(),
         alchemy_api_key: String::new(),
         alchemy_rpc_url: String::new(),
+        ..Policy::default()
     }
 }
 
@@ -245,6 +246,7 @@ fn blocks_transactions_when_rate_limit_is_exceeded() {
         helius_rpc_url: String::new(),
         alchemy_api_key: String::new(),
         alchemy_rpc_url: String::new(),
+        ..Policy::default()
     });
     let transfer_tx = system_transfer_transaction();
 

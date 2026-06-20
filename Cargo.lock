@@ -755,6 +755,7 @@ dependencies = [
  "async-trait",
  "axum",
  "base64 0.22.1",
+ "bastion-arcium",
  "bastion-core",
  "bastion-correlation",
  "bincode",

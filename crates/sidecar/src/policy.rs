@@ -26,6 +26,18 @@ pub struct Policy {
     pub alchemy_api_key: String,
     #[serde(default = "default_alchemy_rpc_url")]
     pub alchemy_rpc_url: String,
+    #[serde(default)]
+    pub arcium_enabled: bool,
+    #[serde(default)]
+    pub arcium_cluster_id: String,
+    #[serde(default)]
+    pub arcium_mxe_id: String,
+    #[serde(default = "default_arcium_timeout")]
+    pub arcium_timeout_ms: u64,
+    #[serde(default = "default_arcium_required_nodes")]
+    pub arcium_required_nodes: u32,
+    #[serde(default = "default_true")]
+    pub arcium_fallback: bool,
 }
 
 fn default_helius_rpc_url() -> String {
@@ -34,6 +46,40 @@ fn default_helius_rpc_url() -> String {
 
 fn default_alchemy_rpc_url() -> String {
     "https://solana-mainnet.g.alchemy.com/v2/".to_string()
+}
+
+fn default_arcium_timeout() -> u64 {
+    5000
+}
+
+fn default_arcium_required_nodes() -> u32 {
+    1
+}
+
+fn default_true() -> bool {
+    true
+}
+
+impl Default for Policy {
+    fn default() -> Self {
+        Self {
+            max_sol_per_tx: None,
+            max_balance_drain_lamports: None,
+            rate_limit_per_minute: None,
+            allowed_programs: vec![],
+            blocked_addresses: vec![],
+            simulation_checks_enabled: true,
+            helius_rpc_url: default_helius_rpc_url(),
+            alchemy_api_key: String::new(),
+            alchemy_rpc_url: default_alchemy_rpc_url(),
+            arcium_enabled: false,
+            arcium_cluster_id: String::new(),
+            arcium_mxe_id: String::new(),
+            arcium_timeout_ms: default_arcium_timeout(),
+            arcium_required_nodes: default_arcium_required_nodes(),
+            arcium_fallback: default_true(),
+        }
+    }
 }
 
 impl Policy {

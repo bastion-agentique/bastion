@@ -42,6 +42,8 @@ use audit::{
     AuditEntry, AuditLogger, AuditResult, Decision, TransactionDetails, current_timestamp,
     hash_transaction_payload,
 };
+use bastion_arcium::{ArcumPolicyEvaluator, NoopArciumClient, MxeConfig};
+use bastion_core::transaction::TxType;
 use grond_oracle::GrondOracle;
 use policy::{
     FlashLoanPatternCheck, HighSlippageCheck, IntentClassification, MaxUnitsCheck, NoErrorCheck,
@@ -87,6 +89,7 @@ struct AppState {
     did_cache: Arc<RwLock<HashMap<String, did::DidResolveResult>>>,
     agent_store: Arc<agents::AgentStore>,
     did_auth_state: auth::DidAuthState,
+    arcium_evaluator: Arc<ArcumPolicyEvaluator<NoopArciumClient, GrondOracle>>,
 }
 
 fn emit_event(tx: &broadcast::Sender<String>, event_type: &str, json_payload: &str) {
@@ -716,8 +719,8 @@ async fn simulate(
             &state.event_tx,
             "AuditRecorded",
             &serde_json::json!({
-                "decision": "Allowed",
-                "reason": "All policy and simulation checks passed",
+                "decision": "Blocked",
+                "reason": err,
                 "timestamp": current_timestamp()
             })
             .to_string(),
@@ -727,6 +730,50 @@ async fn simulate(
             StatusCode::FORBIDDEN,
             Json(ErrorResponse {
                 error: err,
+                block_id: None,
+            }),
+        )
+            .into_response();
+    }
+
+    // Arcium MXE evaluation (Solana-only, optional)
+    // With NoopArciumClient this always returns Pass. When a real Arcium client
+    // is plugged in, this will evaluate through the MXE before simulation.
+    let arcium_decision = {
+        let arcium_tx = bastion_core::NormalizedTransaction::new(
+            tx.signatures.first().map(|s| s.to_string()).unwrap_or_default(),
+            format!("{:?}", tx.message.account_keys.first().unwrap_or(&solana_sdk::pubkey::Pubkey::default())),
+            format!("{:?}", tx.message.account_keys.get(1).unwrap_or(&solana_sdk::pubkey::Pubkey::default())),
+            0,
+            "SOL".to_string(),
+            TxType::Transfer,
+            bastion_core::transaction::Chain::Solana,
+        );
+        let policy_set = bastion_core::PolicySet::new();
+        state.arcium_evaluator.evaluate(&arcium_tx, &policy_set).await
+    };
+
+    if arcium_decision.is_blocked() {
+        let reason = match &arcium_decision {
+            bastion_core::FirewallDecision::Block { reason, .. } => reason.clone(),
+            _ => "Arcium blocked transaction".to_string(),
+        };
+        let entry = AuditEntry {
+            ..build_audit_entry(
+                signature.clone(),
+                Decision::Blocked(reason.clone()),
+                AuditResult::Blocked,
+                reason.clone(),
+                None,
+                intent.clone(),
+                Some(tx_details.clone()),
+            )
+        };
+        let _ = state.logger.log(entry);
+        return (
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse {
+                error: reason,
                 block_id: None,
             }),
         )
@@ -1924,6 +1971,17 @@ pub fn build_app(
         }
     });
 
+    let arcium_config = MxeConfig {
+        cluster_id: policy.arcium_cluster_id.clone(),
+        mxe_id: policy.arcium_mxe_id.clone(),
+        computation_timeout: policy.arcium_timeout_ms,
+        required_nodes: policy.arcium_required_nodes,
+    };
+    let arcium_evaluator = Arc::new(
+        ArcumPolicyEvaluator::with_oracle(NoopArciumClient, arcium_config, grond_oracle.clone())
+            .with_fallback(policy.arcium_fallback),
+    );
+
     let app_state = AppState {
         policy_engine: Arc::new(RwLock::new(PolicyEngine::new(policy))),
         simulator,
@@ -1940,6 +1998,7 @@ pub fn build_app(
         did_cache: Arc::new(RwLock::new(HashMap::new())),
         agent_store,
         did_auth_state: did_auth_state.clone(),
+        arcium_evaluator,
     };
 
     async fn markdown_middleware(req: AxumRequest<Body>, next: Next) -> impl IntoResponse {
