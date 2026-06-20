@@ -18,6 +18,11 @@ solana-program = "1.18"
 borsh = "1"
 thiserror = "2"
 
+[dev-dependencies]
+solana-program-test = "1.18"
+solana-sdk = "1.18"
+tokio = { version = "1", features = ["full"] }
+
 [profile.release]
 opt-level = "z"
 lto = true

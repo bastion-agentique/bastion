@@ -31,17 +31,17 @@
       "skillPath": ".cursor/skills/armaniferrante-x-status-solana-reference/SKILL.md",
       "computedHash": "cbaee123691d69d0a03c9652fbe07c8fab561733ec33dc2f27074def0cc93eb8"
     },
-    "behavioral-risk-screening-concepts": {
-      "source": "agentic-reserve/blockint-skills",
-      "sourceType": "github",
-      "skillPath": ".cursor/skills/behavioral-risk-screening-concepts/SKILL.md",
-      "computedHash": "06d14c2e5f1d5e36079172488ac353fe803d3b2f922cc44cf205abb53fade140"
-    },
     "bastion-how-to-use": {
       "source": "local",
       "sourceType": "local",
       "skillPath": ".agents/skills/bastion-how-to-use/SKILL.md",
       "computedHash": "83381b7c81f567945970a7e183b2a7a18211cc801ae38cd153db70026b8a04cc"
+    },
+    "behavioral-risk-screening-concepts": {
+      "source": "agentic-reserve/blockint-skills",
+      "sourceType": "github",
+      "skillPath": ".cursor/skills/behavioral-risk-screening-concepts/SKILL.md",
+      "computedHash": "06d14c2e5f1d5e36079172488ac353fe803d3b2f922cc44cf205abb53fade140"
     },
     "bellingcat-investigation-toolkit": {
       "source": "agentic-reserve/blockint-skills",
@@ -234,6 +234,12 @@
       "sourceType": "github",
       "skillPath": ".cursor/skills/rug-pull-pattern-detection-agent/SKILL.md",
       "computedHash": "04547f0902832c16880ec4a6344da8c76107708e97af1a91184eaf34ac332f85"
+    },
+    "rust-best-practices": {
+      "source": "apollographql/skills",
+      "sourceType": "github",
+      "skillPath": "skills/rust-best-practices/SKILL.md",
+      "computedHash": "fd336f2f772eb46ddf8658de5f9dd8faa1f35615b316665307fc82eeb4b2e658"
     },
     "sandwich-attack-investigator-agent": {
       "source": "agentic-reserve/blockint-skills",
